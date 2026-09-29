@@ -7,7 +7,10 @@ import {
   type ProductId,
   type ProductType,
 } from "./catalog";
-import { fromPriceForProduct } from "./offer";
+import {
+  fromPriceForProduct,
+  priceCertaintyForProduct,
+} from "./offer";
 
 export type BoundingBox = {
   west: number;
@@ -30,6 +33,7 @@ export type DiscoveryProductSummary = {
   type: ProductType;
   name: string;
   fromPrice: number | null;
+  priceState: "estimated" | "final" | null;
   unit: string;
   mapEntityIds: string[];
   spatialMatch: "linked" | "unlocated";
@@ -171,6 +175,7 @@ export function discover(query: DiscoveryQuery): DiscoveryResult {
       type: product.type,
       name: product.name,
       fromPrice: fromPriceForProduct(product.id),
+      priceState: priceCertaintyForProduct(product.id),
       unit: product.unit,
       mapEntityIds: product.mapEntityIds,
       spatialMatch: product.mapEntityIds.length ? "linked" : "unlocated",
