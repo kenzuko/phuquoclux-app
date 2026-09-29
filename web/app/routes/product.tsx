@@ -438,6 +438,9 @@ export default function ProductRoute() {
             <p className="microcopy">
               Giá và tình trạng chỗ sẽ được kiểm tra lại ở bước tiếp theo.
             </p>
+            {product.pricingNote ? (
+              <p className="pricing-context-note">{product.pricingNote}</p>
+            ) : null}
           </aside>
         </section>
       </main>
