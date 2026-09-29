@@ -13,6 +13,7 @@ declare module "react-router" {
     cloudflare: {
       env: PhuQuocLuxEnv;
       ctx: WorkerExecutionContext;
+      requestId: string;
     };
   }
 }
