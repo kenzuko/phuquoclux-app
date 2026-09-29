@@ -64,11 +64,10 @@ export const mapEntities: MapEntity[] = [
     subtitle: "Bắc đảo · khám phá",
     lat: 10.3759,
     lng: 103.9,
-    category: "ticket",
-    icon: "🎟",
+    category: "place",
+    icon: "⌖",
     kicker: "BẮC ĐẢO",
-    copy: "Khu vực tham quan phía Bắc. Ticket được gắn theo đúng địa điểm và offer.",
-    href: "/product/ticket",
+    copy: "Khu vực tham quan phía Bắc. Chỉ gắn sản phẩm khi vị trí và offer đã được xác minh.",
   },
   {
     id: "airport-demo",
@@ -114,7 +113,7 @@ export const products: Record<ProductType, Product> = {
       { id: "adult", label: "Người lớn", multiplier: 1 },
       { id: "child", label: "Trẻ em", multiplier: 0.72 },
     ],
-    mapEntityIds: ["ganh-dau"],
+    mapEntityIds: [],
   },
   transfer: {
     type: "transfer",
