@@ -44,6 +44,7 @@ export type Product = {
   lead: string;
   pricingNote?: string;
   fulfillmentSummary: string;
+  facts: Array<{ label: string; value: string }>;
   media: ProductMedia;
   unit: string;
   duration?: string;
@@ -121,6 +122,10 @@ export const products: Record<ProductId, Product> = {
     kicker: "NAM ĐẢO · 7 GIỜ",
     lead: "Đón khách sạn · Ăn trưa · Lặn ngắm san hô",
     fulfillmentSummary: "Điểm đón & hướng dẫn tour",
+    facts: [
+      { label: "Khu vực", value: "An Thới" },
+      { label: "Thời lượng", value: "Khoảng 7 giờ" },
+    ],
     media: {
       kind: "placeholder",
       alt: "Tour 3 đảo bằng cano ở Nam đảo Phú Quốc",
@@ -149,6 +154,10 @@ export const products: Record<ProductId, Product> = {
     kicker: "HÒN THƠM · VÉ ĐIỆN TỬ",
     lead: "Chọn ngày · Voucher trên điện thoại · Đi thẳng đến cổng",
     fulfillmentSummary: "Voucher điện tử",
+    facts: [
+      { label: "Khu vực", value: "Nam đảo" },
+      { label: "Hình thức", value: "Voucher điện tử" },
+    ],
     media: {
       kind: "placeholder",
       alt: "Vé cáp treo Hòn Thơm Phú Quốc",
@@ -176,6 +185,10 @@ export const products: Record<ProductId, Product> = {
     pricingNote:
       "Giá xe đang hiển thị là tham khảo và có thể thay đổi theo điểm đến, thời gian đón và điều kiện vận hành.",
     fulfillmentSummary: "Điểm đón & thông tin tài xế",
+    facts: [
+      { label: "Điểm bắt đầu", value: "Sân bay PQC" },
+      { label: "Hình thức", value: "Xe riêng" },
+    ],
     media: {
       kind: "placeholder",
       alt: "Xe riêng đón sân bay Phú Quốc",
