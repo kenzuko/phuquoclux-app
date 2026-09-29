@@ -152,6 +152,13 @@ export default function MapRoute() {
     setSelected(null);
   }
 
+  function changeIntent(key: "date" | "pax", value: string) {
+    const params = new URLSearchParams(searchParams);
+    params.set(key, value);
+    setSearchParams(params);
+    setSelected(null);
+  }
+
   return (
     <div className="map-page">
       <header className="map-topbar">
@@ -193,6 +200,29 @@ export default function MapRoute() {
             {label}
           </button>
         ))}
+        <label className="map-intent-control">
+          <span>Ngày</span>
+          <input
+            type="date"
+            value={intent.date}
+            onChange={(event) => changeIntent("date", event.target.value)}
+          />
+        </label>
+        <label className="map-intent-control">
+          <span>Khách</span>
+          <select
+            value={intent.pax}
+            onChange={(event) => changeIntent("pax", event.target.value)}
+          >
+            {Array.from({ length: 10 }, (_, index) => index + 1).map(
+              (value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
         {hasAreaSearch ? (
           <button
             className="area-reset"
