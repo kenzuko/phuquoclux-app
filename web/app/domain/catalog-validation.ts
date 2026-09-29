@@ -77,6 +77,21 @@ export function validateCatalog(): CatalogIssue[] {
       });
     }
 
+    if (product.facts.length < 2) {
+      issues.push({
+        code: "PRODUCT_FACTS_TOO_SHALLOW",
+        message: `${product.id} requires at least two traveler-facing facts`,
+      });
+    }
+    for (const fact of product.facts) {
+      if (!fact.label.trim() || !fact.value.trim()) {
+        issues.push({
+          code: "PRODUCT_FACT_INVALID",
+          message: `${product.id} contains an empty Product fact`,
+        });
+      }
+    }
+
     if (product.media.kind === "photo") {
       if (!product.media.src.startsWith("/")) {
         issues.push({
