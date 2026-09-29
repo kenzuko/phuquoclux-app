@@ -55,6 +55,7 @@ export async function loader({
     offerId: selection.offerId,
     pax: selection.pax,
     serviceDate: selection.serviceDate,
+    requestId: context.cloudflare.requestId,
   });
   const offer = getOffer(type, quote.offerId);
 
@@ -90,6 +91,7 @@ export async function action({
     offerId: selection.offerId,
     pax: selection.pax,
     serviceDate: selection.serviceDate,
+    requestId: context.cloudflare.requestId,
   });
   assertQuoteBookable(quote);
 
