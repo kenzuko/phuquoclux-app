@@ -13,6 +13,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
       postgresConnected: false,
       paymentConnected: false,
       liveInventoryConnected: false,
+      opsOutboxConnected: false,
     },
     time: new Date().toISOString(),
   });
