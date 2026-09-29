@@ -6,6 +6,7 @@ import {
 
 export default [
   index("routes/home.tsx"),
+  route("map", "routes/map.tsx"),
   route("product/:type", "routes/product.tsx"),
   route("checkout/:type", "routes/checkout.tsx"),
   route("bookings", "routes/bookings.tsx"),
