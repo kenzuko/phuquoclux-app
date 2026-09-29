@@ -16,6 +16,13 @@ import {
   assertPrototypeCommerce,
   getCommerceMode,
 } from "../services/commerce-mode.server";
+import {
+  assertSameOriginMutation,
+  readEmail,
+  readPhone,
+  readText,
+  readUuid,
+} from "../services/request-validation.server";
 
 function parseSelection(request: Request) {
   const url = new URL(request.url);
@@ -75,6 +82,7 @@ export async function action({
   }
 
   assertPrototypeCommerce(getCommerceMode(context.cloudflare.env));
+  assertSameOriginMutation(request);
 
   const selection = parseSelection(request);
   const quote = await createPrototypeQuote({
@@ -92,17 +100,13 @@ export async function action({
 
   const operationalFields = new Set(offer.operationalFields);
   const form = await request.formData();
-  const requestId = String(form.get("requestId") ?? "").trim();
-  const name = String(form.get("name") ?? "").trim();
-  const phone = String(form.get("phone") ?? "").trim();
-  const email = String(form.get("email") ?? "").trim();
-  const hotelOrPickup = String(form.get("usage") ?? "").trim();
-  const flightNumber = String(form.get("flightNumber") ?? "").trim();
-  const guestNote = String(form.get("note") ?? "").trim();
-
-  if (!requestId || !name || !phone || !email) {
-    return new Response("Missing required booking fields", { status: 400 });
-  }
+  const requestId = readUuid(form, "requestId");
+  const name = readText(form, "name", { required: true, maxLength: 120 });
+  const phone = readPhone(form);
+  const email = readEmail(form);
+  const hotelOrPickup = readText(form, "usage", { maxLength: 300 });
+  const flightNumber = readText(form, "flightNumber", { maxLength: 32 });
+  const guestNote = readText(form, "note", { maxLength: 1200 });
 
   const booking = createPrototypeBookingRequest({
     requestId,
