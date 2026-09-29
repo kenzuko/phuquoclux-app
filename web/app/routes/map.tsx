@@ -101,6 +101,7 @@ export default function MapRoute() {
           styleUrl={mapStyleUrl}
           category="all"
           onSelect={onSelect}
+          interaction="full"
         />
 
         <button className="search-area-cta" type="button">
