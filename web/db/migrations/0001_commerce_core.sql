@@ -3,9 +3,11 @@
 
 create table if not exists products (
   id text primary key,
-  product_type text not null,
+  product_type text not null
+    check (product_type in ('tour', 'ticket', 'transfer')),
   name text not null,
-  status text not null default 'active',
+  status text not null default 'active'
+    check (status in ('active', 'paused', 'retired')),
   payload jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -15,12 +17,17 @@ create table if not exists offers (
   id text primary key,
   product_id text not null references products(id),
   provider_id text not null,
-  status text not null,
-  availability_mode text not null,
+  status text not null
+    check (status in ('active', 'paused', 'retired')),
+  availability_mode text not null
+    check (availability_mode in ('request', 'live', 'scheduled')),
   price_amount bigint not null check (price_amount >= 0),
-  price_currency text not null default 'VND',
-  price_basis text not null,
-  price_source text not null,
+  price_currency text not null default 'VND'
+    check (price_currency in ('VND')),
+  price_basis text not null
+    check (price_basis in ('per_person', 'per_booking')),
+  price_source text not null
+    check (price_source in ('prototype', 'jotrip', 'supplier', 'provider_api')),
   policy jsonb not null default '{}'::jsonb,
   operational_fields jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
@@ -34,16 +41,22 @@ create table if not exists quotes (
   id uuid primary key,
   product_id text not null references products(id),
   offer_id text not null references offers(id),
-  status text not null,
+  status text not null
+    check (status in ('active', 'expired', 'accepted', 'void')),
   service_date date not null,
   pax integer not null check (pax > 0),
   total_amount bigint not null check (total_amount >= 0),
-  currency text not null default 'VND',
+  currency text not null default 'VND'
+    check (currency in ('VND')),
   availability_snapshot jsonb not null,
   created_at timestamptz not null,
   expires_at timestamptz not null,
-  accepted_at timestamptz
+  accepted_at timestamptz,
+  check (expires_at > created_at)
 );
+
+create index if not exists quotes_offer_date_idx
+  on quotes(offer_id, service_date);
 
 create table if not exists quote_lines (
   quote_id uuid not null references quotes(id) on delete cascade,
@@ -53,7 +66,8 @@ create table if not exists quote_lines (
   quantity integer not null check (quantity > 0),
   unit_price_amount bigint not null check (unit_price_amount >= 0),
   total_amount bigint not null check (total_amount >= 0),
-  currency text not null default 'VND',
+  currency text not null default 'VND'
+    check (currency in ('VND')),
   primary key (quote_id, line_no)
 );
 
@@ -67,12 +81,38 @@ create table if not exists bookings (
   product_id text not null references products(id),
   offer_id text not null references offers(id),
   quote_id uuid not null references quotes(id),
-  state text not null,
-  payment_status text not null,
+  state text not null check (
+    state in (
+      'draft',
+      'pending_payment',
+      'paid',
+      'pending_confirmation',
+      'confirmed',
+      'fulfilled',
+      'cancel_requested',
+      'cancelled',
+      'refund_pending',
+      'refunded',
+      'failed',
+      'expired'
+    )
+  ),
+  version bigint not null default 1 check (version > 0),
+  payment_status text not null check (
+    payment_status in (
+      'unpaid',
+      'authorized',
+      'paid',
+      'partially_refunded',
+      'refunded',
+      'failed'
+    )
+  ),
   service_date date not null,
   pax integer not null check (pax > 0),
   total_amount bigint not null check (total_amount >= 0),
-  currency text not null default 'VND',
+  currency text not null default 'VND'
+    check (currency in ('VND')),
   operational_data jsonb not null default '{}'::jsonb,
   voucher_ref text,
   created_at timestamptz not null,
@@ -93,9 +133,11 @@ create table if not exists booking_events (
   booking_id uuid not null references bookings(id) on delete cascade,
   from_state text not null,
   to_state text not null,
+  version bigint not null check (version > 1),
   reason text,
   payload jsonb not null default '{}'::jsonb,
-  created_at timestamptz not null
+  created_at timestamptz not null,
+  unique (booking_id, version)
 );
 
 create index if not exists booking_events_booking_idx
@@ -106,9 +148,19 @@ create table if not exists payments (
   booking_id uuid not null references bookings(id),
   provider text not null,
   provider_reference text,
-  status text not null,
+  status text not null check (
+    status in (
+      'unpaid',
+      'authorized',
+      'paid',
+      'partially_refunded',
+      'refunded',
+      'failed'
+    )
+  ),
   amount bigint not null check (amount >= 0),
-  currency text not null default 'VND',
+  currency text not null default 'VND'
+    check (currency in ('VND')),
   payload jsonb not null default '{}'::jsonb,
   created_at timestamptz not null,
   updated_at timestamptz not null
@@ -129,3 +181,6 @@ create table if not exists idempotency_keys (
 
 comment on table bookings is
   'Authoritative booking ledger. Cache/Map state must never replace this table.';
+
+comment on column bookings.version is
+  'Optimistic concurrency version. Every state transition must increment this value.';
