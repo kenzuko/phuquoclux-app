@@ -196,9 +196,18 @@ export async function action({
   const name = readText(form, "name", { required: true, maxLength: 120 });
   const phone = readPhone(form);
   const email = readEmail(form);
-  const hotelOrPickup = readText(form, "usage", { maxLength: 300 });
-  const flightNumber = readText(form, "flightNumber", { maxLength: 32 });
-  const guestNote = readText(form, "note", { maxLength: 1200 });
+  const hotelOrPickup = readText(form, "usage", {
+    required: requiredOperationalFields.has("hotel_or_pickup"),
+    maxLength: 300,
+  });
+  const flightNumber = readText(form, "flightNumber", {
+    required: requiredOperationalFields.has("flight_number"),
+    maxLength: 32,
+  });
+  const guestNote = readText(form, "note", {
+    required: requiredOperationalFields.has("guest_note"),
+    maxLength: 1200,
+  });
 
   const booking = createPrototypeBookingRequest({
     requestId,
@@ -300,8 +309,21 @@ export default function CheckoutRoute() {
               <div className="form-grid">
                 {offer.operationalFields.includes("hotel_or_pickup") ? (
                   <label className="full">
-                    <span>Khách sạn / điểm đến / ghi chú đón</span>
-                    <input name="usage" autoComplete="off" />
+                    <span>
+                      Khách sạn / điểm đến
+                      {offer.requiredOperationalFields?.includes(
+                        "hotel_or_pickup",
+                      )
+                        ? " *"
+                        : ""}
+                    </span>
+                    <input
+                      name="usage"
+                      required={offer.requiredOperationalFields?.includes(
+                        "hotel_or_pickup",
+                      )}
+                      autoComplete="off"
+                    />
                   </label>
                 ) : null}
                 {offer.operationalFields.includes("flight_number") ? (
@@ -309,6 +331,9 @@ export default function CheckoutRoute() {
                     <span>Số chuyến bay</span>
                     <input
                       name="flightNumber"
+                      required={offer.requiredOperationalFields?.includes(
+                        "flight_number",
+                      )}
                       placeholder="Ví dụ: VN1825"
                       autoCapitalize="characters"
                       autoComplete="off"
@@ -318,7 +343,13 @@ export default function CheckoutRoute() {
                 {offer.operationalFields.includes("guest_note") ? (
                   <label className="full">
                     <span>Ghi chú</span>
-                    <textarea name="note" rows={4} />
+                    <textarea
+                      name="note"
+                      rows={4}
+                      required={offer.requiredOperationalFields?.includes(
+                        "guest_note",
+                      )}
+                    />
                   </label>
                 ) : null}
               </div>
