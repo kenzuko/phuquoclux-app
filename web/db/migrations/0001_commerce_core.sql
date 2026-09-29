@@ -38,6 +38,7 @@ create table if not exists offers (
   policy jsonb not null default '{}'::jsonb,
   constraints jsonb not null default '{}'::jsonb,
   operational_fields jsonb not null default '[]'::jsonb,
+  required_operational_fields jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   check (
