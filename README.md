@@ -35,3 +35,32 @@ See:
 - `docs/PRODUCT_LOCK.md`
 - `docs/BRAND_UI_DIRECTION.md`
 - `design/tokens.css`
+
+
+## Current review flow
+
+Routes in the prototype:
+
+- `/` - Home + embedded Map
+- `/product.html?type=tour`
+- `/product.html?type=ticket`
+- `/product.html?type=transfer`
+- `/checkout.html`
+- `/bookings.html`
+
+The current branch now covers the full UX spine:
+
+```
+Home / Map → Product → Checkout → My Bookings
+```
+
+## Production stack decision
+
+After UX acceptance, production implementation is locked to:
+
+- React Router v8 + TypeScript
+- Vite + Cloudflare Vite plugin
+- Cloudflare Workers
+- MapLibre GL JS with provider-agnostic tiles/styles
+
+See `docs/STACK_DECISION_V1.md`.
