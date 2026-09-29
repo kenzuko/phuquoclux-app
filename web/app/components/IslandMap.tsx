@@ -9,6 +9,7 @@ type Props = {
   styleUrl: string;
   category: "all" | MapCategory;
   onSelect: (entity: MapEntity) => void;
+  selectedEntityId?: string | null;
   onViewportChange?: (bounds: BoundingBox) => void;
   initialBounds?: BoundingBox;
   className?: string;
@@ -20,6 +21,7 @@ export function IslandMap({
   styleUrl,
   category,
   onSelect,
+  selectedEntityId,
   onViewportChange,
   initialBounds,
   className = "",
@@ -182,7 +184,14 @@ export function IslandMap({
         .forEach((entity) => {
           const el = document.createElement("button");
           el.type = "button";
-          el.className = `map-pin map-pin--${entity.category} map-pin--${entity.verification}`;
+          el.className = [
+            "map-pin",
+            `map-pin--${entity.category}`,
+            `map-pin--${entity.verification}`,
+            entity.id === selectedEntityId ? "is-selected" : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
           const icon = document.createElement("span");
           icon.className = "map-pin-icon";
           icon.textContent = entity.icon;
@@ -206,7 +215,15 @@ export function IslandMap({
     return () => {
       cancelled = true;
     };
-  }, [category, entities, interaction, onSelect, ready, zoom]);
+  }, [
+    category,
+    entities,
+    interaction,
+    onSelect,
+    ready,
+    selectedEntityId,
+    zoom,
+  ]);
 
   return (
     <div
