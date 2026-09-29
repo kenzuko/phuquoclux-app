@@ -127,6 +127,7 @@ export default function MapRoute() {
     mapStyleUrl,
   } = useLoaderData<typeof loader>();
   const [selected, setSelected] = useState<MapEntity | null>(null);
+  const [sheetExpanded, setSheetExpanded] = useState(false);
   const [viewport, setViewport] = useState<BoundingBox | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const returnTo = searchParams.toString()
@@ -145,6 +146,7 @@ export default function MapRoute() {
     else params.set("category", next);
     setSearchParams(params);
     setSelected(null);
+    setSheetExpanded(false);
   }
 
   function searchThisArea() {
@@ -156,6 +158,7 @@ export default function MapRoute() {
     }
     setSearchParams(params);
     setSelected(null);
+    setSheetExpanded(false);
   }
 
   function clearAreaSearch() {
@@ -163,6 +166,7 @@ export default function MapRoute() {
     for (const key of boundKeys) params.delete(key);
     setSearchParams(params);
     setSelected(null);
+    setSheetExpanded(false);
   }
 
   function changeIntent(key: "date" | "pax", value: string) {
@@ -170,6 +174,7 @@ export default function MapRoute() {
     params.set(key, value);
     setSearchParams(params);
     setSelected(null);
+    setSheetExpanded(false);
   }
 
   return (
@@ -291,8 +296,20 @@ export default function MapRoute() {
             />
           </aside>
         ) : (
-          <aside className="map-results-sheet">
-            <span className="sheet-grabber" />
+          <aside
+            className={`map-results-sheet${sheetExpanded ? " is-expanded" : ""}`}
+          >
+            <button
+              className="sheet-grabber"
+              type="button"
+              aria-label={
+                sheetExpanded
+                  ? "Thu gọn danh sách kết quả"
+                  : "Mở rộng danh sách kết quả"
+              }
+              aria-expanded={sheetExpanded}
+              onClick={() => setSheetExpanded((value) => !value)}
+            />
             <div className="map-results-head">
               <div>
                 <small>
