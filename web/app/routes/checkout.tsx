@@ -161,7 +161,7 @@ export default function CheckoutRoute() {
     <div>
       <header className="topbar topbar--border">
         <Brand />
-        <span className="secure-label">Checkout prototype</span>
+        <span className="secure-label">Chưa thu tiền</span>
       </header>
 
       <main className="checkout-main">
@@ -188,7 +188,7 @@ export default function CheckoutRoute() {
             <section className="checkout-section">
               <p className="section-kicker">NGƯỜI ĐẶT</p>
               <h1>Thông tin liên hệ</h1>
-              <p>Mass checkout: không bắt buộc tạo tài khoản trước.</p>
+              <p>Không cần tạo tài khoản. JoTrip dùng thông tin này để liên hệ về đặt chỗ.</p>
               <div className="form-grid">
                 <label>
                   <span>Họ và tên</span>
@@ -207,7 +207,7 @@ export default function CheckoutRoute() {
 
             <section className="checkout-section">
               <p className="section-kicker">THÔNG TIN SỬ DỤNG</p>
-              <h2>Thông tin vận hành</h2>
+              <h2>Thông tin để phục vụ chuyến đi</h2>
               <div className="form-grid">
                 {offer.operationalFields.includes("hotel_or_pickup") ? (
                   <label className="full">
@@ -239,8 +239,8 @@ export default function CheckoutRoute() {
               <p className="section-kicker">TRẠNG THÁI</p>
               <h2>Cần xác nhận tình trạng</h2>
               <div className="prototype-warning">
-                Prototype chưa nối inventory nhà cung cấp nên Quote đang ở trạng thái
-                yêu cầu xác nhận. Không hiển thị “còn chỗ” khi chưa có dữ liệu thật.
+                Bản thử nghiệm hiện chưa nối dữ liệu chỗ trống từ nhà cung cấp.
+                Vì vậy hệ thống chỉ nhận yêu cầu và không tự báo “còn chỗ” khi chưa xác minh.
               </div>
             </section>
 
@@ -250,11 +250,11 @@ export default function CheckoutRoute() {
           </Form>
 
           <aside className="order-summary">
-            <p className="section-kicker">QUOTE</p>
+            <p className="section-kicker">TÓM TẮT ĐẶT CHỖ</p>
             <h2>{product.name}</h2>
             <div className="order-meta">
               <div>
-                <span>Offer</span>
+                <span>Lựa chọn</span>
                 <b>{offer.label}</b>
               </div>
               <div>
@@ -271,18 +271,18 @@ export default function CheckoutRoute() {
               </div>
             </div>
             <div className="order-line total">
-              <span>Tổng theo Quote</span>
+              <span>Tạm tính</span>
               <strong>{money(quote.total.amount)}</strong>
             </div>
             <div className="quote-meta">
-              <span>Quote #{quote.id.slice(0, 8)}</span>
-              <span>Giữ giá prototype đến {expiresAt}</span>
+              <span>Mã tạm #{quote.id.slice(0, 8)}</span>
+              <span>Giá tạm tính đến {expiresAt}</span>
             </div>
             <div className="support-note">
               <b>JoTrip đứng sau vận hành</b>
               <p>
-                Sau khi provider được nối, Quote sẽ chỉ đi tiếp khi Availability
-                và policy của đúng Offer cho phép.
+                JoTrip sẽ kiểm tra lại tình trạng và điều kiện của đúng dịch vụ
+                trước khi xác nhận đặt chỗ.
               </p>
             </div>
           </aside>
