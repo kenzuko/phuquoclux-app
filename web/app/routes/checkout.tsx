@@ -384,6 +384,11 @@ export default function CheckoutRoute() {
                   : `Ước tính đến ${expiresAt}`}
               </span>
             </div>
+            {product.pricingNote ? (
+              <div className="pricing-context-note pricing-context-note--summary">
+                {product.pricingNote}
+              </div>
+            ) : null}
             <div className="support-note">
               <b>JoTrip đứng sau vận hành</b>
               <p>
