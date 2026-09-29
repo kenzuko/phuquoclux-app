@@ -29,6 +29,7 @@ import {
   readText,
   readUuid,
 } from "../services/request-validation.server";
+import { safeReturnTo } from "../domain/navigation";
 import {
   parsePrototypeQuoteReceipt,
   reconcilePrototypeQuote,
@@ -75,6 +76,7 @@ function buildSelectionQuery(
   pax: number,
   serviceDate: string,
   unitQuantities: Record<string, number>,
+  returnTo: string,
 ) {
   const params = new URLSearchParams({
     pax: String(pax),
@@ -82,6 +84,7 @@ function buildSelectionQuery(
     date: serviceDate,
   });
   appendUnitQuantities(params, offer, unitQuantities);
+  params.set("returnTo", returnTo);
   return params.toString();
 }
 
@@ -98,6 +101,10 @@ export async function loader({
   assertPrototypeCommerce(getCommerceMode(context.cloudflare.env));
 
   const selection = readSelection(request, product.id);
+  const returnTo = safeReturnTo(
+    new URL(request.url).searchParams.get("returnTo"),
+    "/map",
+  );
   const quote = await createPrototypeQuote({
     productId: product.id,
     offerId: selection.offer.id,
@@ -116,6 +123,7 @@ export async function loader({
       quote.pax,
       quote.serviceDate,
       selection.unitQuantities,
+      returnTo,
     ),
     quoteReceipt: serializePrototypeQuoteReceipt(quote),
     requestId: crypto.randomUUID(),
