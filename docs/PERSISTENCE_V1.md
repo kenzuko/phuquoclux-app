@@ -14,6 +14,7 @@ Cloudflare cache, browser state, Map state, KV-like stores and discovery read mo
 ```
 products
 offers
+offer_unit_rates
 quotes
 quote_lines
 bookings
@@ -42,7 +43,9 @@ Product answers:
 Offer answers:
 
 - which commercial variant;
-- price basis;
+- pricing mode;
+- price basis for flat pricing;
+- per-unit rates for mixed pricing such as adult/child tickets;
 - provider;
 - availability mode;
 - policy;
