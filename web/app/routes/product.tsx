@@ -95,14 +95,24 @@ export default function ProductRoute() {
             <section className="content-block">
               <p className="section-kicker">VỊ TRÍ / TUYẾN</p>
               <h2>Xem trên bản đồ</h2>
-              <div className="product-map-wrap">
-                <IslandMap
-                  entities={entities}
-                  styleUrl={mapStyleUrl}
-                  category="all"
-                  onSelect={() => undefined}
-                />
-              </div>
+              {entities.length ? (
+                <div className="product-map-wrap">
+                  <IslandMap
+                    entities={entities}
+                    styleUrl={mapStyleUrl}
+                    category="all"
+                    onSelect={() => undefined}
+                  />
+                </div>
+              ) : (
+                <div className="map-verification-note">
+                  <b>Chưa gắn pin sản phẩm</b>
+                  <p>
+                    Vị trí commerce chỉ được đưa lên Map khi tọa độ/điểm sử dụng
+                    đã được xác minh. Không dùng pin gần đúng để lấp chỗ trống.
+                  </p>
+                </div>
+              )}
             </section>
 
             <section className="content-block">
