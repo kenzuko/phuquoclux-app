@@ -149,6 +149,13 @@ export async function action({
   return redirect(`/bookings?${next.toString()}`);
 }
 
+export function meta() {
+  return [
+    { title: "Đặt dịch vụ | PhuQuocLux" },
+    { name: "robots", content: "noindex,nofollow" },
+  ];
+}
+
 export default function CheckoutRoute() {
   const { product, offer, pax, quote, quoteReceipt, requestId } =
     useLoaderData<typeof loader>();
