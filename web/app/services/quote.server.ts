@@ -1,5 +1,4 @@
 import {
-  type AvailabilityResult,
   type Quote,
   type QuoteLine,
 } from "../domain/commerce";
@@ -8,6 +7,7 @@ import {
   products,
   type ProductType,
 } from "../domain/catalog";
+import { checkAvailabilityForProduct } from "./availability.server";
 
 export type PrototypeQuoteInput = {
   type: ProductType;
@@ -26,13 +26,21 @@ function defaultServiceDate() {
   return date.toISOString().slice(0, 10);
 }
 
+function earlierExpiry(a: string, b?: string) {
+  if (!b) return a;
+  return new Date(a).getTime() <= new Date(b).getTime() ? a : b;
+}
+
 /**
- * Temporary server-side quote boundary.
+ * Temporary server-side Quote boundary.
  *
- * This is intentionally NOT a real availability service. It always returns
- * state=request so the UI never implies inventory was confirmed.
+ * Price is still prototype catalog pricing, but availability already travels
+ * through the ProviderAdapter contract. The current adapter intentionally
+ * returns "request" instead of pretending supplier inventory is live.
  */
-export function createPrototypeQuote(input: PrototypeQuoteInput): Quote {
+export async function createPrototypeQuote(
+  input: PrototypeQuoteInput,
+): Promise<Quote> {
   if (!isProductType(input.type)) {
     throw new Error("INVALID_PRODUCT_TYPE");
   }
@@ -45,16 +53,21 @@ export function createPrototypeQuote(input: PrototypeQuoteInput): Quote {
   const pax = Math.max(1, Math.min(20, input.pax));
   const quantity = product.type === "transfer" ? 1 : pax;
   const now = new Date();
-  const expires = new Date(now.getTime() + 15 * 60 * 1000);
+  const serviceDate = input.serviceDate || defaultServiceDate();
+  const productId = `product:${product.type}`;
+  const offerId = `offer:${product.type}:${option.id}`;
   const totalAmount = product.fromPrice * option.multiplier * quantity;
 
-  const availability: AvailabilityResult = {
-    state: "request",
-    checkedAt: now.toISOString(),
-    source: "manual",
-    expiresAt: expires.toISOString(),
-    note: "Prototype only: provider availability has not been connected.",
-  };
+  const availability = await checkAvailabilityForProduct(product.type, {
+    productId,
+    offerId,
+    serviceDate,
+    pax,
+    optionId: option.id,
+  });
+
+  const priceExpiry = new Date(now.getTime() + 15 * 60 * 1000).toISOString();
+  const expiresAt = earlierExpiry(priceExpiry, availability.expiresAt);
 
   const lines: QuoteLine[] = [
     {
@@ -70,15 +83,15 @@ export function createPrototypeQuote(input: PrototypeQuoteInput): Quote {
     id: crypto.randomUUID(),
     status: "active",
     productType: product.type,
-    productId: `product:${product.type}`,
-    offerId: `offer:${product.type}:${option.id}`,
+    productId,
+    offerId,
     optionId: option.id,
-    serviceDate: input.serviceDate || defaultServiceDate(),
+    serviceDate,
     pax,
     lines,
     total: vnd(totalAmount),
     createdAt: now.toISOString(),
-    expiresAt: expires.toISOString(),
+    expiresAt,
     availabilitySnapshot: availability,
   };
 }
