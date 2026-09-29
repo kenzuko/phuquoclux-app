@@ -266,8 +266,8 @@ export default function ProductRoute() {
                   <b>{fromPrice === null ? "Liên hệ" : money(fromPrice)}</b>
                 </div>
                 <div>
-                  <small>Voucher</small>
-                  <b>Trong đặt chỗ</b>
+                  <small>Sau khi xác nhận</small>
+                  <b>{product.fulfillmentSummary}</b>
                 </div>
                 <div>
                   <small>Hỗ trợ</small>
