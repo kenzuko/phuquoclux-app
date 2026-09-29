@@ -108,7 +108,12 @@ export default function HomeRoute() {
               <p className="section-kicker">GỢI Ý Ở PHÚ QUỐC</p>
               <h2>Dễ đặt, dễ đi</h2>
               <div className="product-list">
-                {Object.values(products).map((product) => (
+                {Object.values(products)
+                  .filter(
+                    (product) =>
+                      category === "all" || product.type === category,
+                  )
+                  .map((product) => (
                   <article className="product-card" key={product.type}>
                     <div className={`product-art product-art--${product.type}`}>
                       <span>{product.type === "tour" ? "◌" : product.type === "ticket" ? "⌁" : "→"}</span>
@@ -124,6 +129,15 @@ export default function HomeRoute() {
                     </div>
                   </article>
                 ))}
+                {category === "place" ? (
+                  <div className="category-placeholder">
+                    <b>Ăn uống sẽ là discovery-first</b>
+                    <span>
+                      Chỉ đưa nhà hàng/địa điểm lên khi dữ liệu vị trí và trạng thái
+                      hoạt động đủ tin cậy.
+                    </span>
+                  </div>
+                ) : null}
               </div>
             </section>
           </div>
