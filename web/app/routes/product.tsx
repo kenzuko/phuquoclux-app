@@ -160,6 +160,12 @@ export default function ProductRoute() {
     });
   }
 
+  const mapSearchParams = new URLSearchParams({ q: product.name });
+  const productMapUrl = mapUrl(
+    { date: serviceDate, pax: priced.pax },
+    mapSearchParams,
+  );
+
   return (
     <div>
       <header className="topbar topbar--border">
@@ -244,6 +250,9 @@ export default function ProductRoute() {
                   </p>
                 </div>
               )}
+              <Link className="product-map-link" to={productMapUrl}>
+                Mở trên bản đồ
+              </Link>
             </section>
 
             <section className="content-block">
