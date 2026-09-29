@@ -31,12 +31,12 @@ export default function BookingsRoute() {
           <div className="booking-status-banner booking-status-banner--request">
             <span>…</span>
             <div>
-              <b>Đã nhận yêu cầu prototype</b>
+              <b>Đã nhận yêu cầu</b>
               <p>
-                Chưa phải booking xác nhận và chưa có giao dịch tiền thật.
-                {bookingId ? ` Request #${bookingId.slice(0, 8)}.` : ""}
-                {quoteId ? ` Quote #${quoteId.slice(0, 8)}.` : ""}
-                {bookingState ? ` State: ${bookingState}.` : ""}
+                Đây là bản thử nghiệm, chưa phải đặt chỗ đã xác nhận và chưa có giao dịch tiền thật.
+                {bookingId ? ` Mã yêu cầu #${bookingId.slice(0, 8)}.` : ""}
+                {quoteId ? ` Mã giá #${quoteId.slice(0, 8)}.` : ""}
+                {bookingState ? ` Trạng thái hệ thống: ${bookingState}.` : ""}
               </p>
             </div>
           </div>
@@ -44,16 +44,16 @@ export default function BookingsRoute() {
 
         <section className="trip-day">
           <div className="trip-day-head">
-            <div><small>DEMO</small><strong>Luồng sau mua</strong></div>
+            <div><small>BẢN THỬ NGHIỆM</small><strong>Sau khi đặt</strong></div>
             <span>Phú Quốc</span>
           </div>
 
           {demoRequest ? (
             <BookingItem
               time="--:--"
-              type="REQUEST"
+              type="YÊU CẦU"
               title="Yêu cầu đang chờ xác nhận"
-              copy="Availability provider chưa được nối. Khi có xác nhận thật, booking mới chuyển sang trạng thái Confirmed."
+              copy="JoTrip sẽ kiểm tra tình trạng dịch vụ. Chỉ sau khi có xác nhận thật, đặt chỗ mới chuyển sang trạng thái đã xác nhận."
               status="Chờ xác nhận"
             />
           ) : null}
@@ -61,16 +61,16 @@ export default function BookingsRoute() {
           <BookingItem
             time="08:00"
             type="TRANSFER"
-            title="Ví dụ: Xe riêng từ khách sạn"
-            copy="Điểm đón sẽ hiển thị sau khi booking thực tế được xác nhận."
+            title="Xe riêng từ khách sạn"
+            copy="Điểm đón sẽ hiển thị sau khi đặt chỗ thực tế được xác nhận."
             status="Ví dụ"
           />
           <BookingItem
             time="09:00"
             type="EXPERIENCE"
-            title="Ví dụ: Tour 3 đảo bằng cano"
-            copy="Voucher và thông tin vận hành sẽ nằm trực tiếp trong booking đã xác nhận."
-            status="Demo confirmed"
+            title="Tour 3 đảo bằng cano"
+            copy="Voucher và hướng dẫn sử dụng sẽ nằm trực tiếp trong đặt chỗ đã xác nhận."
+            status="Ví dụ đã xác nhận"
             confirmed
           />
         </section>
@@ -84,10 +84,10 @@ export default function BookingsRoute() {
             <span>＋</span>
             <div><b>Đặt thêm dịch vụ</b><small>Tour, vé, xe và hơn nữa</small></div>
           </Link>
-          <button type="button">
+          <div className="booking-tool-static">
             <span>?</span>
-            <div><b>Cần hỗ trợ?</b><small>JoTrip hỗ trợ booking của bạn</small></div>
-          </button>
+            <div><b>Hỗ trợ JoTrip</b><small>Kênh hỗ trợ sẽ được nối ở bước sau</small></div>
+          </div>
         </section>
       </main>
       <BottomNav />
