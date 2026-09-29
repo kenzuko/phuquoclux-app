@@ -26,7 +26,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
   const selection = parseSelection(request);
   const product = products[type];
-  const quote = createPrototypeQuote({
+  const quote = await createPrototypeQuote({
     type,
     optionId: selection.optionId,
     pax: selection.pax,
@@ -44,7 +44,7 @@ export async function action({ params, request }: ActionFunctionArgs) {
   if (!isProductType(type)) throw new Response("Not found", { status: 404 });
 
   const selection = parseSelection(request);
-  const quote = createPrototypeQuote({
+  const quote = await createPrototypeQuote({
     type,
     optionId: selection.optionId,
     pax: selection.pax,
