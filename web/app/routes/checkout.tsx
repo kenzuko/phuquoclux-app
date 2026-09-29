@@ -88,7 +88,7 @@ export default function CheckoutRoute() {
       <main className="checkout-main">
         <Link
           className="back-link"
-          to={`/product/${product.type}?pax=${pax}&option=${option.id}`}
+          to={`/product/${product.type}?pax=${pax}&option=${option.id}&date=${quote.serviceDate}`}
         >
           ← Quay lại dịch vụ
         </Link>
