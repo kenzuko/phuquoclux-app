@@ -80,3 +80,6 @@
 .error-card>div{display:flex;gap:8px;margin-top:18px}
 .error-card a{text-decoration:none;border:1px solid var(--line);border-radius:11px;padding:10px 12px;color:var(--ink);font-size:10px;font-weight:850}
 .error-card a:first-child{background:var(--green-700);border-color:var(--green-700);color:#fff}
+
+.map-filter-row .area-reset{border-style:dashed;color:var(--green-700)}
+.search-area-cta:disabled{opacity:.55;cursor:wait}
