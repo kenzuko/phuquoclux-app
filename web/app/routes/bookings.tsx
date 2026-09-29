@@ -2,6 +2,7 @@ import { Link, useSearchParams } from "react-router";
 import { Brand } from "../components/Brand";
 import { BottomNav } from "../components/BottomNav";
 import { getProductById } from "../domain/catalog";
+import { formatServiceDate } from "../domain/service-date";
 
 export function meta() {
   return [
@@ -57,7 +58,11 @@ export default function BookingsRoute() {
             <section className="trip-day">
               <div className="trip-day-head">
                 <div>
-                  <small>{serviceDate ?? "BẢN THỬ NGHIỆM"}</small>
+                  <small>
+                    {serviceDate
+                      ? formatServiceDate(serviceDate)
+                      : "BẢN THỬ NGHIỆM"}
+                  </small>
                   <strong>Yêu cầu vừa gửi</strong>
                 </div>
                 <span>Phú Quốc</span>
