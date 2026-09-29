@@ -313,6 +313,11 @@ export default function MapRoute() {
                         ? "Liên hệ"
                         : `${money(product.fromPrice)} ${product.unit}`}
                     </small>
+                    {product.spatialMatch === "unlocated" ? (
+                      <small className="map-result-location">
+                        Chưa gắn vị trí chính xác
+                      </small>
+                    ) : null}
                   </div>
                   <i>→</i>
                 </Link>
