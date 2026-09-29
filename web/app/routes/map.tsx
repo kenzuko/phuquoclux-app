@@ -344,6 +344,9 @@ export default function MapRoute() {
                   </span>
                   <div>
                     <b>{product.name}</b>
+                    <span className="map-result-place">
+                      {product.locationLabel}
+                    </span>
                     <small>
                       {product.fromPrice === null
                         ? "Liên hệ"
