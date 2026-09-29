@@ -7,6 +7,7 @@ import {
   type ProductType,
 } from "../domain/catalog";
 import { getOffer } from "../domain/offer";
+import { normalizeServiceDate } from "../domain/service-date";
 import { checkAvailabilityForOffer } from "./availability.server";
 
 export type PrototypeQuoteInput = {
@@ -18,12 +19,6 @@ export type PrototypeQuoteInput = {
 
 function vnd(amount: number) {
   return { amount: Math.round(amount), currency: "VND" as const };
-}
-
-function defaultServiceDate() {
-  const date = new Date();
-  date.setUTCDate(date.getUTCDate() + 1);
-  return date.toISOString().slice(0, 10);
 }
 
 function earlierExpiry(a: string, b?: string) {
@@ -52,7 +47,7 @@ export async function createPrototypeQuote(
   const pax = Math.max(1, Math.min(20, input.pax));
   const quantity = offer.price.basis === "per_person" ? pax : 1;
   const now = new Date();
-  const serviceDate = input.serviceDate || defaultServiceDate();
+  const serviceDate = normalizeServiceDate(input.serviceDate, now);
   const productId = `product:${input.type}`;
   const totalAmount = offer.price.amount * quantity;
 
