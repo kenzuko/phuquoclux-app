@@ -41,3 +41,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Validate Worker bundle
+        run: npx wrangler deploy --dry-run
