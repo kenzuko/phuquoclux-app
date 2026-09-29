@@ -10,6 +10,7 @@ import { Brand } from "../components/Brand";
 import { isProductType, money, products } from "../domain/catalog";
 import { assertQuoteBookable } from "../domain/commerce";
 import { createPrototypeQuote } from "../services/quote.server";
+import { createPrototypeBookingRequest } from "../services/booking.server";
 
 function parseSelection(request: Request) {
   const url = new URL(request.url);
@@ -61,11 +62,17 @@ export async function action({ params, request }: ActionFunctionArgs) {
     return new Response("Missing required contact fields", { status: 400 });
   }
 
+  const booking = createPrototypeBookingRequest({
+    quote,
+    guestEmail: email,
+  });
+
   const next = new URLSearchParams({
     demo: "request",
     type,
     quote: quote.id,
-    state: quote.availabilitySnapshot.state,
+    booking: booking.id,
+    state: booking.state,
   });
 
   return redirect(`/bookings?${next.toString()}`);
