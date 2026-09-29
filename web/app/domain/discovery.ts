@@ -32,6 +32,7 @@ export type DiscoveryProductSummary = {
   slug: string;
   type: ProductType;
   name: string;
+  locationLabel: string;
   fromPrice: number | null;
   priceState: "estimated" | "final" | null;
   unit: string;
@@ -225,6 +226,7 @@ export function discover(query: DiscoveryQuery): DiscoveryResult {
       slug: product.slug,
       type: product.type,
       name: product.name,
+      locationLabel: product.locationLabel,
       fromPrice: fromPriceForProduct(product.id),
       priceState: priceCertaintyForProduct(product.id),
       unit: product.unit,
