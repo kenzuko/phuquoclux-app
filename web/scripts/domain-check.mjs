@@ -18,6 +18,7 @@ import { boundsForEntities } from "../app/domain/map-bounds.ts";
 import {
   fromPriceForProduct,
   getOffer,
+  priceCertaintyForProduct,
   offersForProduct,
 } from "../app/domain/offer.ts";
 import {
