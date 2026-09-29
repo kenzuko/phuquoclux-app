@@ -52,15 +52,27 @@ export function ErrorBoundary() {
   const title =
     status === 404
       ? "Không tìm thấy trang này"
-      : status === 503
-        ? "Dịch vụ này chưa sẵn sàng"
-        : "Có lỗi khi tải trang";
+      : status === 409
+        ? "Thông tin đặt chỗ vừa thay đổi"
+        : status === 400
+          ? "Thông tin chưa hợp lệ"
+          : status === 403
+            ? "Yêu cầu này không được chấp nhận"
+            : status === 503
+              ? "Dịch vụ này chưa sẵn sàng"
+              : "Có lỗi khi tải trang";
   const copy =
     status === 404
       ? "Liên kết có thể đã thay đổi hoặc nội dung chưa được mở."
-      : status === 503
-        ? "PhuQuocLux đang giữ an toàn giao dịch thay vì tiếp tục với dữ liệu chưa đủ."
-        : "Bạn có thể quay lại trang chính và thử lại.";
+      : status === 409
+        ? "Giá, tình trạng chỗ hoặc lựa chọn vừa được cập nhật. Hãy mở lại dịch vụ và kiểm tra trước khi tiếp tục."
+        : status === 400
+          ? "Một số thông tin gửi lên chưa đúng định dạng. Hãy quay lại và kiểm tra lại."
+          : status === 403
+            ? "PhuQuocLux đã chặn yêu cầu này để bảo vệ giao dịch của bạn."
+            : status === 503
+              ? "PhuQuocLux đang giữ an toàn giao dịch thay vì tiếp tục với dữ liệu chưa đủ."
+              : "Bạn có thể quay lại trang chính và thử lại.";
 
   return (
     <main className="error-page">
