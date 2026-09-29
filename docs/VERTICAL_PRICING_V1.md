@@ -95,3 +95,20 @@ A child or concession rate may have eligibility rules and should not make the wh
 `UnitMixPricing.headlineUnitCode` selects the rate used for discovery/product "from" pricing.
 
 The Hòn Thơm prototype uses `adult` as the headline unit while still pricing mixed adult/child baskets correctly.
+
+
+## Passenger / vehicle capacity
+
+Transfer Offers may declare a `maxPax` constraint.
+
+The Product UI uses it to:
+
+- disable vehicle choices that cannot carry the selected party;
+- move the traveler to the first compatible vehicle when party size increases;
+- cap the transfer product at the largest active vehicle capacity.
+
+The server pricing function enforces the same constraint.
+
+A hand-edited URL must not be able to price a 4-seat vehicle for a party above its declared capacity.
+
+The persistence schema stores Offer constraints as JSON so provider-specific capacity rules can evolve without changing Product identity.
