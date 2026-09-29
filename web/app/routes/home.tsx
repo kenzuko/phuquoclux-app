@@ -3,6 +3,7 @@ import { Form, Link, type LoaderFunctionArgs, useLoaderData } from "react-router
 import { BottomNav } from "../components/BottomNav";
 import { Brand } from "../components/Brand";
 import { IslandMap } from "../components/IslandMap";
+import { ProductVisual } from "../components/ProductVisual";
 import {
   mapEntities,
   mapVerificationLabel,
@@ -212,9 +213,7 @@ export default function HomeRoute() {
                   )
                   .map((product) => (
                   <article className="product-card" key={product.id}>
-                    <div className={`product-art product-art--${product.type}`}>
-                      <span>{product.type === "tour" ? "◌" : product.type === "ticket" ? "⌁" : "→"}</span>
-                    </div>
+                    <ProductVisual product={product} mode="card" />
                     <div className="product-body">
                       <p>{product.kicker}</p>
                       <h3>{product.name}</h3>
