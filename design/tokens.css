@@ -1,0 +1,43 @@
+:root {
+  /* Heritage brand */
+  --pql-green-700: #4d7328;
+  --pql-green-600: #657d3c;
+  --pql-green-500: #6a8930;
+  --pql-green-400: #7c9742;
+  --pql-orange-500: #fbb041;
+
+  /* Neutrals - provisional */
+  --pql-ink-950: #172018;
+  --pql-ink-700: #39413a;
+  --pql-ink-500: #667068;
+  --pql-line-200: #e3e8e3;
+  --pql-surface-50: #f7f9f6;
+  --pql-white: #ffffff;
+
+  /* Semantic aliases */
+  --pql-brand: var(--pql-green-600);
+  --pql-brand-strong: var(--pql-green-700);
+  --pql-accent: var(--pql-orange-500);
+  --pql-text: var(--pql-ink-950);
+  --pql-text-muted: var(--pql-ink-500);
+  --pql-border: var(--pql-line-200);
+  --pql-surface: var(--pql-surface-50);
+
+  /* Shape */
+  --pql-radius-sm: 10px;
+  --pql-radius-md: 16px;
+  --pql-radius-lg: 22px;
+  --pql-radius-pill: 999px;
+
+  /* Layout */
+  --pql-page-max: 1440px;
+  --pql-touch-min: 44px;
+}
+
+/*
+  DESIGN LOCK:
+  - Map-first, never map-only.
+  - Orange is an accent, not a page background.
+  - The old logo is heritage input, not a mandate to reproduce old travel-agency styling.
+  - Final tokens must pass accessibility/contrast testing before release.
+*/
