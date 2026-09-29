@@ -131,6 +131,48 @@ async function run() {
     "cano intent must rank the tour product first",
   );
 
+  const honThomInArea = discover({
+    q: "hòn thơm",
+    bounds: {
+      west: 103.95,
+      south: 9.98,
+      east: 104.05,
+      north: 10.08,
+    },
+  });
+  equal(
+    honThomInArea.products[0]?.productId,
+    "hon-thom-cable-car",
+    "text search must keep a matching unlocated product",
+  );
+  equal(
+    honThomInArea.products[0]?.spatialMatch,
+    "unlocated",
+    "matching product without verified anchor must stay explicitly unlocated",
+  );
+  ok(
+    !honThomInArea.entities.some((entity) => entity.category === "ticket"),
+    "unlocated product must not create a fake map pin",
+  );
+
+  const northOnly = discover({
+    category: "place",
+    bounds: {
+      west: 103.86,
+      south: 10.32,
+      east: 103.96,
+      north: 10.42,
+    },
+  });
+  ok(
+    northOnly.entities.some((entity) => entity.id === "ganh-dau"),
+    "viewport discovery must include Ganh Dau in north-island bounds",
+  );
+  ok(
+    !northOnly.entities.some((entity) => entity.id === "duong-dong"),
+    "viewport discovery must exclude Duong Dong outside the bounds",
+  );
+
   const sharedQuote = await createPrototypeQuote({
     productId: "tour-three-islands-cano",
     offerId: "tour-three-islands-cano:shared",
