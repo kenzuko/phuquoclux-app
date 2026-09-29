@@ -16,6 +16,10 @@ import {
   productsForMapEntity,
 } from "../domain/catalog";
 import {
+  fromPriceForProduct,
+  priceCertaintyForProduct,
+} from "../domain/offer";
+import {
   productSlugUrl,
   productUrl,
   tripIntentFromUrl,
@@ -371,10 +375,22 @@ function MapRelatedProducts({
     <div className="entity-related-products">
       {related.slice(0, 4).map((product) => (
         <Link
+          className="entity-product-link"
           key={product.id}
           to={withReturnTo(productUrl(product, intent), returnTo)}
         >
-          {product.name}
+          <span>
+            <b>{product.name}</b>
+            <small>
+              {priceCertaintyForProduct(product.id) === "estimated"
+                ? "Tham khảo từ "
+                : "Từ "}
+              {fromPriceForProduct(product.id) === null
+                ? "Liên hệ"
+                : money(fromPriceForProduct(product.id)!)}
+            </small>
+          </span>
+          <i>→</i>
         </Link>
       ))}
     </div>
