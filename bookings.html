@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f7f9f6" />
+  <title>Đặt chỗ của tôi — PhuQuocLux</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="bookings-page">
+  <header class="topbar detail-topbar">
+    <a class="brand" href="./index.html">
+      <img class="brand-mark" src="./assets/phuquoclux-mark.webp" alt="" />
+      <span class="brand-copy"><strong>PhuQuoc<span>Lux</span></strong><small>by JoTrip</small></span>
+    </a>
+    <a class="header-link" href="./index.html">Khám phá thêm</a>
+  </header>
+
+  <main class="bookings-main">
+    <section class="bookings-intro">
+      <p class="eyebrow">ĐẶT CHỖ CỦA TÔI</p>
+      <h1>Mọi thứ cần cho chuyến đi,<br /><span>nằm ở đây.</span></h1>
+      <p>Voucher, giờ đón, điểm gặp và hỗ trợ sau khi đặt.</p>
+    </section>
+
+    <div class="booking-status-banner" id="bookingBanner" hidden>
+      <span>✓</span><div><b>Prototype booking đã được tạo</b><p>Đây là trạng thái demo, chưa có giao dịch tiền thật.</p></div>
+    </div>
+
+    <section class="trip-day">
+      <div class="trip-day-head"><div><small>12 OCT</small><strong>Thứ Hai</strong></div><span>Phú Quốc</span></div>
+
+      <article class="booking-item is-upcoming">
+        <div class="booking-time"><strong>08:00</strong><span>Đón</span></div>
+        <div class="booking-item-body">
+          <div class="booking-type">TRANSFER</div>
+          <h2>Xe riêng từ khách sạn</h2>
+          <p>Điểm đón sẽ hiển thị sau khi booking được xác nhận.</p>
+          <div class="booking-actions"><button type="button">Xem điểm đón</button><button type="button">Liên hệ hỗ trợ</button></div>
+        </div>
+        <span class="status-pill">Sắp tới</span>
+      </article>
+
+      <article class="booking-item">
+        <div class="booking-time"><strong>09:00</strong><span>Tour</span></div>
+        <div class="booking-item-body">
+          <div class="booking-type">EXPERIENCE</div>
+          <h2>Tour 3 đảo bằng cano</h2>
+          <p>Voucher và thông tin vận hành sẽ nằm trực tiếp trong booking này.</p>
+          <div class="booking-actions"><button type="button">Mở voucher</button><button type="button">Xem chính sách</button></div>
+        </div>
+        <span class="status-pill confirmed">Đã xác nhận</span>
+      </article>
+    </section>
+
+    <section class="booking-tools">
+      <a href="./index.html"><span>⌖</span><div><b>Mở bản đồ</b><small>Xem dịch vụ quanh bạn</small></div></a>
+      <a href="./index.html"><span>＋</span><div><b>Đặt thêm dịch vụ</b><small>Tour, vé, xe và hơn nữa</small></div></a>
+      <button type="button"><span>?</span><div><b>Cần hỗ trợ?</b><small>JoTrip hỗ trợ booking của bạn</small></div></button>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Điều hướng chính">
+    <a href="./index.html"><span>⌂</span><b>Khám phá</b></a>
+    <a href="./index.html#map"><span>⌖</span><b>Bản đồ</b></a>
+    <a class="is-active" href="./bookings.html"><span>▣</span><b>Đặt chỗ</b></a>
+    <a href="#"><span>♡</span><b>Đã lưu</b></a>
+    <a href="#"><span>☺</span><b>Tôi</b></a>
+  </nav>
+
+  <script>
+    const q = new URLSearchParams(location.search);
+    if(q.get('demo') === 'confirmed') document.getElementById('bookingBanner').hidden = false;
+  </script>
+</body>
+</html>
