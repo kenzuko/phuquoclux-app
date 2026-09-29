@@ -260,3 +260,9 @@
 .entity-product-link small{margin-top:2px;color:var(--muted);font-size:8px;font-weight:700;letter-spacing:0}
 .entity-product-link i{font-style:normal;color:var(--green-700);font-weight:900}
 @media(max-width:980px){.entity-product-link b{font-size:11px}.entity-product-link small{font-size:10px}}
+
+.option-list button span,.option-list button small{display:block}
+.option-list button small{margin-top:3px;color:var(--muted);font-size:8px;font-weight:700}
+.option-list button:disabled{opacity:.45;cursor:not-allowed;background:var(--surface)}
+.option-list button:disabled.is-selected{border-color:var(--line)}
+@media(max-width:980px){.option-list button small{font-size:10px}}
