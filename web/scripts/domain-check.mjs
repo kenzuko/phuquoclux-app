@@ -9,6 +9,10 @@ import {
   getProductBySlug,
   productsForMapEntity,
 } from "../app/domain/catalog.ts";
+import {
+  assertCatalogValid,
+  validateCatalog,
+} from "../app/domain/catalog-validation.ts";
 import { discover } from "../app/domain/discovery.ts";
 import {
   fromPriceForProduct,
@@ -49,6 +53,9 @@ function equal(actual, expected, message) {
 }
 
 async function run() {
+  equal(validateCatalog().length, 0, "catalog must have no integrity issues");
+  assertCatalogValid();
+
   equal(getCommerceMode({}), "prototype", "commerce must fail-safe to prototype");
   equal(
     getCommerceMode({ COMMERCE_MODE: "live" }),
