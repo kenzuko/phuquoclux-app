@@ -255,10 +255,12 @@ export default function ProductRoute() {
                 theo lựa chọn của bạn và được kiểm tra lại trước khi gửi yêu cầu.
               </p>
               <div className="fact-grid">
-                <div>
-                  <small>Khu vực</small>
-                  <b>{product.locationLabel}</b>
-                </div>
+                {product.facts.slice(0, 2).map((fact) => (
+                  <div key={fact.label}>
+                    <small>{fact.label}</small>
+                    <b>{fact.value}</b>
+                  </div>
+                ))}
                 <div>
                   <small>
                     {priceState === "estimated" ? "Giá tham khảo từ" : "Giá từ"}
@@ -268,10 +270,6 @@ export default function ProductRoute() {
                 <div>
                   <small>Sau khi xác nhận</small>
                   <b>{product.fulfillmentSummary}</b>
-                </div>
-                <div>
-                  <small>Hỗ trợ</small>
-                  <b>JoTrip</b>
                 </div>
               </div>
             </section>
