@@ -29,6 +29,7 @@ import {
   productSlugUrl,
   tripIntentFromUrl,
 } from "../app/domain/trip-intent.ts";
+import { buildTripProjection } from "../app/domain/trip.ts";
 import { createPrototypeBookingRequest } from "../app/services/booking.server.ts";
 import { createPrototypeQuote } from "../app/services/quote.server.ts";
 import {
@@ -261,6 +262,26 @@ async function run() {
     "provider approved request",
   );
   equal(event.version, 2, "transition event must increment booking version");
+
+  const trip = buildTripProjection([
+    booking,
+    {
+      ...booking,
+      id: "00000000-0000-4000-8000-000000000002",
+      requestId: "00000000-0000-4000-8000-000000000003",
+      serviceDate: "2026-10-03",
+      state: "confirmed",
+    },
+    {
+      ...booking,
+      id: "00000000-0000-4000-8000-000000000004",
+      requestId: "00000000-0000-4000-8000-000000000005",
+      state: "cancelled",
+    },
+  ]);
+  equal(trip.bookingCount, 2, "Trip must exclude cancelled bookings");
+  equal(trip.days.length, 2, "Trip must group visible bookings by service date");
+  equal(trip.days[0]?.date, "2026-10-02", "Trip days must be chronological");
 
   let invalidTransitionCaught = false;
   try {
