@@ -207,8 +207,12 @@ export default function HomeRoute() {
             </section>
 
             <section className="product-section">
-              <p className="section-kicker">GỢI Ý Ở PHÚ QUỐC</p>
-              <h2>Dễ đặt, dễ đi</h2>
+              <p className="section-kicker">
+                {category === "place" ? "ĐỊA ĐIỂM Ở PHÚ QUỐC" : "GỢI Ý Ở PHÚ QUỐC"}
+              </p>
+              <h2>
+                {category === "place" ? "Xem theo khu vực" : "Dễ đặt, dễ đi"}
+              </h2>
               <div className="product-list">
                 {productList
                   .filter(
@@ -235,11 +239,35 @@ export default function HomeRoute() {
                   </article>
                 ))}
                 {category === "place" ? (
-                  <div className="category-placeholder">
-                    <b>Đang bổ sung địa điểm</b>
-                    <span>
-                      Chỉ hiển thị những điểm có vị trí và trạng thái hoạt động đủ tin cậy.
-                    </span>
+                  <div className="home-place-list">
+                    {mapEntities
+                      .filter((entity) => entity.category === "place")
+                      .sort((a, b) => b.priority - a.priority)
+                      .map((entity) => {
+                        const params = new URLSearchParams({
+                          category: "place",
+                          q: entity.name,
+                        });
+                        return (
+                          <Link
+                            className="home-place-card"
+                            key={entity.id}
+                            to={mapUrl(intent, params)}
+                          >
+                            <span className="home-place-icon">{entity.icon}</span>
+                            <span>
+                              <b>{entity.name}</b>
+                              <small>{entity.subtitle}</small>
+                              <em
+                                className={`verification-badge verification-badge--${entity.verification}`}
+                              >
+                                {mapVerificationLabel(entity.verification)}
+                              </em>
+                            </span>
+                            <i>→</i>
+                          </Link>
+                        );
+                      })}
                   </div>
                 ) : null}
               </div>
