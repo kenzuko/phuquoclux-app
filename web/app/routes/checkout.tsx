@@ -128,7 +128,13 @@ export default function CheckoutRoute() {
         </Link>
 
         <div className="checkout-grid">
-          <Form className="checkout-form" method="post">
+          <Form
+            className="checkout-form"
+            method="post"
+            action={`/checkout/${product.type}?pax=${pax}&offer=${encodeURIComponent(
+              offer.id,
+            )}&date=${quote.serviceDate}`}
+          >
             <input type="hidden" name="requestId" value={requestId} />
 
             <section className="checkout-section">
