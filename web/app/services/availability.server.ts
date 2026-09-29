@@ -2,23 +2,28 @@ import type {
   AvailabilityRequest,
   AvailabilityResult,
 } from "../domain/commerce";
-import type { ProductType } from "../domain/catalog";
+import type { Offer } from "../domain/offer";
 import type { ProviderAdapter } from "../domain/provider";
 import { ManualRequestProviderAdapter } from "../providers/manual-request.server";
 
-const manualRequest = new ManualRequestProviderAdapter();
-
-const providerByProductType: Record<ProductType, ProviderAdapter> = {
-  tour: manualRequest,
-  ticket: manualRequest,
-  transfer: manualRequest,
+const providers: Record<string, ProviderAdapter> = {
+  "jotrip-manual-request": new ManualRequestProviderAdapter(),
 };
 
-export async function checkAvailabilityForProduct(
-  type: ProductType,
+export async function checkAvailabilityForOffer(
+  offer: Offer,
   input: AvailabilityRequest,
 ): Promise<AvailabilityResult> {
-  const provider = providerByProductType[type];
+  const provider = providers[offer.providerId];
+
+  if (!provider) {
+    return {
+      state: "unknown",
+      checkedAt: new Date().toISOString(),
+      source: "manual",
+      note: `Provider adapter not configured: ${offer.providerId}`,
+    };
+  }
 
   return provider.checkAvailability(input, {
     providerId: provider.id,
@@ -27,6 +32,6 @@ export async function checkAvailabilityForProduct(
   });
 }
 
-export function providerForProduct(type: ProductType) {
-  return providerByProductType[type];
+export function providerForOffer(offer: Offer) {
+  return providers[offer.providerId];
 }

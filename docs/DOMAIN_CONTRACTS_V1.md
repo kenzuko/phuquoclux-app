@@ -4,7 +4,7 @@ Date: 29/09/2026
 
 ## Purpose
 
-Keep Map discovery, commerce state and supplier integrations separated before real inventory is connected.
+Keep Map discovery, Product, Offer, commerce state and supplier integrations separated before real inventory is connected.
 
 ## Discovery
 
@@ -20,17 +20,42 @@ It returns:
 
 - MapEntities;
 - product summaries;
-- only "from price" display values.
+- only `from_price` display values.
 
 **Discovery never claims availability.**
 
-The current API stub is:
+Current API:
 
 `GET /api/discovery`
 
 Example:
 
 `/api/discovery?category=tour&west=103.90&south=9.95&east=104.05&north=10.10`
+
+## Product and Offer
+
+Product is the discoverable thing.
+
+Offer is the commercial variant.
+
+Examples:
+
+```
+Product: Tour 3 đảo bằng cano
+  ├── Offer: Ghép đoàn
+  └── Offer: Cano riêng
+```
+
+Each Offer owns:
+
+- explicit price;
+- price basis;
+- provider id;
+- availability mode;
+- policy summary;
+- operational fields.
+
+The app no longer models Offer pricing as a multiplier on Product.
 
 ## Availability
 
@@ -60,12 +85,11 @@ A Quote is a priced snapshot for:
 - offer;
 - service date;
 - pax;
-- selected option;
 - availability snapshot.
 
 A Quote has an expiry.
 
-The UI must not carry a raw catalog price directly into payment.
+The UI must not carry a raw discovery/catalog price directly into payment.
 
 ## Booking
 
@@ -93,6 +117,8 @@ failed
 expired
 ```
 
+State changes must satisfy the domain transition guard and should be written to `booking_events`.
+
 ## Provider adapters
 
 External suppliers sit behind `ProviderAdapter`.
@@ -109,11 +135,24 @@ Capabilities are explicit:
 
 A provider that does not expose live availability must not implement the product UI as if it did.
 
+## Persistence
+
+PostgreSQL is the intended transactional source of truth.
+
+Repository contracts now exist for:
+
+- Quote;
+- Booking;
+- idempotency.
+
+No cache or Map state may implement the production booking ledger.
+
 ## Map rule
 
 `MapEntity` remains a spatial/discovery concept.
 
 It does not know:
+
 - payment state;
 - booking state;
 - supplier confirmation;

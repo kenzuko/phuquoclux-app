@@ -19,7 +19,6 @@ export type AvailabilityRequest = {
   offerId: string;
   serviceDate: string;
   pax: number;
-  optionId?: string;
 };
 
 export type AvailabilityResult = {
@@ -48,7 +47,6 @@ export type Quote = {
   offerId: string;
   serviceDate: string;
   pax: number;
-  optionId?: string;
   lines: QuoteLine[];
   total: Money;
   createdAt: string;
@@ -78,10 +76,23 @@ export type PaymentStatus =
   | "refunded"
   | "failed";
 
+export type BookingContact = {
+  name: string;
+  email: string;
+  phone: string;
+};
+
+export type BookingOperationalData = {
+  hotelOrPickup?: string;
+  flightNumber?: string;
+  guestNote?: string;
+};
+
 export type Booking = {
   id: string;
+  requestId: string;
   customerId?: string;
-  guestEmail: string;
+  contact: BookingContact;
   productType: ProductType;
   productId: string;
   offerId: string;
@@ -91,10 +102,51 @@ export type Booking = {
   serviceDate: string;
   pax: number;
   total: Money;
+  operationalData?: BookingOperationalData;
   voucherRef?: string;
   createdAt: string;
   updatedAt: string;
 };
+
+export type BookingEvent = {
+  id: string;
+  bookingId: string;
+  fromState: BookingState;
+  toState: BookingState;
+  reason?: string;
+  createdAt: string;
+};
+
+const bookingTransitions: Record<BookingState, ReadonlySet<BookingState>> = {
+  draft: new Set(["pending_payment", "pending_confirmation", "expired", "failed"]),
+  pending_payment: new Set(["paid", "cancelled", "expired", "failed"]),
+  paid: new Set(["pending_confirmation", "confirmed", "refund_pending", "failed"]),
+  pending_confirmation: new Set(["confirmed", "cancelled", "refund_pending", "failed"]),
+  confirmed: new Set(["fulfilled", "cancel_requested", "cancelled"]),
+  fulfilled: new Set([]),
+  cancel_requested: new Set(["cancelled", "confirmed"]),
+  cancelled: new Set(["refund_pending", "refunded"]),
+  refund_pending: new Set(["refunded", "failed"]),
+  refunded: new Set([]),
+  failed: new Set([]),
+  expired: new Set([]),
+};
+
+export function canTransitionBooking(
+  from: BookingState,
+  to: BookingState,
+) {
+  return bookingTransitions[from].has(to);
+}
+
+export function assertBookingTransition(
+  from: BookingState,
+  to: BookingState,
+) {
+  if (!canTransitionBooking(from, to)) {
+    throw new Error(`INVALID_BOOKING_TRANSITION:${from}->${to}`);
+  }
+}
 
 export function assertQuoteBookable(quote: Quote, now = new Date()) {
   if (quote.status !== "active") {

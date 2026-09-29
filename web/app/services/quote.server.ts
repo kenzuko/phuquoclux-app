@@ -4,14 +4,14 @@ import {
 } from "../domain/commerce";
 import {
   isProductType,
-  products,
   type ProductType,
 } from "../domain/catalog";
-import { checkAvailabilityForProduct } from "./availability.server";
+import { getOffer } from "../domain/offer";
+import { checkAvailabilityForOffer } from "./availability.server";
 
 export type PrototypeQuoteInput = {
   type: ProductType;
-  optionId?: string;
+  offerId?: string;
   pax: number;
   serviceDate?: string;
 };
@@ -34,9 +34,8 @@ function earlierExpiry(a: string, b?: string) {
 /**
  * Temporary server-side Quote boundary.
  *
- * Price is still prototype catalog pricing, but availability already travels
- * through the ProviderAdapter contract. The current adapter intentionally
- * returns "request" instead of pretending supplier inventory is live.
+ * Pricing is still prototype data, but Product and Offer are now separated.
+ * Availability travels through the ProviderAdapter selected by the Offer.
  */
 export async function createPrototypeQuote(
   input: PrototypeQuoteInput,
@@ -45,25 +44,23 @@ export async function createPrototypeQuote(
     throw new Error("INVALID_PRODUCT_TYPE");
   }
 
-  const product = products[input.type];
-  const option =
-    product.options.find((item) => item.id === input.optionId) ??
-    product.options[0];
+  const offer = getOffer(input.type, input.offerId);
+  if (!offer) {
+    throw new Error("OFFER_NOT_FOUND");
+  }
 
   const pax = Math.max(1, Math.min(20, input.pax));
-  const quantity = product.type === "transfer" ? 1 : pax;
+  const quantity = offer.price.basis === "per_person" ? pax : 1;
   const now = new Date();
   const serviceDate = input.serviceDate || defaultServiceDate();
-  const productId = `product:${product.type}`;
-  const offerId = `offer:${product.type}:${option.id}`;
-  const totalAmount = product.fromPrice * option.multiplier * quantity;
+  const productId = `product:${input.type}`;
+  const totalAmount = offer.price.amount * quantity;
 
-  const availability = await checkAvailabilityForProduct(product.type, {
+  const availability = await checkAvailabilityForOffer(offer, {
     productId,
-    offerId,
+    offerId: offer.id,
     serviceDate,
     pax,
-    optionId: option.id,
   });
 
   const priceExpiry = new Date(now.getTime() + 15 * 60 * 1000).toISOString();
@@ -72,9 +69,9 @@ export async function createPrototypeQuote(
   const lines: QuoteLine[] = [
     {
       code: "base",
-      label: option.label,
+      label: offer.label,
       quantity,
-      unitPrice: vnd(product.fromPrice * option.multiplier),
+      unitPrice: vnd(offer.price.amount),
       total: vnd(totalAmount),
     },
   ];
@@ -82,10 +79,9 @@ export async function createPrototypeQuote(
   return {
     id: crypto.randomUUID(),
     status: "active",
-    productType: product.type,
+    productType: input.type,
     productId,
-    offerId,
-    optionId: option.id,
+    offerId: offer.id,
     serviceDate,
     pax,
     lines,

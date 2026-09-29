@@ -11,6 +11,7 @@ import {
   money,
   products,
 } from "../domain/catalog";
+import { getOffer, offersForProduct } from "../domain/offer";
 import { IslandMap } from "../components/IslandMap";
 
 export async function loader({ params, context, request }: LoaderFunctionArgs) {
@@ -18,13 +19,23 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   if (!isProductType(type)) {
     throw new Response("Not found", { status: 404 });
   }
+
   const product = products[type];
+  const offers = offersForProduct(type);
   const url = new URL(request.url);
-  const initialPax = Math.max(1, Math.min(20, Number(url.searchParams.get("pax")) || 2));
-  const requestedOption = url.searchParams.get("option");
-  const initialOptionId =
-    product.options.find((item) => item.id === requestedOption)?.id ??
-    product.options[0].id;
+  const initialPax = Math.max(
+    1,
+    Math.min(20, Number(url.searchParams.get("pax")) || 2),
+  );
+  const requestedOffer =
+    url.searchParams.get("offer") ??
+    url.searchParams.get("option") ??
+    undefined;
+  const initialOffer = getOffer(type, requestedOffer);
+
+  if (!initialOffer) {
+    throw new Response("No offer configured", { status: 503 });
+  }
 
   const tomorrow = new Date();
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
@@ -35,10 +46,11 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
 
   return {
     product,
+    offers,
     defaultDate,
     initialServiceDate,
     initialPax,
-    initialOptionId,
+    initialOfferId: initialOffer.id,
     entities: mapEntities.filter((entity) =>
       product.mapEntityIds.includes(entity.id),
     ),
@@ -51,46 +63,56 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
 export default function ProductRoute() {
   const {
     product,
+    offers,
     entities,
     mapStyleUrl,
     defaultDate,
     initialServiceDate,
     initialPax,
-    initialOptionId,
+    initialOfferId,
   } = useLoaderData<typeof loader>();
-  const [optionId, setOptionId] = useState(initialOptionId);
+  const [offerId, setOfferId] = useState(initialOfferId);
   const [pax, setPax] = useState(initialPax);
   const [serviceDate, setServiceDate] = useState(initialServiceDate);
 
-  const option = product.options.find((item) => item.id === optionId)!;
-  const quantity = product.type === "transfer" ? 1 : pax;
-  const total = product.fromPrice * option.multiplier * quantity;
+  const offer =
+    offers.find((item) => item.id === offerId) ?? offers[0];
+  const quantity = offer.price.basis === "per_person" ? pax : 1;
+  const total = offer.price.amount * quantity;
 
   const checkoutUrl = useMemo(() => {
     const query = new URLSearchParams({
       pax: String(pax),
-      option: optionId,
+      offer: offerId,
       date: serviceDate,
     });
     return `/checkout/${product.type}?${query}`;
-  }, [optionId, pax, product.type, serviceDate]);
+  }, [offerId, pax, product.type, serviceDate]);
 
   return (
     <div>
       <header className="topbar topbar--border">
         <Brand />
-        <Link className="header-link" to="/bookings">Đặt chỗ của tôi</Link>
+        <Link className="header-link" to="/bookings">
+          Đặt chỗ của tôi
+        </Link>
       </header>
 
       <main className="detail-main">
-        <Link className="back-link" to="/">← Quay lại khám phá</Link>
+        <Link className="back-link" to="/">
+          ← Quay lại khám phá
+        </Link>
 
         <section className="product-hero">
           <div>
             <p className="eyebrow">{product.kicker}</p>
             <h1>{product.name}</h1>
             <p>{product.lead}</p>
-            <div className="chip-row">{product.chips.map((chip) => <span key={chip}>{chip}</span>)}</div>
+            <div className="chip-row">
+              {product.chips.map((chip) => (
+                <span key={chip}>{chip}</span>
+              ))}
+            </div>
           </div>
           <div className={`product-hero-art product-hero-art--${product.type}`}>
             <span>{product.locationLabel}</span>
@@ -104,13 +126,25 @@ export default function ProductRoute() {
               <h2>Biết rõ trước khi đặt</h2>
               <p>
                 PhuQuocLux tách thông tin địa điểm khỏi điều kiện bán.
-                Giá, lựa chọn, ngày sử dụng và chính sách phải thuộc đúng offer.
+                Giá, lựa chọn, ngày sử dụng và chính sách thuộc đúng Offer.
               </p>
               <div className="fact-grid">
-                <div><small>Khu vực</small><b>{product.locationLabel}</b></div>
-                <div><small>Giá từ</small><b>{money(product.fromPrice)}</b></div>
-                <div><small>Voucher</small><b>Trong booking</b></div>
-                <div><small>Hỗ trợ</small><b>JoTrip</b></div>
+                <div>
+                  <small>Khu vực</small>
+                  <b>{product.locationLabel}</b>
+                </div>
+                <div>
+                  <small>Giá từ</small>
+                  <b>{money(product.fromPrice)}</b>
+                </div>
+                <div>
+                  <small>Voucher</small>
+                  <b>Trong booking</b>
+                </div>
+                <div>
+                  <small>Hỗ trợ</small>
+                  <b>JoTrip</b>
+                </div>
               </div>
             </section>
 
@@ -142,9 +176,24 @@ export default function ProductRoute() {
               <p className="section-kicker">TRƯỚC KHI ĐẶT</p>
               <h2>Thông tin cần biết</h2>
               <div className="policy-list">
-                <div><b>Availability</b><p>Không ghi “còn chỗ” cho tới khi Availability service xác nhận.</p></div>
-                <div><b>Đổi / huỷ</b><p>Policy phải đi theo đúng offer, không dùng luật chung cho mọi sản phẩm.</p></div>
-                <div><b>Vận hành</b><p>Thông tin đón, voucher và hỗ trợ được đưa về My Bookings sau khi xác nhận.</p></div>
+                <div>
+                  <b>Availability</b>
+                  <p>
+                    Không ghi “còn chỗ” cho tới khi Availability service xác nhận.
+                  </p>
+                </div>
+                <div>
+                  <b>Đổi / huỷ</b>
+                  <p>
+                    Policy đi theo đúng Offer, không dùng luật chung cho mọi sản phẩm.
+                  </p>
+                </div>
+                <div>
+                  <b>Vận hành</b>
+                  <p>
+                    Thông tin đón, voucher và hỗ trợ được đưa về My Bookings sau khi xác nhận.
+                  </p>
+                </div>
               </div>
             </section>
           </div>
@@ -169,12 +218,12 @@ export default function ProductRoute() {
             <div className="booking-field">
               <span>Lựa chọn</span>
               <div className="option-list">
-                {product.options.map((item) => (
+                {offers.map((item) => (
                   <button
                     type="button"
                     key={item.id}
-                    className={optionId === item.id ? "is-selected" : ""}
-                    onClick={() => setOptionId(item.id)}
+                    className={offerId === item.id ? "is-selected" : ""}
+                    onClick={() => setOfferId(item.id)}
                   >
                     {item.label}
                   </button>
@@ -185,20 +234,32 @@ export default function ProductRoute() {
             <div className="booking-field">
               <span>Số khách</span>
               <div className="quantity-control">
-                <button type="button" onClick={() => setPax((value) => Math.max(1, value - 1))}>−</button>
+                <button
+                  type="button"
+                  onClick={() => setPax((value) => Math.max(1, value - 1))}
+                >
+                  −
+                </button>
                 <b>{pax}</b>
-                <button type="button" onClick={() => setPax((value) => Math.min(20, value + 1))}>+</button>
+                <button
+                  type="button"
+                  onClick={() => setPax((value) => Math.min(20, value + 1))}
+                >
+                  +
+                </button>
               </div>
             </div>
 
             <div className="booking-total">
-              <small>Ước tính</small>
+              <small>Ước tính theo Offer</small>
               <strong>{money(total)}</strong>
             </div>
 
-            <Link className="booking-cta" to={checkoutUrl}>Tiếp tục đặt</Link>
+            <Link className="booking-cta" to={checkoutUrl}>
+              Tiếp tục đặt
+            </Link>
             <p className="microcopy">
-              Giá cuối cùng được tạo thành Quote ở checkout. Chưa xác nhận availability.
+              Giá cuối cùng được đóng thành Quote ở checkout. Chưa xác nhận availability.
             </p>
           </aside>
         </section>

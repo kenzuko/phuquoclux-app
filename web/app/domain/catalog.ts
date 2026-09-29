@@ -14,12 +14,6 @@ export type MapEntity = {
   href?: string;
 };
 
-export type ProductOption = {
-  id: string;
-  label: string;
-  multiplier: number;
-};
-
 export type Product = {
   type: ProductType;
   name: string;
@@ -31,7 +25,6 @@ export type Product = {
   locationLabel: string;
   chips: string[];
   searchTerms: string[];
-  options: ProductOption[];
   mapEntityIds: string[];
 };
 
@@ -105,10 +98,6 @@ export const products: Record<ProductType, Product> = {
       "an thới",
       "an thoi",
     ],
-    options: [
-      { id: "shared", label: "Ghép đoàn", multiplier: 1 },
-      { id: "private", label: "Cano riêng", multiplier: 5.2 },
-    ],
     mapEntityIds: ["an-thoi"],
   },
   ticket: {
@@ -128,10 +117,6 @@ export const products: Record<ProductType, Product> = {
       "cable car",
       "sun world",
     ],
-    options: [
-      { id: "adult", label: "Người lớn", multiplier: 1 },
-      { id: "child", label: "Trẻ em", multiplier: 0.72 },
-    ],
     mapEntityIds: [],
   },
   transfer: {
@@ -150,11 +135,6 @@ export const products: Record<ProductType, Product> = {
       "private car",
       "pqc",
       "taxi sân bay",
-    ],
-    options: [
-      { id: "sedan", label: "Sedan 4 chỗ", multiplier: 1 },
-      { id: "suv", label: "SUV 7 chỗ", multiplier: 1.45 },
-      { id: "van", label: "Van 16 chỗ", multiplier: 2.2 },
     ],
     mapEntityIds: ["airport-demo"],
   },

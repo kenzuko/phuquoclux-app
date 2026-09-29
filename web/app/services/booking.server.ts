@@ -1,8 +1,15 @@
-import type { Booking, Quote } from "../domain/commerce";
+import type {
+  Booking,
+  BookingOperationalData,
+  BookingContact,
+  Quote,
+} from "../domain/commerce";
 
 export type PrototypeBookingRequestInput = {
+  requestId: string;
   quote: Quote;
-  guestEmail: string;
+  contact: BookingContact;
+  operationalData?: BookingOperationalData;
 };
 
 /**
@@ -26,7 +33,8 @@ export function createPrototypeBookingRequest(
 
   return {
     id: crypto.randomUUID(),
-    guestEmail: input.guestEmail,
+    requestId: input.requestId,
+    contact: input.contact,
     productType: input.quote.productType,
     productId: input.quote.productId,
     offerId: input.quote.offerId,
@@ -36,6 +44,7 @@ export function createPrototypeBookingRequest(
     serviceDate: input.quote.serviceDate,
     pax: input.quote.pax,
     total: input.quote.total,
+    operationalData: input.operationalData,
     createdAt: now,
     updatedAt: now,
   };
