@@ -64,6 +64,53 @@ function tokens(value: string) {
   return normalize(value).split(" ").filter(Boolean);
 }
 
+function editDistanceWithinOne(a: string, b: string) {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      i += 1;
+      j += 1;
+      continue;
+    }
+
+    edits += 1;
+    if (edits > 1) return false;
+
+    if (a.length > b.length) i += 1;
+    else if (b.length > a.length) j += 1;
+    else {
+      i += 1;
+      j += 1;
+    }
+  }
+
+  if (i < a.length || j < b.length) edits += 1;
+  return edits <= 1;
+}
+
+function tokenMatches(queryToken: string, haystackTokens: string[]) {
+  return haystackTokens.some((candidate) => {
+    if (
+      candidate.includes(queryToken) ||
+      queryToken.includes(candidate)
+    ) {
+      return true;
+    }
+
+    return (
+      queryToken.length >= 4 &&
+      candidate.length >= 4 &&
+      editDistanceWithinOne(queryToken, candidate)
+    );
+  });
+}
+
 function textScore(query: string, fields: string[]) {
   if (!query) return 1;
 
@@ -74,9 +121,13 @@ function textScore(query: string, fields: string[]) {
   if (haystack.includes(q)) return 100;
 
   const queryTokens = tokens(q);
+  const haystackTokens = tokens(haystack);
   if (!queryTokens.length) return 0;
 
-  const matched = queryTokens.filter((token) => haystack.includes(token)).length;
+  const matched = queryTokens.filter((token) =>
+    tokenMatches(token, haystackTokens),
+  ).length;
+
   return matched === queryTokens.length
     ? 70 + matched
     : matched
