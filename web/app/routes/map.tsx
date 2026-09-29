@@ -153,7 +153,7 @@ export default function MapRoute() {
           ["tour", "Tour"],
           ["ticket", "Vé"],
           ["transfer", "Xe"],
-          ["place", "Ăn uống"],
+          ["place", "Địa điểm"],
         ].map(([id, label]) => (
           <button
             key={id}
