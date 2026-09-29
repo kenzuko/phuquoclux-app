@@ -88,6 +88,7 @@ export default function HomeRoute() {
                 styleUrl={mapStyleUrl}
                 category={category}
                 onSelect={onSelect}
+                interaction="embedded"
               />
               {selected ? <MapEntitySheet entity={selected} onClose={() => setSelected(null)} /> : null}
             </div>
@@ -152,6 +153,7 @@ export default function HomeRoute() {
                 styleUrl={mapStyleUrl}
                 category={category}
                 onSelect={onSelect}
+                interaction="full"
               />
               {selected ? <MapEntitySheet entity={selected} onClose={() => setSelected(null)} /> : null}
             </div>
