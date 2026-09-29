@@ -9,7 +9,8 @@
     "preview": "npm run build && vite preview",
     "typecheck": "react-router typegen && tsc --noEmit",
     "deploy": "npm run build && wrangler deploy",
-    "check": "npm run typecheck && npm run build && wrangler deploy --dry-run"
+    "check": "npm run typecheck && npm run test:domain && npm run build && wrangler deploy --dry-run",
+    "test:domain": "tsx scripts/domain-check.mjs"
   },
   "dependencies": {
     "maplibre-gl": "6.11.2",
@@ -25,6 +26,7 @@
     "@types/react-dom": "^19.0.0",
     "typescript": "7.0.2",
     "vite": "8.3.1",
-    "wrangler": "^4.143.0"
+    "wrangler": "^4.143.0",
+    "tsx": "^4.20.6"
   }
 }
