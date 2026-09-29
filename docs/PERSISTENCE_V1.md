@@ -120,3 +120,19 @@ Workers remains the application runtime.
 When PostgreSQL wiring begins, use a Worker-compatible PostgreSQL connection path. The exact connection adapter is intentionally not committed in this step because database infrastructure has not been provisioned yet.
 
 This avoids turning an infrastructure placeholder into an accidental production dependency.
+
+
+## Concurrency
+
+Booking state changes use optimistic concurrency.
+
+Every Booking has a monotonically increasing `version`.
+
+A transition must update only when both are still true:
+
+- current state equals `expectedFrom`;
+- current version equals `expectedVersion`.
+
+The resulting `booking_event.version` is unique per booking.
+
+This prevents a supplier callback, an Ops confirmation and a customer cancellation from silently overwriting one another.
