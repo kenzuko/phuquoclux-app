@@ -1,14 +1,33 @@
 import { NavLink } from "react-router";
+import {
+  appendTripIntent,
+  mapUrl,
+  type TripIntent,
+} from "../domain/trip-intent";
 
-const items = [
-  { to: "/", label: "Khám phá", icon: "⌂", end: true },
-  { to: "/map", label: "Bản đồ", icon: "⌖" },
-  { to: "/bookings", label: "Đặt chỗ", icon: "▣" },
-  { to: "/?saved=1", label: "Đã lưu", icon: "♡" },
-  { to: "/?me=1", label: "Tôi", icon: "☺" },
-];
+type Item = {
+  to: string;
+  label: string;
+  icon: string;
+  end?: boolean;
+};
 
-export function BottomNav() {
+export function BottomNav({ intent }: { intent?: TripIntent }) {
+  const homeTo = intent
+    ? `/?${appendTripIntent(new URLSearchParams(), intent).toString()}`
+    : "/";
+  const mapTo = intent ? mapUrl(intent) : "/map";
+  const tripTo = intent
+    ? `/trip?${appendTripIntent(new URLSearchParams(), intent).toString()}`
+    : "/trip";
+
+  const items: Item[] = [
+    { to: homeTo, label: "Khám phá", icon: "⌂", end: true },
+    { to: mapTo, label: "Bản đồ", icon: "⌖" },
+    { to: tripTo, label: "Hành trình", icon: "≋" },
+    { to: "/bookings", label: "Đặt chỗ", icon: "▣" },
+  ];
+
   return (
     <nav className="bottom-nav" aria-label="Điều hướng chính">
       {items.map((item) => (
