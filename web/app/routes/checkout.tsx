@@ -150,7 +150,19 @@ export async function action({
     requestId: context.cloudflare.requestId,
   });
   const quote = reconcilePrototypeQuote(receipt, freshQuote);
-  assertQuoteBookable(quote);
+  try {
+    assertQuoteBookable(quote);
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "NOT_BOOKABLE";
+    if (
+      code === "QUOTE_EXPIRED" ||
+      code === "QUOTE_NOT_ACTIVE" ||
+      code === "NOT_BOOKABLE"
+    ) {
+      throw new Response("Booking conditions changed", { status: 409 });
+    }
+    throw error;
+  }
 
   const operationalFields = new Set(selection.offer.operationalFields);
   const name = readText(form, "name", { required: true, maxLength: 120 });
