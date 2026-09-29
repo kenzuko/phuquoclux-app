@@ -5,6 +5,7 @@ import {
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
   useLoaderData,
+  useNavigation,
 } from "react-router";
 import { Brand } from "../components/Brand";
 import { getProductBySlug, money, type ProductId } from "../domain/catalog";
@@ -207,6 +208,8 @@ export function meta() {
 }
 
 export default function CheckoutRoute() {
+  const navigation = useNavigation();
+  const submitting = navigation.state === "submitting";
   const {
     product,
     offer,
@@ -303,8 +306,13 @@ export default function CheckoutRoute() {
               </div>
             </section>
 
-            <button className="checkout-submit" type="submit">
-              Gửi yêu cầu đặt
+            <button
+              className="checkout-submit"
+              type="submit"
+              disabled={submitting}
+              aria-busy={submitting}
+            >
+              {submitting ? "Đang gửi yêu cầu…" : "Gửi yêu cầu đặt"}
             </button>
           </Form>
 
