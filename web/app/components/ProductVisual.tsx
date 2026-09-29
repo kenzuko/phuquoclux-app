@@ -48,7 +48,7 @@ export function ProductVisual({ product, mode = "card" }: Props) {
       </span>
       <span className="product-visual-location">{product.locationLabel}</span>
       <span className="product-visual-note">
-        Hình minh họa · ảnh thật sẽ được bổ sung
+        Hình minh họa
       </span>
     </div>
   );
