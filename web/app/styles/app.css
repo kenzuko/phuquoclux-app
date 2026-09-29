@@ -123,3 +123,8 @@
 .map-result-card .map-result-location{color:#8a5a18;margin-top:3px;font-size:7px;font-weight:800}
 
 .product-map-link{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;min-height:38px;padding:0 12px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--green-800);text-decoration:none;font-size:9px;font-weight:850}
+
+.navigation-progress{position:fixed;z-index:120;top:0;left:0;height:3px;width:42%;background:var(--green-700);border-radius:0 999px 999px 0;animation:navigation-progress 1.05s ease-in-out infinite}
+@keyframes navigation-progress{0%{transform:translateX(-100%)}55%{transform:translateX(120%)}100%{transform:translateX(260%)}}
+.checkout-submit:disabled{opacity:.68;cursor:wait}
+@media(prefers-reduced-motion:reduce){.navigation-progress{animation:none;width:100%}}
