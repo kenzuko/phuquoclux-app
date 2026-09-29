@@ -121,7 +121,7 @@ export default function HomeRoute() {
                 value={pax}
                 onChange={(event) => setPax(Number(event.target.value))}
               >
-                {Array.from({ length: 10 }, (_, index) => index + 1).map(
+                {Array.from({ length: 20 }, (_, index) => index + 1).map(
                   (value) => (
                     <option key={value} value={value}>
                       {value} khách
