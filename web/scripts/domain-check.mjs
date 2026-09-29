@@ -18,9 +18,12 @@ import { boundsForEntities } from "../app/domain/map-bounds.ts";
 import {
   fromPriceForProduct,
   getOffer,
+  maxPaxForProduct,
+  offerSupportsPax,
   priceCertaintyForProduct,
   offersForProduct,
 } from "../app/domain/offer.ts";
+import { priceOffer } from "../app/domain/pricing.ts";
 import {
   formatServiceDate,
   normalizeServiceDate,
@@ -182,6 +185,40 @@ async function run() {
     fromPriceForProduct("hon-thom-cable-car"),
     700_000,
     "ticket from-price must use the configured headline unit",
+  );
+
+  equal(
+    priceCertaintyForProduct("tour-three-islands-cano"),
+    "estimated",
+    "prototype headline pricing must remain explicitly estimated",
+  );
+
+  const sedan = getOffer(
+    "airport-private-transfer",
+    "airport-private-transfer:sedan",
+  );
+  ok(Boolean(sedan), "transfer sedan offer must exist");
+  equal(
+    maxPaxForProduct("airport-private-transfer"),
+    16,
+    "transfer max pax must come from the largest active vehicle",
+  );
+  ok(
+    !offerSupportsPax(sedan, 5),
+    "sedan must reject pax above its declared capacity",
+  );
+
+  let capacityCaught = false;
+  try {
+    priceOffer(sedan, 5);
+  } catch (error) {
+    capacityCaught =
+      error instanceof Error &&
+      error.message === "OFFER_CAPACITY_EXCEEDED";
+  }
+  ok(
+    capacityCaught,
+    "server pricing must reject an over-capacity vehicle offer",
   );
 
   const discoveryIntent = discover({ q: "cano", category: "all" });
