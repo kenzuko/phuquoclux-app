@@ -85,12 +85,19 @@ export async function action({
   });
   assertQuoteBookable(quote);
 
+  const offer = getOffer(type, quote.offerId);
+  if (!offer) {
+    throw new Response("Offer unavailable", { status: 503 });
+  }
+
+  const operationalFields = new Set(offer.operationalFields);
   const form = await request.formData();
   const requestId = String(form.get("requestId") ?? "").trim();
   const name = String(form.get("name") ?? "").trim();
   const phone = String(form.get("phone") ?? "").trim();
   const email = String(form.get("email") ?? "").trim();
   const hotelOrPickup = String(form.get("usage") ?? "").trim();
+  const flightNumber = String(form.get("flightNumber") ?? "").trim();
   const guestNote = String(form.get("note") ?? "").trim();
 
   if (!requestId || !name || !phone || !email) {
@@ -102,8 +109,15 @@ export async function action({
     quote,
     contact: { name, phone, email },
     operationalData: {
-      hotelOrPickup: hotelOrPickup || undefined,
-      guestNote: guestNote || undefined,
+      hotelOrPickup: operationalFields.has("hotel_or_pickup")
+        ? hotelOrPickup || undefined
+        : undefined,
+      flightNumber: operationalFields.has("flight_number")
+        ? flightNumber || undefined
+        : undefined,
+      guestNote: operationalFields.has("guest_note")
+        ? guestNote || undefined
+        : undefined,
     },
   });
 
@@ -177,14 +191,29 @@ export default function CheckoutRoute() {
               <p className="section-kicker">THÔNG TIN SỬ DỤNG</p>
               <h2>Thông tin vận hành</h2>
               <div className="form-grid">
-                <label className="full">
-                  <span>Khách sạn / điểm đến / ghi chú đón</span>
-                  <input name="usage" />
-                </label>
-                <label className="full">
-                  <span>Ghi chú</span>
-                  <textarea name="note" rows={4} />
-                </label>
+                {offer.operationalFields.includes("hotel_or_pickup") ? (
+                  <label className="full">
+                    <span>Khách sạn / điểm đến / ghi chú đón</span>
+                    <input name="usage" autoComplete="off" />
+                  </label>
+                ) : null}
+                {offer.operationalFields.includes("flight_number") ? (
+                  <label className="full">
+                    <span>Số chuyến bay</span>
+                    <input
+                      name="flightNumber"
+                      placeholder="Ví dụ: VN1825"
+                      autoCapitalize="characters"
+                      autoComplete="off"
+                    />
+                  </label>
+                ) : null}
+                {offer.operationalFields.includes("guest_note") ? (
+                  <label className="full">
+                    <span>Ghi chú</span>
+                    <textarea name="note" rows={4} />
+                  </label>
+                ) : null}
               </div>
             </section>
 
