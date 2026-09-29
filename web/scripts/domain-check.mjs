@@ -32,6 +32,10 @@ import {
   tripIntentFromUrl,
 } from "../app/domain/trip-intent.ts";
 import { buildTripProjection } from "../app/domain/trip.ts";
+import {
+  safeReturnTo,
+  withReturnTo,
+} from "../app/domain/navigation.ts";
 import { isBookingAccessActive } from "../app/domain/booking-access.ts";
 import { createPrototypeBookingRequest } from "../app/services/booking.server.ts";
 import { createPrototypeQuote } from "../app/services/quote.server.ts";
@@ -98,6 +102,24 @@ async function run() {
     mapUrl(intent),
     "/map?date=2026-10-02&pax=4",
     "map URL must carry trip intent",
+  );
+  equal(
+    safeReturnTo("/map?q=cano&date=2026-10-02&pax=4"),
+    "/map?q=cano&date=2026-10-02&pax=4",
+    "safe return path must preserve internal Map state",
+  );
+  equal(
+    safeReturnTo("https://evil.example/path", "/map"),
+    "/map",
+    "external return targets must be rejected",
+  );
+  equal(
+    withReturnTo(
+      "/product/tour-3-dao-cano?date=2026-10-02&pax=4",
+      "/map?q=cano&date=2026-10-02&pax=4",
+    ),
+    "/product/tour-3-dao-cano?date=2026-10-02&pax=4&returnTo=%2Fmap%3Fq%3Dcano%26date%3D2026-10-02%26pax%3D4",
+    "Product links must retain an encoded internal return target",
   );
   ok(
     isBookingAccessActive(
