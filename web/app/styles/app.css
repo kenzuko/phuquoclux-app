@@ -200,3 +200,53 @@
   text-align:center;
   pointer-events:none;
 }
+
+/* Mobile readability - avoid tiny travel-critical text */
+@media(max-width:980px){
+  .eyebrow,.section-kicker{font-size:11px}
+  .trip-controls small,.trip-field small{font-size:10px}
+  .trip-field input,.trip-field select{font-size:12px}
+  .filter-row button,.map-filter-row button{font-size:11px}
+  .service-card b{font-size:13px}
+  .service-card small{font-size:11px}
+  .product-body>p{font-size:10px}
+  .product-body>span{font-size:12px}
+  .product-foot small{font-size:10px}
+  .product-foot b{font-size:15px}
+  .product-foot a{font-size:11px}
+  .entity-sheet small,.full-map-entity-sheet small{font-size:9px}
+  .entity-sheet p,.full-map-entity-sheet p{font-size:11px}
+  .entity-sheet a,.full-map-entity-sheet a{font-size:11px}
+  .map-results-head small{font-size:9px}
+  .map-results-head>span{font-size:10px}
+  .map-result-card b{font-size:11px}
+  .map-result-card small{font-size:10px}
+  .map-result-card .map-result-location{font-size:9px}
+  .map-intent-control span{font-size:9px}
+  .map-intent-control input,.map-intent-control select{font-size:11px}
+  .fact-grid small{font-size:10px}
+  .fact-grid b{font-size:12px}
+  .policy-list b{font-size:12px}
+  .policy-list p{font-size:11px}
+  .booking-price small,.booking-price span{font-size:10px}
+  .booking-field>span{font-size:11px}
+  .option-list button{font-size:11px}
+  .booking-total small{font-size:10px}
+  .booking-cta,.checkout-submit{font-size:13px}
+  .microcopy{font-size:10px;line-height:1.45}
+  .form-grid span{font-size:11px}
+  .prototype-warning{font-size:11px}
+  .order-meta>div,.order-line{font-size:11px}
+  .support-note b{font-size:11px}
+  .support-note p{font-size:10px}
+  .booking-status-banner b{font-size:12px}
+  .booking-status-banner p{font-size:10px}
+  .booking-item-body p{font-size:11px}
+  .booking-type{font-size:9px}
+  .status-pill{font-size:9px}
+  .booking-tools b{font-size:11px}
+  .booking-tools small{font-size:10px}
+  .bottom-nav a b{font-size:10px}
+  .home-trust-grid b{font-size:11px}
+  .home-trust-grid p{font-size:10px}
+}
