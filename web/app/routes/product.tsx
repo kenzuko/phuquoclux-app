@@ -24,6 +24,7 @@ import {
 } from "../domain/pricing";
 import { normalizeServiceDate, todayInPhuQuoc } from "../domain/service-date";
 import { mapUrl, normalizePax } from "../domain/trip-intent";
+import { safeReturnTo } from "../domain/navigation";
 import { IslandMap } from "../components/IslandMap";
 
 export async function loader({ params, context, request }: LoaderFunctionArgs) {
@@ -49,6 +50,10 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   const initialServiceDate = normalizeServiceDate(
     url.searchParams.get("date") ?? undefined,
   );
+  const returnTo = safeReturnTo(
+    url.searchParams.get("returnTo"),
+    mapUrl({ date: initialServiceDate, pax: initialPax }),
+  );
 
   return {
     product,
@@ -58,6 +63,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
     initialServiceDate,
     initialPax,
     initialOfferId: initialOffer.id,
+    returnTo,
     initialUnitQuantities: unitQuantitiesFromSearch(
       initialOffer,
       url.searchParams,
@@ -103,6 +109,7 @@ export default function ProductRoute() {
     initialServiceDate,
     initialPax,
     initialOfferId,
+    returnTo,
     initialUnitQuantities,
   } = useLoaderData<typeof loader>();
   const [offerId, setOfferId] = useState(initialOfferId);
@@ -122,12 +129,14 @@ export default function ProductRoute() {
       date: serviceDate,
     });
     appendUnitQuantities(query, offer, unitQuantities);
+    query.set("returnTo", returnTo);
     return `/checkout/${product.slug}?${query}`;
   }, [
     offer,
     offerId,
     priced.pax,
     product.slug,
+    returnTo,
     serviceDate,
     unitQuantities,
   ]);
@@ -176,11 +185,8 @@ export default function ProductRoute() {
       </header>
 
       <main className="detail-main">
-        <Link
-          className="back-link"
-          to={mapUrl({ date: serviceDate, pax: priced.pax })}
-        >
-          ← Quay lại bản đồ
+        <Link className="back-link" to={returnTo}>
+          ← Quay lại khám phá
         </Link>
 
         <section className="product-hero">
