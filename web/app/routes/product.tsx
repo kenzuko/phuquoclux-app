@@ -132,8 +132,8 @@ export default function ProductRoute() {
               <p className="section-kicker">TÓM TẮT</p>
               <h2>Biết rõ trước khi đặt</h2>
               <p>
-                PhuQuocLux tách thông tin địa điểm khỏi điều kiện bán.
-                Giá, lựa chọn, ngày sử dụng và chính sách thuộc đúng Offer.
+                Chọn ngày, số khách và phương án phù hợp. Giá hiển thị sẽ thay đổi
+                theo lựa chọn của bạn và được kiểm tra lại trước khi gửi yêu cầu.
               </p>
               <div className="fact-grid">
                 <div>
@@ -170,10 +170,10 @@ export default function ProductRoute() {
                 </div>
               ) : (
                 <div className="map-verification-note">
-                  <b>Chưa gắn pin sản phẩm</b>
+                  <b>Chưa hiển thị vị trí chính xác</b>
                   <p>
-                    Vị trí commerce chỉ được đưa lên Map khi tọa độ/điểm sử dụng
-                    đã được xác minh. Không dùng pin gần đúng để lấp chỗ trống.
+                    PhuQuocLux chỉ hiển thị pin khi vị trí đủ tin cậy.
+                    Những điểm chưa xác minh sẽ không được đặt gần đúng trên bản đồ.
                   </p>
                 </div>
               )}
@@ -184,21 +184,24 @@ export default function ProductRoute() {
               <h2>Thông tin cần biết</h2>
               <div className="policy-list">
                 <div>
-                  <b>Availability</b>
+                  <b>Tình trạng chỗ</b>
                   <p>
-                    Không ghi “còn chỗ” cho tới khi Availability service xác nhận.
+                    Chỉ báo còn chỗ khi có dữ liệu xác nhận. Nếu chưa chắc chắn,
+                    hệ thống sẽ ghi rõ là cần kiểm tra lại.
                   </p>
                 </div>
                 <div>
                   <b>Đổi / huỷ</b>
                   <p>
-                    Policy đi theo đúng Offer, không dùng luật chung cho mọi sản phẩm.
+                    Điều kiện đổi hoặc hủy phụ thuộc vào đúng lựa chọn bạn đặt
+                    và sẽ được hiển thị trước khi thanh toán.
                   </p>
                 </div>
                 <div>
-                  <b>Vận hành</b>
+                  <b>Sau khi đặt</b>
                   <p>
-                    Thông tin đón, voucher và hỗ trợ được đưa về My Bookings sau khi xác nhận.
+                    Điểm đón, voucher và hướng dẫn sử dụng sẽ nằm trong mục
+                    Đặt chỗ của tôi sau khi được xác nhận.
                   </p>
                 </div>
               </div>
@@ -258,7 +261,7 @@ export default function ProductRoute() {
             </div>
 
             <div className="booking-total">
-              <small>Ước tính theo Offer</small>
+              <small>Tạm tính</small>
               <strong>{money(total)}</strong>
             </div>
 
@@ -266,7 +269,7 @@ export default function ProductRoute() {
               Tiếp tục đặt
             </Link>
             <p className="microcopy">
-              Giá cuối cùng được đóng thành Quote ở checkout. Chưa xác nhận availability.
+              Giá và tình trạng chỗ sẽ được kiểm tra lại ở bước tiếp theo.
             </p>
           </aside>
         </section>
