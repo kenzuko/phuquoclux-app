@@ -1,6 +1,8 @@
 export type ProductType = "tour" | "ticket" | "transfer";
 export type MapCategory = ProductType | "place";
 
+export type MapVerification = "verified" | "reference" | "demo";
+
 export type MapEntity = {
   id: string;
   name: string;
@@ -12,6 +14,9 @@ export type MapEntity = {
   kicker: string;
   copy: string;
   href?: string;
+  verification: MapVerification;
+  priority: number;
+  minZoom: number;
 };
 
 export type Product = {
@@ -39,6 +44,9 @@ export const mapEntities: MapEntity[] = [
     icon: "⌂",
     kicker: "KHU VỰC",
     copy: "Ăn uống, dịch vụ hằng ngày và các điểm quanh trung tâm.",
+    verification: "verified",
+    priority: 95,
+    minZoom: 8.8,
   },
   {
     id: "an-thoi",
@@ -51,6 +59,9 @@ export const mapEntities: MapEntity[] = [
     kicker: "TOUR · NAM ĐẢO",
     copy: "Điểm xuất phát chính cho trải nghiệm đảo và cano phía Nam.",
     href: "/product/tour",
+    verification: "verified",
+    priority: 100,
+    minZoom: 8.8,
   },
   {
     id: "ganh-dau",
@@ -62,18 +73,24 @@ export const mapEntities: MapEntity[] = [
     icon: "⌖",
     kicker: "BẮC ĐẢO",
     copy: "Khu vực tham quan phía Bắc. Chỉ gắn sản phẩm khi vị trí và offer đã được xác minh.",
+    verification: "reference",
+    priority: 72,
+    minZoom: 9.2,
   },
   {
-    id: "airport-demo",
+    id: "pqc-airport-reference",
     name: "Sân bay PQC",
-    subtitle: "Transfer · demo UI",
+    subtitle: "Điểm tham chiếu sân bay",
     lat: 10.1698,
     lng: 103.9931,
     category: "transfer",
     icon: "🚗",
     kicker: "TRANSFER",
-    copy: "Đặt xe riêng từ sân bay đến khách sạn với thông tin đón rõ ràng.",
+    copy: "Vị trí tham chiếu của sân bay, không phải điểm đón cụ thể cho từng booking.",
     href: "/product/transfer",
+    verification: "reference",
+    priority: 98,
+    minZoom: 8.8,
   },
 ];
 
@@ -136,7 +153,7 @@ export const products: Record<ProductType, Product> = {
       "pqc",
       "taxi sân bay",
     ],
-    mapEntityIds: ["airport-demo"],
+    mapEntityIds: ["pqc-airport-reference"],
   },
 };
 
@@ -146,4 +163,10 @@ export function isProductType(value: string | undefined): value is ProductType {
 
 export function money(value: number) {
   return new Intl.NumberFormat("vi-VN").format(Math.round(value)) + "đ";
+}
+
+export function mapVerificationLabel(verification: MapVerification) {
+  if (verification === "verified") return "Đã xác minh vị trí";
+  if (verification === "reference") return "Vị trí tham chiếu";
+  return "Dữ liệu demo";
 }
