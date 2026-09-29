@@ -10,7 +10,7 @@ import { BottomNav } from "../components/BottomNav";
 import { Brand } from "../components/Brand";
 import { IslandMap } from "../components/IslandMap";
 import type { MapCategory, MapEntity } from "../domain/catalog";
-import { money } from "../domain/catalog";
+import { mapVerificationLabel, money } from "../domain/catalog";
 import { normalizeServiceDate } from "../domain/service-date";
 import {
   discover,
@@ -215,6 +215,9 @@ export default function MapRoute() {
               ×
             </button>
             <small>{selected.kicker}</small>
+            <span className={`verification-badge verification-badge--${selected.verification}`}>
+              {mapVerificationLabel(selected.verification)}
+            </span>
             <strong>{selected.name}</strong>
             <p>{selected.copy}</p>
             {selected.href ? (
