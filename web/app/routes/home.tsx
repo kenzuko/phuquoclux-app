@@ -160,6 +160,7 @@ export default function HomeRoute() {
                 styleUrl={mapStyleUrl}
                 category={category}
                 onSelect={onSelect}
+                selectedEntityId={selected?.id}
                 interaction="embedded"
               />
               {selected ? (
@@ -279,6 +280,7 @@ export default function HomeRoute() {
                 styleUrl={mapStyleUrl}
                 category={category}
                 onSelect={onSelect}
+                selectedEntityId={selected?.id}
                 onViewportChange={onDesktopViewportChange}
                 interaction="full"
               />
