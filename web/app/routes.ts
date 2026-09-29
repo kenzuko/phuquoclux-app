@@ -9,6 +9,7 @@ export default [
   route("map", "routes/map.tsx"),
   route("product/:slug", "routes/product.tsx"),
   route("checkout/:slug", "routes/checkout.tsx"),
+  route("trip", "routes/trip.tsx"),
   route("bookings", "routes/bookings.tsx"),
   route("api/health", "routes/api.health.ts"),
   route("api/discovery", "routes/api.discovery.ts"),
