@@ -12,6 +12,7 @@ import {
   products,
 } from "../domain/catalog";
 import { getOffer, offersForProduct } from "../domain/offer";
+import { normalizeServiceDate, todayInPhuQuoc } from "../domain/service-date";
 import { IslandMap } from "../components/IslandMap";
 
 export async function loader({ params, context, request }: LoaderFunctionArgs) {
@@ -37,12 +38,10 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
     throw new Response("No offer configured", { status: 503 });
   }
 
-  const tomorrow = new Date();
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-  const defaultDate = tomorrow.toISOString().slice(0, 10);
-  const requestedDate = url.searchParams.get("date");
-  const initialServiceDate =
-    requestedDate && requestedDate >= defaultDate ? requestedDate : defaultDate;
+  const defaultDate = todayInPhuQuoc();
+  const initialServiceDate = normalizeServiceDate(
+    url.searchParams.get("date") ?? undefined,
+  );
 
   return {
     product,
