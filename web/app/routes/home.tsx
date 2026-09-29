@@ -9,6 +9,7 @@ import {
   products,
   type MapCategory,
   type MapEntity,
+  mapVerificationLabel,
 } from "../domain/catalog";
 import type { BoundingBox } from "../domain/discovery";
 import { todayInPhuQuoc } from "../domain/service-date";
@@ -222,6 +223,9 @@ function MapEntitySheet({ entity, onClose }: { entity: MapEntity; onClose: () =>
     <div className="entity-sheet">
       <button className="entity-close" type="button" onClick={onClose}>×</button>
       <small>{entity.kicker}</small>
+      <span className={`verification-badge verification-badge--${entity.verification}`}>
+        {mapVerificationLabel(entity.verification)}
+      </span>
       <strong>{entity.name}</strong>
       <p>{entity.copy}</p>
       {entity.href ? <Link to={entity.href}>Xem lựa chọn</Link> : null}
