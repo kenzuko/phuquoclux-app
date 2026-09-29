@@ -44,13 +44,12 @@ export default function HomeRoute() {
       </header>
 
       <main className="home-main">
-        <section className="hero-copy">
-          <p className="eyebrow">Khám phá Phú Quốc theo cách của bạn</p>
-          <h1>
-            Nhìn trên bản đồ.
-            <br />
-            <span>Tìm đúng thứ cần.</span>
-          </h1>
+        <section className="home-context">
+          <div>
+            <p className="eyebrow">ĐIỂM ĐẾN</p>
+            <h1>Phú Quốc</h1>
+          </div>
+          <p>Khám phá trên bản đồ · Tìm và đặt dịch vụ nhanh</p>
         </section>
 
         <Form className="search-panel" method="get" action="/map">
