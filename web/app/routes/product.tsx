@@ -66,6 +66,24 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   };
 }
 
+export function meta({
+  data,
+}: {
+  data?: Awaited<ReturnType<typeof loader>>;
+}) {
+  if (!data) {
+    return [{ title: "Dịch vụ Phú Quốc | PhuQuocLux" }];
+  }
+
+  return [
+    { title: `${data.product.name} | PhuQuocLux` },
+    { name: "description", content: data.product.lead },
+    { property: "og:title", content: data.product.name },
+    { property: "og:description", content: data.product.lead },
+    { property: "og:type", content: "website" },
+  ];
+}
+
 export default function ProductRoute() {
   const {
     product,
