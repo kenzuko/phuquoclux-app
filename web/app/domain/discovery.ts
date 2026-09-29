@@ -32,6 +32,7 @@ export type DiscoveryProductSummary = {
   fromPrice: number | null;
   unit: string;
   mapEntityIds: string[];
+  spatialMatch: "linked" | "unlocated";
 };
 
 export type DiscoveryResult = {
@@ -153,9 +154,13 @@ export function discover(query: DiscoveryQuery): DiscoveryResult {
   );
 
   const products = rankedProducts
-    .filter(({ product }) => {
+    .filter(({ product, score }) => {
       if (!query.bounds) return true;
-      if (!product.mapEntityIds.length) return false;
+
+      if (!product.mapEntityIds.length) {
+        return Boolean(search && score > 0);
+      }
+
       return product.mapEntityIds.some((entityId) =>
         visibleEntityIds.has(entityId),
       );
@@ -168,6 +173,7 @@ export function discover(query: DiscoveryQuery): DiscoveryResult {
       fromPrice: fromPriceForProduct(product.id),
       unit: product.unit,
       mapEntityIds: product.mapEntityIds,
+      spatialMatch: product.mapEntityIds.length ? "linked" : "unlocated",
     }));
 
   return {
