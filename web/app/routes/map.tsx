@@ -78,6 +78,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     date,
     pax,
     hasAreaSearch: Boolean(bounds),
+    initialBounds: bounds ?? null,
     mapStyleUrl:
       context.cloudflare.env.MAP_STYLE_URL ??
       "https://demotiles.maplibre.org/style.json",
@@ -85,8 +86,16 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 }
 
 export default function MapRoute() {
-  const { result, category, q, date, pax, hasAreaSearch, mapStyleUrl } =
-    useLoaderData<typeof loader>();
+  const {
+    result,
+    category,
+    q,
+    date,
+    pax,
+    hasAreaSearch,
+    initialBounds,
+    mapStyleUrl,
+  } = useLoaderData<typeof loader>();
   const [selected, setSelected] = useState<MapEntity | null>(null);
   const [viewport, setViewport] = useState<BoundingBox | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -182,6 +191,7 @@ export default function MapRoute() {
           category="all"
           onSelect={onSelect}
           onViewportChange={onViewportChange}
+          initialBounds={initialBounds ?? undefined}
           interaction="full"
         />
 
