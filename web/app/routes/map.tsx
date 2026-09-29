@@ -131,6 +131,10 @@ export default function MapRoute() {
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const [viewport, setViewport] = useState<BoundingBox | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const entityResults =
+    category === "place"
+      ? result.entities
+      : result.entities.slice(0, 6);
   const returnTo = searchParams.toString()
     ? `/map?${searchParams.toString()}`
     : "/map";
@@ -324,46 +328,87 @@ export default function MapRoute() {
             </div>
 
             <div className="map-result-cards">
-              {result.products.map((product) => (
-                <Link
-                  key={product.productId}
-                  className="map-result-card"
-                  to={withReturnTo(
-                    productSlugUrl(product.slug, intent),
-                    returnTo,
-                  )}
-                >
-                  <span
-                    className={`map-result-icon map-result-icon--${product.type}`}
-                  >
-                    {product.type === "tour"
-                      ? "🛥"
-                      : product.type === "ticket"
-                        ? "🎟"
-                        : "🚗"}
+              {result.products.length ? (
+                <div className="map-result-group">
+                  <span className="map-result-group-label">DỊCH VỤ</span>
+                  {result.products.map((product) => (
+                    <Link
+                      key={product.productId}
+                      className="map-result-card"
+                      to={withReturnTo(
+                        productSlugUrl(product.slug, intent),
+                        returnTo,
+                      )}
+                    >
+                      <span
+                        className={`map-result-icon map-result-icon--${product.type}`}
+                      >
+                        {product.type === "tour"
+                          ? "🛥"
+                          : product.type === "ticket"
+                            ? "🎟"
+                            : "🚗"}
+                      </span>
+                      <div>
+                        <b>{product.name}</b>
+                        <span className="map-result-place">
+                          {product.locationLabel}
+                        </span>
+                        <small>
+                          {product.fromPrice === null
+                            ? "Liên hệ"
+                            : `${product.priceState === "estimated" ? "Tham khảo " : ""}${money(product.fromPrice)} ${product.unit}`}
+                        </small>
+                        {product.spatialMatch === "unlocated" ? (
+                          <small className="map-result-location">
+                            Chưa gắn vị trí chính xác
+                          </small>
+                        ) : null}
+                      </div>
+                      <i>→</i>
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+
+              {entityResults.length ? (
+                <div className="map-result-group">
+                  <span className="map-result-group-label">
+                    ĐIỂM TRÊN BẢN ĐỒ
                   </span>
-                  <div>
-                    <b>{product.name}</b>
-                    <span className="map-result-place">
-                      {product.locationLabel}
-                    </span>
-                    <small>
-                      {product.fromPrice === null
-                        ? "Liên hệ"
-                        : `${product.priceState === "estimated" ? "Tham khảo " : ""}${money(product.fromPrice)} ${product.unit}`}
-                    </small>
-                    {product.spatialMatch === "unlocated" ? (
-                      <small className="map-result-location">
-                        Chưa gắn vị trí chính xác
-                      </small>
-                    ) : null}
-                  </div>
-                  <i>→</i>
-                </Link>
-              ))}
-              {!result.products.length ? (
+                  {entityResults.map((entity) => (
+                    <button
+                      key={entity.id}
+                      className="map-entity-result"
+                      type="button"
+                      onClick={() => {
+                        setSelected(entity);
+                        setSheetExpanded(false);
+                      }}
+                    >
+                      <span
+                        className={`map-result-icon map-result-icon--${entity.category}`}
+                      >
+                        {entity.icon}
+                      </span>
+                      <span>
+                        <b>{entity.name}</b>
+                        <small>{entity.subtitle}</small>
+                        <em
+                          className={`map-result-verification map-result-verification--${entity.verification}`}
+                        >
+                          {mapVerificationLabel(entity.verification)}
+                        </em>
+                      </span>
+                      <i>⌖</i>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+
+              {!result.products.length && !result.entities.length ? (
                 <div className="map-empty">
-                  <b>Chưa có dịch vụ phù hợp</b>
+                  <b>Chưa có kết quả phù hợp</b>
                   <span>
                     Thử đổi bộ lọc, từ khóa hoặc quay lại tìm trên toàn đảo.
                   </span>
