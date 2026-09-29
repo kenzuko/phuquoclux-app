@@ -22,21 +22,53 @@ create table if not exists offers (
     check (status in ('active', 'paused', 'retired')),
   availability_mode text not null
     check (availability_mode in ('request', 'live', 'scheduled')),
-  price_amount bigint not null check (price_amount >= 0),
+  pricing_mode text not null
+    check (pricing_mode in ('flat', 'unit_mix')),
+  price_amount bigint
+    check (price_amount is null or price_amount > 0),
   price_currency text not null default 'VND'
     check (price_currency in ('VND')),
-  price_basis text not null
-    check (price_basis in ('per_person', 'per_booking')),
+  price_basis text
+    check (price_basis is null or price_basis in ('per_person', 'per_booking')),
   price_source text not null
     check (price_source in ('prototype', 'jotrip', 'supplier', 'provider_api')),
+  price_state text not null
+    check (price_state in ('estimated', 'final')),
+  headline_unit_code text,
   policy jsonb not null default '{}'::jsonb,
   operational_fields jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  check (
+    (
+      pricing_mode = 'flat'
+      and price_amount is not null
+      and price_basis is not null
+      and headline_unit_code is null
+    )
+    or
+    (
+      pricing_mode = 'unit_mix'
+      and price_amount is null
+      and price_basis is null
+    )
+  )
 );
 
 create index if not exists offers_product_id_idx
   on offers(product_id);
+
+create table if not exists offer_unit_rates (
+  offer_id text not null references offers(id) on delete cascade,
+  code text not null,
+  label text not null,
+  amount bigint not null check (amount > 0),
+  sort_order integer not null default 0,
+  primary key (offer_id, code)
+);
+
+create index if not exists offer_unit_rates_offer_idx
+  on offer_unit_rates(offer_id, sort_order, code);
 
 create table if not exists quotes (
   id uuid primary key,
@@ -241,3 +273,6 @@ comment on column bookings.version is
 
 comment on table booking_access_tokens is
   'Guest manage-booking capability. Only a hash of the opaque token is stored; raw access tokens are delivered out-of-band and never persisted.';
+
+comment on table offer_unit_rates is
+  'Per-unit pricing for unit_mix Offers, such as adult/child ticket quantities. Flat Offers keep price_amount/price_basis on offers.';
