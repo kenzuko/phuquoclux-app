@@ -28,12 +28,19 @@ export function appendTripIntent(
   return params;
 }
 
+export function productSlugUrl(
+  slug: string,
+  intent: TripIntent,
+) {
+  const params = appendTripIntent(new URLSearchParams(), intent);
+  return `/product/${slug}?${params.toString()}`;
+}
+
 export function productUrl(
   product: Product,
   intent: TripIntent,
 ) {
-  const params = appendTripIntent(new URLSearchParams(), intent);
-  return `/product/${product.slug}?${params.toString()}`;
+  return productSlugUrl(product.slug, intent);
 }
 
 export function mapUrl(
