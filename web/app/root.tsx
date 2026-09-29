@@ -13,9 +13,20 @@ import {
 import "./cloudflare-context";
 import "./styles/app.css";
 
+export function links() {
+  return [
+    {
+      rel: "icon",
+      type: "image/webp",
+      href: "/assets/phuquoclux-mark.webp",
+    },
+  ];
+}
+
 export function meta() {
   return [
     { title: "PhuQuocLux | Phú Quốc" },
+    { property: "og:site_name", content: "PhuQuocLux" },
     {
       name: "description",
       content:
