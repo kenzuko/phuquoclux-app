@@ -42,6 +42,7 @@ export type Product = {
   name: string;
   kicker: string;
   lead: string;
+  pricingNote?: string;
   media: ProductMedia;
   unit: string;
   duration?: string;
@@ -169,6 +170,8 @@ export const products: Record<ProductId, Product> = {
     name: "Sân bay → khách sạn",
     kicker: "PQC · PRIVATE TRANSFER",
     lead: "Đón theo chuyến bay · Không ghép khách · Hỗ trợ hành lý",
+    pricingNote:
+      "Giá xe đang hiển thị là tham khảo và có thể thay đổi theo điểm đến, thời gian đón và điều kiện vận hành.",
     media: {
       kind: "placeholder",
       alt: "Xe riêng đón sân bay Phú Quốc",
