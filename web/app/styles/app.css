@@ -45,3 +45,7 @@
 .quote-meta{display:flex;justify-content:space-between;gap:10px;margin-top:9px;color:var(--muted);font-size:8px;line-height:1.4}
 .booking-status-banner--request{background:var(--orange-soft);border-color:#f0d7ac}
 .booking-status-banner--request>span{background:var(--orange);color:#5f410f}
+
+.map-verification-note{margin-top:15px;border:1px dashed #c7d1c4;background:var(--surface);border-radius:16px;padding:16px}
+.map-verification-note b{font-size:11px}
+.map-verification-note p{margin:5px 0 0;color:var(--muted);font-size:10px;line-height:1.5}
