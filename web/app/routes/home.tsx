@@ -20,12 +20,14 @@ import { fromPriceForProduct } from "../domain/offer";
 import {
   mapUrl,
   productUrl,
+  tripIntentFromUrl,
   type TripIntent,
 } from "../domain/trip-intent";
 
-export async function loader({ context }: LoaderFunctionArgs) {
+export async function loader({ context, request }: LoaderFunctionArgs) {
   return {
     today: todayInPhuQuoc(),
+    initialIntent: tripIntentFromUrl(new URL(request.url)),
     mapStyleUrl:
       context.cloudflare.env.MAP_STYLE_URL ??
       "https://demotiles.maplibre.org/style.json",
@@ -41,10 +43,10 @@ const filters: Array<{ id: "all" | MapCategory; label: string }> = [
 ];
 
 export default function HomeRoute() {
-  const { mapStyleUrl, today } = useLoaderData<typeof loader>();
+  const { mapStyleUrl, today, initialIntent } = useLoaderData<typeof loader>();
   const [category, setCategory] = useState<"all" | MapCategory>("all");
-  const [serviceDate, setServiceDate] = useState(today);
-  const [pax, setPax] = useState(2);
+  const [serviceDate, setServiceDate] = useState(initialIntent.date);
+  const [pax, setPax] = useState(initialIntent.pax);
   const [selected, setSelected] = useState<MapEntity | null>(null);
   const [desktopViewport, setDesktopViewport] = useState<BoundingBox | null>(null);
   const onSelect = useCallback((entity: MapEntity) => setSelected(entity), []);
@@ -263,7 +265,7 @@ export default function HomeRoute() {
           </aside>
         </section>
       </main>
-      <BottomNav />
+      <BottomNav intent={intent} />
     </div>
   );
 }
