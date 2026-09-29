@@ -5,7 +5,11 @@ import {
   createBookingTransitionEvent,
 } from "../app/domain/commerce.ts";
 import { discover } from "../app/domain/discovery.ts";
-import { getOffer, offersForProduct } from "../app/domain/offer.ts";
+import {
+  fromPriceForProduct,
+  getOffer,
+  offersForProduct,
+} from "../app/domain/offer.ts";
 import {
   normalizeServiceDate,
   todayInPhuQuoc,
@@ -59,6 +63,11 @@ async function run() {
     getOffer("tour", "tour:private")?.price.basis,
     "per_booking",
     "private tour must price per booking",
+  );
+  equal(
+    fromPriceForProduct("tour"),
+    850_000,
+    "product from-price must be derived from active offers",
   );
 
   const intent = discover({ q: "cano", category: "all" });
