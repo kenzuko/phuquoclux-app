@@ -83,3 +83,6 @@
 
 .map-filter-row .area-reset{border-style:dashed;color:var(--green-700)}
 .search-area-cta:disabled{opacity:.55;cursor:wait}
+
+.language-indicator{cursor:default;user-select:none}
+.booking-actions--demo span{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 9px;font-size:8px;font-weight:800;color:var(--muted)}
