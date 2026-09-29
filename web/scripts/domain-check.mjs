@@ -208,6 +208,11 @@ async function run() {
     "sedan must reject pax above its declared capacity",
   );
 
+  ok(
+    sedan.requiredOperationalFields?.includes("hotel_or_pickup"),
+    "transfer must require destination / hotel before request submission",
+  );
+
   let capacityCaught = false;
   try {
     priceOffer(sedan, 5);
