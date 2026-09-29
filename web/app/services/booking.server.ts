@@ -40,6 +40,7 @@ export function createPrototypeBookingRequest(
     offerId: input.quote.offerId,
     quoteId: input.quote.id,
     state,
+    version: 1,
     paymentStatus: "unpaid",
     serviceDate: input.quote.serviceDate,
     pax: input.quote.pax,
