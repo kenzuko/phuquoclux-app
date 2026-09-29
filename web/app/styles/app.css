@@ -119,3 +119,5 @@
 
 .trip-empty-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
 .trip-empty-actions .secondary{background:#fff;color:var(--green-800);border:1px solid var(--line)}
+
+.map-result-card .map-result-location{color:#8a5a18;margin-top:3px;font-size:7px;font-weight:800}
