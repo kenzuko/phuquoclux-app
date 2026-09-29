@@ -21,6 +21,29 @@ export type OperationalField =
   | "flight_number"
   | "guest_note";
 
+export type FlatPricing = {
+  mode: "flat";
+  amount: number;
+  currency: Currency;
+  basis: PriceBasis;
+  source: OfferPriceSource;
+};
+
+export type UnitRate = {
+  code: string;
+  label: string;
+  amount: number;
+};
+
+export type UnitMixPricing = {
+  mode: "unit_mix";
+  currency: Currency;
+  source: OfferPriceSource;
+  units: UnitRate[];
+};
+
+export type OfferPricing = FlatPricing | UnitMixPricing;
+
 export type Offer = {
   id: string;
   productId: ProductId;
@@ -28,12 +51,7 @@ export type Offer = {
   status: OfferStatus;
   providerId: string;
   availabilityMode: AvailabilityMode;
-  price: {
-    amount: number;
-    currency: Currency;
-    basis: PriceBasis;
-    source: OfferPriceSource;
-  };
+  pricing: OfferPricing;
   policy: {
     cancellation: "provider_defined" | "non_refundable" | "flexible";
     confirmation: "instant" | "request";
@@ -49,7 +67,8 @@ const offers: Offer[] = [
     status: "active",
     providerId: "jotrip-manual-request",
     availabilityMode: "request",
-    price: {
+    pricing: {
+      mode: "flat",
       amount: 850000,
       currency: "VND",
       basis: "per_person",
@@ -68,7 +87,8 @@ const offers: Offer[] = [
     status: "active",
     providerId: "jotrip-manual-request",
     availabilityMode: "request",
-    price: {
+    pricing: {
+      mode: "flat",
       amount: 4420000,
       currency: "VND",
       basis: "per_booking",
@@ -81,36 +101,20 @@ const offers: Offer[] = [
     operationalFields: ["hotel_or_pickup", "guest_note"],
   },
   {
-    id: "hon-thom-cable-car:adult",
+    id: "hon-thom-cable-car:standard",
     productId: "hon-thom-cable-car",
-    label: "Người lớn",
+    label: "Vé cáp treo",
     status: "active",
     providerId: "jotrip-manual-request",
     availabilityMode: "request",
-    price: {
-      amount: 700000,
+    pricing: {
+      mode: "unit_mix",
       currency: "VND",
-      basis: "per_person",
       source: "prototype",
-    },
-    policy: {
-      cancellation: "provider_defined",
-      confirmation: "request",
-    },
-    operationalFields: ["guest_note"],
-  },
-  {
-    id: "hon-thom-cable-car:child",
-    productId: "hon-thom-cable-car",
-    label: "Trẻ em",
-    status: "active",
-    providerId: "jotrip-manual-request",
-    availabilityMode: "request",
-    price: {
-      amount: 504000,
-      currency: "VND",
-      basis: "per_person",
-      source: "prototype",
+      units: [
+        { code: "adult", label: "Người lớn", amount: 700000 },
+        { code: "child", label: "Trẻ em", amount: 504000 },
+      ],
     },
     policy: {
       cancellation: "provider_defined",
@@ -125,7 +129,8 @@ const offers: Offer[] = [
     status: "active",
     providerId: "jotrip-manual-request",
     availabilityMode: "request",
-    price: {
+    pricing: {
+      mode: "flat",
       amount: 250000,
       currency: "VND",
       basis: "per_booking",
@@ -144,7 +149,8 @@ const offers: Offer[] = [
     status: "active",
     providerId: "jotrip-manual-request",
     availabilityMode: "request",
-    price: {
+    pricing: {
+      mode: "flat",
       amount: 362500,
       currency: "VND",
       basis: "per_booking",
@@ -163,7 +169,8 @@ const offers: Offer[] = [
     status: "active",
     providerId: "jotrip-manual-request",
     availabilityMode: "request",
-    price: {
+    pricing: {
+      mode: "flat",
       amount: 550000,
       currency: "VND",
       basis: "per_booking",
@@ -193,12 +200,23 @@ export function getOffer(productId: ProductId, offerId?: string) {
   );
 }
 
+export function fromPriceForOffer(offer: Offer) {
+  if (offer.pricing.mode === "flat") {
+    return offer.pricing.amount;
+  }
+  if (!offer.pricing.units.length) return null;
+  return offer.pricing.units.reduce(
+    (lowest, unit) => Math.min(lowest, unit.amount),
+    offer.pricing.units[0].amount,
+  );
+}
+
 export function fromPriceForProduct(productId: ProductId) {
   const active = offersForProduct(productId);
-  if (!active.length) return null;
+  const prices = active
+    .map(fromPriceForOffer)
+    .filter((value): value is number => value !== null);
 
-  return active.reduce(
-    (lowest, offer) => Math.min(lowest, offer.price.amount),
-    active[0].price.amount,
-  );
+  if (!prices.length) return null;
+  return Math.min(...prices);
 }

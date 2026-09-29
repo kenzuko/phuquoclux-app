@@ -15,6 +15,13 @@ import {
   getOffer,
   offersForProduct,
 } from "../domain/offer";
+import {
+  appendUnitQuantities,
+  defaultUnitQuantities,
+  priceOffer,
+  unitQuantitiesFromSearch,
+  type UnitQuantities,
+} from "../domain/pricing";
 import { normalizeServiceDate, todayInPhuQuoc } from "../domain/service-date";
 import { IslandMap } from "../components/IslandMap";
 
@@ -53,6 +60,11 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
     initialServiceDate,
     initialPax,
     initialOfferId: initialOffer.id,
+    initialUnitQuantities: unitQuantitiesFromSearch(
+      initialOffer,
+      url.searchParams,
+      initialPax,
+    ),
     entities: mapEntities.filter(
       (entity) =>
         product.mapEntityIds.includes(entity.id) &&
@@ -93,24 +105,62 @@ export default function ProductRoute() {
     initialServiceDate,
     initialPax,
     initialOfferId,
+    initialUnitQuantities,
   } = useLoaderData<typeof loader>();
   const [offerId, setOfferId] = useState(initialOfferId);
   const [pax, setPax] = useState(initialPax);
   const [serviceDate, setServiceDate] = useState(initialServiceDate);
+  const [unitQuantities, setUnitQuantities] =
+    useState<UnitQuantities>(initialUnitQuantities);
 
   const offer =
     offers.find((item) => item.id === offerId) ?? offers[0];
-  const quantity = offer.price.basis === "per_person" ? pax : 1;
-  const total = offer.price.amount * quantity;
+  const priced = priceOffer(offer, pax, unitQuantities);
 
   const checkoutUrl = useMemo(() => {
     const query = new URLSearchParams({
-      pax: String(pax),
+      pax: String(priced.pax),
       offer: offerId,
       date: serviceDate,
     });
+    appendUnitQuantities(query, offer, unitQuantities);
     return `/checkout/${product.slug}?${query}`;
-  }, [offerId, pax, product.slug, serviceDate]);
+  }, [
+    offer,
+    offerId,
+    priced.pax,
+    product.slug,
+    serviceDate,
+    unitQuantities,
+  ]);
+
+  function chooseOffer(nextOfferId: string) {
+    const next =
+      offers.find((item) => item.id === nextOfferId) ?? offers[0];
+    setOfferId(next.id);
+    setUnitQuantities(
+      next.pricing.mode === "unit_mix"
+        ? defaultUnitQuantities(next, pax)
+        : {},
+    );
+  }
+
+  function changeUnit(code: string, delta: number) {
+    setUnitQuantities((current) => {
+      const nextValue = Math.max(
+        0,
+        Math.min(20, (current[code] ?? 0) + delta),
+      );
+      const next = { ...current, [code]: nextValue };
+      const total = Object.values(next).reduce(
+        (sum, value) => sum + value,
+        0,
+      );
+
+      if (total < 1 || total > 20) return current;
+      return next;
+    });
+  }
 
   return (
     <div>
@@ -241,44 +291,79 @@ export default function ProductRoute() {
               />
             </label>
 
-            <div className="booking-field">
-              <span>Lựa chọn</span>
-              <div className="option-list">
-                {offers.map((item) => (
-                  <button
-                    type="button"
-                    key={item.id}
-                    className={offerId === item.id ? "is-selected" : ""}
-                    onClick={() => setOfferId(item.id)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+            {offers.length > 1 ? (
+              <div className="booking-field">
+                <span>Lựa chọn</span>
+                <div className="option-list">
+                  {offers.map((item) => (
+                    <button
+                      type="button"
+                      key={item.id}
+                      className={offerId === item.id ? "is-selected" : ""}
+                      onClick={() => chooseOffer(item.id)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : null}
 
             <div className="booking-field">
-              <span>Số khách</span>
-              <div className="quantity-control">
-                <button
-                  type="button"
-                  onClick={() => setPax((value) => Math.max(1, value - 1))}
-                >
-                  −
-                </button>
-                <b>{pax}</b>
-                <button
-                  type="button"
-                  onClick={() => setPax((value) => Math.min(20, value + 1))}
-                >
-                  +
-                </button>
-              </div>
+              <span>
+                {offer.pricing.mode === "unit_mix"
+                  ? "Số lượng vé"
+                  : "Số khách"}
+              </span>
+
+              {offer.pricing.mode === "unit_mix" ? (
+                <div className="unit-quantity-list">
+                  {offer.pricing.units.map((unit) => (
+                    <div className="unit-quantity-row" key={unit.code}>
+                      <div>
+                        <b>{unit.label}</b>
+                        <small>{money(unit.amount)} / vé</small>
+                      </div>
+                      <div className="quantity-control">
+                        <button
+                          type="button"
+                          onClick={() => changeUnit(unit.code, -1)}
+                        >
+                          −
+                        </button>
+                        <b>{unitQuantities[unit.code] ?? 0}</b>
+                        <button
+                          type="button"
+                          onClick={() => changeUnit(unit.code, 1)}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="quantity-control">
+                  <button
+                    type="button"
+                    onClick={() => setPax((value) => Math.max(1, value - 1))}
+                  >
+                    −
+                  </button>
+                  <b>{pax}</b>
+                  <button
+                    type="button"
+                    onClick={() => setPax((value) => Math.min(20, value + 1))}
+                  >
+                    +
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="booking-total">
               <small>Tạm tính</small>
-              <strong>{money(total)}</strong>
+              <strong>{money(priced.totalAmount)}</strong>
             </div>
 
             <Link className="booking-cta" to={checkoutUrl}>

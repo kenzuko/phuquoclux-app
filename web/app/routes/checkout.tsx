@@ -7,9 +7,13 @@ import {
   useLoaderData,
 } from "react-router";
 import { Brand } from "../components/Brand";
-import { getProductBySlug, money } from "../domain/catalog";
+import { getProductBySlug, money, type ProductId } from "../domain/catalog";
 import { assertQuoteBookable } from "../domain/commerce";
-import { getOffer } from "../domain/offer";
+import { getOffer, type Offer } from "../domain/offer";
+import {
+  appendUnitQuantities,
+  unitQuantitiesFromSearch,
+} from "../domain/pricing";
 import { createPrototypeQuote } from "../services/quote.server";
 import { createPrototypeBookingRequest } from "../services/booking.server";
 import {
@@ -29,16 +33,54 @@ import {
   serializePrototypeQuoteReceipt,
 } from "../services/prototype-quote-receipt.server";
 
-function parseSelection(request: Request) {
+function parsePax(url: URL) {
+  return Math.max(
+    1,
+    Math.min(20, Number(url.searchParams.get("pax")) || 2),
+  );
+}
+
+function readSelection(
+  request: Request,
+  productId: ProductId,
+) {
   const url = new URL(request.url);
+  const pax = parsePax(url);
+  const offerId =
+    url.searchParams.get("offer") ??
+    url.searchParams.get("option") ??
+    undefined;
+  const offer = getOffer(productId, offerId);
+
+  if (!offer) {
+    throw new Response("Offer unavailable", { status: 503 });
+  }
+
   return {
-    pax: Math.max(1, Math.min(20, Number(url.searchParams.get("pax")) || 2)),
-    offerId:
-      url.searchParams.get("offer") ??
-      url.searchParams.get("option") ??
-      undefined,
+    pax,
+    offer,
+    unitQuantities: unitQuantitiesFromSearch(
+      offer,
+      url.searchParams,
+      pax,
+    ),
     serviceDate: url.searchParams.get("date") ?? undefined,
   };
+}
+
+function buildSelectionQuery(
+  offer: Offer,
+  pax: number,
+  serviceDate: string,
+  unitQuantities: Record<string, number>,
+) {
+  const params = new URLSearchParams({
+    pax: String(pax),
+    offer: offer.id,
+    date: serviceDate,
+  });
+  appendUnitQuantities(params, offer, unitQuantities);
+  return params.toString();
 }
 
 export async function loader({
@@ -53,25 +95,26 @@ export async function loader({
 
   assertPrototypeCommerce(getCommerceMode(context.cloudflare.env));
 
-  const selection = parseSelection(request);
+  const selection = readSelection(request, product.id);
   const quote = await createPrototypeQuote({
     productId: product.id,
-    offerId: selection.offerId,
+    offerId: selection.offer.id,
     pax: selection.pax,
+    unitQuantities: selection.unitQuantities,
     serviceDate: selection.serviceDate,
     requestId: context.cloudflare.requestId,
   });
-  const offer = getOffer(product.id, quote.offerId);
-
-  if (!offer) {
-    throw new Response("Offer unavailable", { status: 503 });
-  }
 
   return {
     product,
-    offer,
-    pax: selection.pax,
+    offer: selection.offer,
     quote,
+    selectionQuery: buildSelectionQuery(
+      selection.offer,
+      quote.pax,
+      quote.serviceDate,
+      selection.unitQuantities,
+    ),
     quoteReceipt: serializePrototypeQuoteReceipt(quote),
     requestId: crypto.randomUUID(),
   };
@@ -90,29 +133,25 @@ export async function action({
   assertPrototypeCommerce(getCommerceMode(context.cloudflare.env));
   assertSameOriginMutation(request);
 
-  const selection = parseSelection(request);
+  const selection = readSelection(request, product.id);
   const form = await request.formData();
   const requestId = readUuid(form, "requestId");
   const receipt = parsePrototypeQuoteReceipt(
-    readText(form, "quoteReceipt", { required: true, maxLength: 1600 }),
+    readText(form, "quoteReceipt", { required: true, maxLength: 2000 }),
   );
 
   const freshQuote = await createPrototypeQuote({
     productId: product.id,
-    offerId: selection.offerId,
+    offerId: selection.offer.id,
     pax: selection.pax,
+    unitQuantities: selection.unitQuantities,
     serviceDate: selection.serviceDate,
     requestId: context.cloudflare.requestId,
   });
   const quote = reconcilePrototypeQuote(receipt, freshQuote);
   assertQuoteBookable(quote);
 
-  const offer = getOffer(product.id, quote.offerId);
-  if (!offer) {
-    throw new Response("Offer unavailable", { status: 503 });
-  }
-
-  const operationalFields = new Set(offer.operationalFields);
+  const operationalFields = new Set(selection.offer.operationalFields);
   const name = readText(form, "name", { required: true, maxLength: 120 });
   const phone = readPhone(form);
   const email = readEmail(form);
@@ -156,8 +195,14 @@ export function meta() {
 }
 
 export default function CheckoutRoute() {
-  const { product, offer, pax, quote, quoteReceipt, requestId } =
-    useLoaderData<typeof loader>();
+  const {
+    product,
+    offer,
+    quote,
+    selectionQuery,
+    quoteReceipt,
+    requestId,
+  } = useLoaderData<typeof loader>();
   const expiresAt = new Date(quote.expiresAt).toLocaleTimeString("vi-VN", {
     hour: "2-digit",
     minute: "2-digit",
@@ -173,9 +218,7 @@ export default function CheckoutRoute() {
       <main className="checkout-main">
         <Link
           className="back-link"
-          to={`/product/${product.slug}?pax=${pax}&offer=${encodeURIComponent(
-            offer.id,
-          )}&date=${quote.serviceDate}`}
+          to={`/product/${product.slug}?${selectionQuery}`}
         >
           ← Quay lại dịch vụ
         </Link>
@@ -184,9 +227,7 @@ export default function CheckoutRoute() {
           <Form
             className="checkout-form"
             method="post"
-            action={`/checkout/${product.slug}?pax=${pax}&offer=${encodeURIComponent(
-              offer.id,
-            )}&date=${quote.serviceDate}`}
+            action={`/checkout/${product.slug}?${selectionQuery}`}
           >
             <input type="hidden" name="requestId" value={requestId} />
             <input type="hidden" name="quoteReceipt" value={quoteReceipt} />
@@ -268,9 +309,17 @@ export default function CheckoutRoute() {
                 <b>{quote.serviceDate}</b>
               </div>
               <div>
-                <span>Số khách</span>
-                <b>{pax}</b>
+                <span>Tổng số khách</span>
+                <b>{quote.pax}</b>
               </div>
+              {quote.lines.map((line) => (
+                <div key={line.code}>
+                  <span>
+                    {line.label} × {line.quantity}
+                  </span>
+                  <b>{money(line.total.amount)}</b>
+                </div>
+              ))}
               <div>
                 <span>Tình trạng</span>
                 <b>Cần xác nhận</b>

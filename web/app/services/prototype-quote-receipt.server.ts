@@ -10,9 +10,19 @@ export type PrototypeQuoteReceipt = {
   pax: number;
   totalAmount: number;
   currency: Quote["total"]["currency"];
+  lineSignature: string;
   createdAt: string;
   expiresAt: string;
 };
+
+function lineSignature(quote: Quote) {
+  return quote.lines
+    .map(
+      (line) =>
+        `${line.code}:${line.quantity}:${line.unitPrice.amount}:${line.total.amount}`,
+    )
+    .join("|");
+}
 
 export function serializePrototypeQuoteReceipt(quote: Quote) {
   const receipt: PrototypeQuoteReceipt = {
@@ -24,6 +34,7 @@ export function serializePrototypeQuoteReceipt(quote: Quote) {
     pax: quote.pax,
     totalAmount: quote.total.amount,
     currency: quote.total.currency,
+    lineSignature: lineSignature(quote),
     createdAt: quote.createdAt,
     expiresAt: quote.expiresAt,
   };
@@ -35,7 +46,7 @@ export function parsePrototypeQuoteReceipt(
   raw: string,
   now = new Date(),
 ): PrototypeQuoteReceipt {
-  if (raw.length > 1600) {
+  if (raw.length > 2000) {
     throw new Response("Invalid quote receipt", { status: 400 });
   }
 
@@ -70,6 +81,8 @@ export function parsePrototypeQuoteReceipt(
     !Number.isFinite(receipt.totalAmount) ||
     receipt.totalAmount < 0 ||
     receipt.currency !== "VND" ||
+    typeof receipt.lineSignature !== "string" ||
+    receipt.lineSignature.length > 1000 ||
     typeof receipt.createdAt !== "string" ||
     typeof receipt.expiresAt !== "string"
   ) {
@@ -104,7 +117,8 @@ export function reconcilePrototypeQuote(
     receipt.serviceDate !== freshQuote.serviceDate ||
     receipt.pax !== freshQuote.pax ||
     receipt.totalAmount !== freshQuote.total.amount ||
-    receipt.currency !== freshQuote.total.currency;
+    receipt.currency !== freshQuote.total.currency ||
+    receipt.lineSignature !== lineSignature(freshQuote);
 
   if (changed) {
     throw new Response("Quote changed. Refresh before continuing.", {

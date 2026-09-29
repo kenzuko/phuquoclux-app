@@ -100,3 +100,11 @@
 .booking-empty h2{margin:0;font-size:21px;letter-spacing:-.03em}
 .booking-empty p{max-width:460px;margin:7px auto 16px;color:var(--muted);font-size:10px;line-height:1.55}
 .booking-empty a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 13px;border-radius:11px;background:var(--green-700);color:#fff;text-decoration:none;font-size:10px;font-weight:850}
+
+.unit-quantity-list{display:grid;gap:8px}
+.unit-quantity-row{display:grid;grid-template-columns:1fr 118px;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.unit-quantity-row>div:first-child b,.unit-quantity-row>div:first-child small{display:block}
+.unit-quantity-row>div:first-child b{font-size:10px}
+.unit-quantity-row>div:first-child small{margin-top:3px;color:var(--muted);font-size:8px}
+.unit-quantity-row .quantity-control{margin:0}
+@media(max-width:560px){.unit-quantity-row{grid-template-columns:1fr 108px}}
