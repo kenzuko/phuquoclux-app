@@ -13,18 +13,27 @@ import {
 } from "../domain/catalog";
 import { IslandMap } from "../components/IslandMap";
 
-export async function loader({ params, context }: LoaderFunctionArgs) {
+export async function loader({ params, context, request }: LoaderFunctionArgs) {
   const type = params.type;
   if (!isProductType(type)) {
     throw new Response("Not found", { status: 404 });
   }
   const product = products[type];
+  const url = new URL(request.url);
+  const initialPax = Math.max(1, Math.min(20, Number(url.searchParams.get("pax")) || 2));
+  const requestedOption = url.searchParams.get("option");
+  const initialOptionId =
+    product.options.find((item) => item.id === requestedOption)?.id ??
+    product.options[0].id;
+
   const tomorrow = new Date();
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
   return {
     product,
     defaultDate: tomorrow.toISOString().slice(0, 10),
+    initialPax,
+    initialOptionId,
     entities: mapEntities.filter((entity) =>
       product.mapEntityIds.includes(entity.id),
     ),
@@ -35,9 +44,16 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
 }
 
 export default function ProductRoute() {
-  const { product, entities, mapStyleUrl, defaultDate } = useLoaderData<typeof loader>();
-  const [optionId, setOptionId] = useState(product.options[0].id);
-  const [pax, setPax] = useState(2);
+  const {
+    product,
+    entities,
+    mapStyleUrl,
+    defaultDate,
+    initialPax,
+    initialOptionId,
+  } = useLoaderData<typeof loader>();
+  const [optionId, setOptionId] = useState(initialOptionId);
+  const [pax, setPax] = useState(initialPax);
   const [serviceDate, setServiceDate] = useState(defaultDate);
 
   const option = product.options.find((item) => item.id === optionId)!;
