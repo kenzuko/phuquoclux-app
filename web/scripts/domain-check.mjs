@@ -90,8 +90,8 @@ async function run() {
   );
   equal(
     fromPriceForProduct("hon-thom-cable-car"),
-    504_000,
-    "ticket from-price must include the lowest unit rate",
+    700_000,
+    "ticket from-price must use the configured headline unit",
   );
 
   const intent = discover({ q: "cano", category: "all" });

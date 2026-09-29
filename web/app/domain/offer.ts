@@ -41,6 +41,7 @@ export type UnitMixPricing = {
   currency: Currency;
   source: OfferPriceSource;
   certainty: QuotePriceState;
+  headlineUnitCode?: string;
   units: UnitRate[];
 };
 
@@ -116,6 +117,7 @@ const offers: Offer[] = [
       currency: "VND",
       source: "prototype",
       certainty: "estimated",
+      headlineUnitCode: "adult",
       units: [
         { code: "adult", label: "Người lớn", amount: 700000 },
         { code: "child", label: "Trẻ em", amount: 504000 },
@@ -213,6 +215,15 @@ export function fromPriceForOffer(offer: Offer) {
     return offer.pricing.amount;
   }
   if (!offer.pricing.units.length) return null;
+
+  const headline = offer.pricing.headlineUnitCode
+    ? offer.pricing.units.find(
+        (unit) => unit.code === offer.pricing.headlineUnitCode,
+      )
+    : undefined;
+
+  if (headline) return headline.amount;
+
   return offer.pricing.units.reduce(
     (lowest, unit) => Math.min(lowest, unit.amount),
     offer.pricing.units[0].amount,

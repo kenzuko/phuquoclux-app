@@ -84,3 +84,14 @@ The contract can later add:
 - add-ons.
 
 Those should extend Offer pricing or Quote lines without changing Product identity or Booking identity.
+
+
+## Headline from-price
+
+For mixed-unit products, the smallest numeric rate is not automatically the public "from" price.
+
+A child or concession rate may have eligibility rules and should not make the whole product appear cheaper than the normal entry rate.
+
+`UnitMixPricing.headlineUnitCode` selects the rate used for discovery/product "from" pricing.
+
+The Hòn Thơm prototype uses `adult` as the headline unit while still pricing mixed adult/child baskets correctly.
