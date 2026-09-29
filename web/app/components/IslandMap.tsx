@@ -10,6 +10,7 @@ type Props = {
   category: "all" | MapCategory;
   onSelect: (entity: MapEntity) => void;
   onViewportChange?: (bounds: BoundingBox) => void;
+  initialBounds?: BoundingBox;
   className?: string;
   interaction?: "embedded" | "full";
 };
@@ -20,6 +21,7 @@ export function IslandMap({
   category,
   onSelect,
   onViewportChange,
+  initialBounds,
   className = "",
   interaction = "full",
 }: Props) {
@@ -114,6 +116,21 @@ export function IslandMap({
       setReady(false);
     };
   }, [interaction, onViewportChange, shouldMount, styleUrl]);
+
+  useEffect(() => {
+    if (!ready || !mapRef.current || !initialBounds) return;
+
+    mapRef.current.fitBounds(
+      [
+        [initialBounds.west, initialBounds.south],
+        [initialBounds.east, initialBounds.north],
+      ],
+      {
+        padding: 36,
+        duration: 0,
+      },
+    );
+  }, [initialBounds, ready]);
 
   useEffect(() => {
     if (!ready || !mapRef.current) return;
