@@ -6,6 +6,8 @@ export default function BookingsRoute() {
   const [params] = useSearchParams();
   const demoRequest = params.get("demo") === "request";
   const quoteId = params.get("quote");
+  const bookingId = params.get("booking");
+  const bookingState = params.get("state");
 
   return (
     <div>
@@ -32,7 +34,9 @@ export default function BookingsRoute() {
               <b>Đã nhận yêu cầu prototype</b>
               <p>
                 Chưa phải booking xác nhận và chưa có giao dịch tiền thật.
+                {bookingId ? ` Request #${bookingId.slice(0, 8)}.` : ""}
                 {quoteId ? ` Quote #${quoteId.slice(0, 8)}.` : ""}
+                {bookingState ? ` State: ${bookingState}.` : ""}
               </p>
             </div>
           </div>
