@@ -14,6 +14,7 @@ import {
   fromPriceForProduct,
   getOffer,
   offersForProduct,
+  priceCertaintyForProduct,
 } from "../domain/offer";
 import {
   appendUnitQuantities,
@@ -59,6 +60,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
     product,
     offers,
     fromPrice: fromPriceForProduct(product.id),
+    priceState: priceCertaintyForProduct(product.id),
     defaultDate,
     initialServiceDate,
     initialPax,
@@ -103,6 +105,7 @@ export default function ProductRoute() {
     product,
     offers,
     fromPrice,
+    priceState,
     entities,
     mapStyleUrl,
     defaultDate,
@@ -220,7 +223,9 @@ export default function ProductRoute() {
                   <b>{product.locationLabel}</b>
                 </div>
                 <div>
-                  <small>Giá từ</small>
+                  <small>
+                    {priceState === "estimated" ? "Giá tham khảo từ" : "Giá từ"}
+                  </small>
                   <b>{fromPrice === null ? "Liên hệ" : money(fromPrice)}</b>
                 </div>
                 <div>
@@ -292,7 +297,9 @@ export default function ProductRoute() {
 
           <aside className="booking-card">
             <div className="booking-price">
-              <small>Từ</small>
+              <small>
+                {priceState === "estimated" ? "Giá tham khảo từ" : "Từ"}
+              </small>
               <strong>{fromPrice === null ? "Liên hệ" : money(fromPrice)}</strong>
               <span>{product.unit}</span>
             </div>
@@ -378,7 +385,9 @@ export default function ProductRoute() {
             </div>
 
             <div className="booking-total">
-              <small>Tạm tính</small>
+              <small>
+                {priced.priceState === "estimated" ? "Tạm tính tham khảo" : "Tạm tính"}
+              </small>
               <strong>{money(priced.totalAmount)}</strong>
             </div>
 
