@@ -277,3 +277,6 @@
   .map-results-sheet.is-expanded{max-height:min(62dvh,560px)}
   .map-results-sheet.is-expanded .map-result-cards{padding-bottom:8px}
 }
+
+.map-result-place{display:block;margin-top:2px;color:var(--green-700);font-size:8px;font-weight:850}
+@media(max-width:980px){.map-result-place{font-size:9px}}
