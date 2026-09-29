@@ -23,6 +23,7 @@ import {
   type UnitQuantities,
 } from "../domain/pricing";
 import { normalizeServiceDate, todayInPhuQuoc } from "../domain/service-date";
+import { mapUrl, normalizePax } from "../domain/trip-intent";
 import { IslandMap } from "../components/IslandMap";
 
 export async function loader({ params, context, request }: LoaderFunctionArgs) {
@@ -33,10 +34,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
 
   const offers = offersForProduct(product.id);
   const url = new URL(request.url);
-  const initialPax = Math.max(
-    1,
-    Math.min(20, Number(url.searchParams.get("pax")) || 2),
-  );
+  const initialPax = normalizePax(url.searchParams.get("pax"), 2);
   const requestedOffer =
     url.searchParams.get("offer") ??
     url.searchParams.get("option") ??
@@ -172,8 +170,11 @@ export default function ProductRoute() {
       </header>
 
       <main className="detail-main">
-        <Link className="back-link" to="/">
-          ← Quay lại khám phá
+        <Link
+          className="back-link"
+          to={mapUrl({ date: serviceDate, pax: priced.pax })}
+        >
+          ← Quay lại bản đồ
         </Link>
 
         <section className="product-hero">
