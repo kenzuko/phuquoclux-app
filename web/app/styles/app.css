@@ -152,3 +152,9 @@
 .home-trust-grid b{font-size:10px}
 .home-trust-grid p{margin:4px 0 0;color:var(--muted);font-size:9px;line-height:1.45}
 @media(max-width:680px){.home-trust-grid{grid-template-columns:1fr}.home-trust-head>span{display:none}}
+
+.product-visual--photo{margin:0;background:#e9eee7}
+.product-visual-photo{width:100%;height:100%;object-fit:cover;display:block}
+.product-visual--photo figcaption{position:absolute;left:12px;right:12px;bottom:12px;display:flex;align-items:end;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:11px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px)}
+.product-visual--photo figcaption span{font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.product-visual--photo figcaption small{font-size:7px;color:var(--muted);text-align:right}
