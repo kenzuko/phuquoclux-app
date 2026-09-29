@@ -32,6 +32,7 @@ import {
   tripIntentFromUrl,
 } from "../app/domain/trip-intent.ts";
 import { buildTripProjection } from "../app/domain/trip.ts";
+import { isBookingAccessActive } from "../app/domain/booking-access.ts";
 import { createPrototypeBookingRequest } from "../app/services/booking.server.ts";
 import { createPrototypeQuote } from "../app/services/quote.server.ts";
 import {
@@ -97,6 +98,35 @@ async function run() {
     mapUrl(intent),
     "/map?date=2026-10-02&pax=4",
     "map URL must carry trip intent",
+  );
+  ok(
+    isBookingAccessActive(
+      {
+        id: "grant-1",
+        bookingId: "booking-1",
+        purpose: "manage_booking",
+        tokenHash: "hash",
+        createdAt: "2026-09-29T00:00:00.000Z",
+        expiresAt: "2026-10-01T00:00:00.000Z",
+      },
+      new Date("2026-09-30T00:00:00.000Z"),
+    ),
+    "unexpired guest booking access must be active",
+  );
+  ok(
+    !isBookingAccessActive(
+      {
+        id: "grant-2",
+        bookingId: "booking-1",
+        purpose: "manage_booking",
+        tokenHash: "hash2",
+        createdAt: "2026-09-29T00:00:00.000Z",
+        expiresAt: "2026-10-01T00:00:00.000Z",
+        revokedAt: "2026-09-30T00:00:00.000Z",
+      },
+      new Date("2026-09-30T12:00:00.000Z"),
+    ),
+    "revoked guest booking access must fail closed",
   );
 
   equal(
