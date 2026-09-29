@@ -19,6 +19,12 @@ import {
   normalizeServiceDate,
   todayInPhuQuoc,
 } from "../app/domain/service-date.ts";
+import {
+  mapUrl,
+  normalizePax,
+  productSlugUrl,
+  tripIntentFromUrl,
+} from "../app/domain/trip-intent.ts";
 import { createPrototypeBookingRequest } from "../app/services/booking.server.ts";
 import { createPrototypeQuote } from "../app/services/quote.server.ts";
 import {
@@ -61,6 +67,22 @@ async function run() {
     "2026-09-29",
     "past service date must be normalized to today",
   );
+  equal(normalizePax("99"), 20, "trip pax must be capped at 20");
+  const intent = tripIntentFromUrl(
+    new URL("https://phuquoclux.com/map?date=2026-10-02&pax=4"),
+  );
+  equal(intent.date, "2026-10-02", "trip intent must preserve service date");
+  equal(intent.pax, 4, "trip intent must preserve pax");
+  equal(
+    productSlugUrl("tour-3-dao-cano", intent),
+    "/product/tour-3-dao-cano?date=2026-10-02&pax=4",
+    "product URL must carry trip intent",
+  );
+  equal(
+    mapUrl(intent),
+    "/map?date=2026-10-02&pax=4",
+    "map URL must carry trip intent",
+  );
 
   equal(
     getProductBySlug("tour-3-dao-cano")?.id,
@@ -94,9 +116,9 @@ async function run() {
     "ticket from-price must use the configured headline unit",
   );
 
-  const intent = discover({ q: "cano", category: "all" });
+  const discoveryIntent = discover({ q: "cano", category: "all" });
   equal(
-    intent.products[0]?.productId,
+    discoveryIntent.products[0]?.productId,
     "tour-three-islands-cano",
     "cano intent must rank the tour product first",
   );
