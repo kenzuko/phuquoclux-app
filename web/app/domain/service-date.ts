@@ -1,0 +1,39 @@
+const PHU_QUOC_TIME_ZONE = "Asia/Ho_Chi_Minh";
+
+function partsInTimeZone(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: PHU_QUOC_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  return {
+    year: value("year"),
+    month: value("month"),
+    day: value("day"),
+  };
+}
+
+export function todayInPhuQuoc(now = new Date()) {
+  const { year, month, day } = partsInTimeZone(now);
+  return `${year}-${month}-${day}`;
+}
+
+export function normalizeServiceDate(
+  candidate: string | undefined,
+  now = new Date(),
+) {
+  const today = todayInPhuQuoc(now);
+
+  if (!candidate || !/^\d{4}-\d{2}-\d{2}$/.test(candidate)) {
+    return today;
+  }
+
+  return candidate >= today ? candidate : today;
+}
+
+export const serviceTimeZone = PHU_QUOC_TIME_ZONE;
