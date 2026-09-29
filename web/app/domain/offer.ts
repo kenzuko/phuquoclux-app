@@ -16,6 +16,11 @@ export type AvailabilityMode =
 
 export type OfferStatus = "active" | "paused" | "retired";
 
+export type OperationalField =
+  | "hotel_or_pickup"
+  | "flight_number"
+  | "guest_note";
+
 export type Offer = {
   id: string;
   productType: ProductType;
@@ -33,7 +38,7 @@ export type Offer = {
     cancellation: "provider_defined" | "non_refundable" | "flexible";
     confirmation: "instant" | "request";
   };
-  operationalFields: string[];
+  operationalFields: OperationalField[];
 };
 
 const offers: Offer[] = [
