@@ -104,8 +104,8 @@ function tokenMatches(queryToken: string, haystackTokens: string[]) {
     }
 
     return (
-      queryToken.length >= 4 &&
-      candidate.length >= 4 &&
+      queryToken.length >= 3 &&
+      candidate.length >= 3 &&
       editDistanceWithinOne(queryToken, candidate)
     );
   });
