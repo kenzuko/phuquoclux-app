@@ -250,3 +250,5 @@
   .home-trust-grid b{font-size:11px}
   .home-trust-grid p{font-size:10px}
 }
+
+.map-pin.is-selected{border-color:var(--orange);box-shadow:0 0 0 5px rgba(251,176,65,.2),0 9px 24px rgba(31,52,31,.26);transform:rotate(-45deg) scale(1.12);z-index:2}
