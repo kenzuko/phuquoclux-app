@@ -38,10 +38,12 @@ export type QuoteLine = {
 };
 
 export type QuoteStatus = "active" | "expired" | "accepted" | "void";
+export type QuotePriceState = "estimated" | "final";
 
 export type Quote = {
   id: string;
   status: QuoteStatus;
+  priceState: QuotePriceState;
   productType: ProductType;
   productId: ProductId;
   offerId: string;
@@ -184,5 +186,18 @@ export function assertQuoteBookable(quote: Quote, now = new Date()) {
   }
   if (!["available", "limited", "request"].includes(quote.availabilitySnapshot.state)) {
     throw new Error("NOT_BOOKABLE");
+  }
+}
+
+
+export function assertQuotePayable(quote: Quote, now = new Date()) {
+  assertQuoteBookable(quote, now);
+
+  if (quote.priceState !== "final") {
+    throw new Error("QUOTE_PRICE_NOT_FINAL");
+  }
+
+  if (!["available", "limited"].includes(quote.availabilitySnapshot.state)) {
+    throw new Error("QUOTE_AVAILABILITY_NOT_PAYABLE");
   }
 }

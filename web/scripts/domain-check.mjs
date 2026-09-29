@@ -1,6 +1,7 @@
 import {
   assertBookingTransition,
   assertQuoteBookable,
+  assertQuotePayable,
   canTransitionBooking,
   createBookingTransitionEvent,
 } from "../app/domain/commerce.ts";
@@ -118,6 +119,22 @@ async function run() {
     "manual provider must never fake live availability",
   );
   assertQuoteBookable(sharedQuote, new Date(sharedQuote.createdAt));
+  equal(
+    sharedQuote.priceState,
+    "estimated",
+    "prototype offer pricing must be explicitly estimated",
+  );
+
+  let payableEstimateRejected = false;
+  try {
+    assertQuotePayable(sharedQuote, new Date(sharedQuote.createdAt));
+  } catch {
+    payableEstimateRejected = true;
+  }
+  ok(
+    payableEstimateRejected,
+    "estimated Quote must never be accepted as payable",
+  );
 
   const familyTicket = await createPrototypeQuote({
     productId: "hon-thom-cable-car",

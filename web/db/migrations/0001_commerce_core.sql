@@ -44,6 +44,8 @@ create table if not exists quotes (
   offer_id text not null references offers(id),
   status text not null
     check (status in ('active', 'expired', 'accepted', 'void')),
+  price_state text not null
+    check (price_state in ('estimated', 'final')),
   service_date date not null,
   pax integer not null check (pax > 0),
   total_amount bigint not null check (total_amount >= 0),

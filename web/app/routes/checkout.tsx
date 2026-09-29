@@ -286,8 +286,8 @@ export default function CheckoutRoute() {
               <p className="section-kicker">TRẠNG THÁI</p>
               <h2>Cần xác nhận tình trạng</h2>
               <div className="prototype-warning">
-                Bản thử nghiệm hiện chưa nối dữ liệu chỗ trống từ nhà cung cấp.
-                Vì vậy hệ thống chỉ nhận yêu cầu và không tự báo “còn chỗ” khi chưa xác minh.
+                Bản thử nghiệm hiện chưa nối dữ liệu chỗ trống và giá bán chính thức từ nhà cung cấp.
+                Vì vậy hệ thống chỉ nhận yêu cầu, không tự báo “còn chỗ” và không coi giá ước tính là giá thanh toán.
               </div>
             </section>
 
@@ -326,12 +326,16 @@ export default function CheckoutRoute() {
               </div>
             </div>
             <div className="order-line total">
-              <span>Tạm tính</span>
+              <span>{quote.priceState === "final" ? "Tổng" : "Giá ước tính"}</span>
               <strong>{money(quote.total.amount)}</strong>
             </div>
             <div className="quote-meta">
               <span>Mã tạm #{quote.id.slice(0, 8)}</span>
-              <span>Giá tạm tính đến {expiresAt}</span>
+              <span>
+                {quote.priceState === "final"
+                  ? `Giữ giá đến ${expiresAt}`
+                  : `Ước tính đến ${expiresAt}`}
+              </span>
             </div>
             <div className="support-note">
               <b>JoTrip đứng sau vận hành</b>

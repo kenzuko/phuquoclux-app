@@ -63,6 +63,7 @@ export async function createPrototypeQuote(
   return {
     id: crypto.randomUUID(),
     status: "active",
+    priceState: priced.priceState,
     productType: product.type,
     productId: product.id,
     offerId: offer.id,

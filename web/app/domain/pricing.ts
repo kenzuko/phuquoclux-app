@@ -6,6 +6,7 @@ export type UnitQuantities = Record<string, number>;
 export type PricedOffer = {
   pax: number;
   totalAmount: number;
+  priceState: Offer["pricing"]["certainty"];
   lines: QuoteLine[];
 };
 
@@ -48,6 +49,7 @@ export function priceOffer(
     return {
       pax: safePax,
       totalAmount,
+      priceState: offer.pricing.certainty,
       lines: [
         {
           code: "base",
@@ -89,6 +91,7 @@ export function priceOffer(
   return {
     pax: totalPax,
     totalAmount: lines.reduce((sum, line) => sum + line.total.amount, 0),
+    priceState: offer.pricing.certainty,
     lines,
   };
 }

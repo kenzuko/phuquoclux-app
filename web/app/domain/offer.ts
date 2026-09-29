@@ -1,4 +1,4 @@
-import type { Currency } from "./commerce";
+import type { Currency, QuotePriceState } from "./commerce";
 import type { ProductId } from "./catalog";
 
 export type PriceBasis = "per_person" | "per_booking";
@@ -27,6 +27,7 @@ export type FlatPricing = {
   currency: Currency;
   basis: PriceBasis;
   source: OfferPriceSource;
+  certainty: QuotePriceState;
 };
 
 export type UnitRate = {
@@ -39,6 +40,7 @@ export type UnitMixPricing = {
   mode: "unit_mix";
   currency: Currency;
   source: OfferPriceSource;
+  certainty: QuotePriceState;
   units: UnitRate[];
 };
 
@@ -73,6 +75,7 @@ const offers: Offer[] = [
       currency: "VND",
       basis: "per_person",
       source: "prototype",
+      certainty: "estimated",
     },
     policy: {
       cancellation: "provider_defined",
@@ -93,6 +96,7 @@ const offers: Offer[] = [
       currency: "VND",
       basis: "per_booking",
       source: "prototype",
+      certainty: "estimated",
     },
     policy: {
       cancellation: "provider_defined",
@@ -111,6 +115,7 @@ const offers: Offer[] = [
       mode: "unit_mix",
       currency: "VND",
       source: "prototype",
+      certainty: "estimated",
       units: [
         { code: "adult", label: "Người lớn", amount: 700000 },
         { code: "child", label: "Trẻ em", amount: 504000 },
@@ -135,6 +140,7 @@ const offers: Offer[] = [
       currency: "VND",
       basis: "per_booking",
       source: "prototype",
+      certainty: "estimated",
     },
     policy: {
       cancellation: "provider_defined",
@@ -155,6 +161,7 @@ const offers: Offer[] = [
       currency: "VND",
       basis: "per_booking",
       source: "prototype",
+      certainty: "estimated",
     },
     policy: {
       cancellation: "provider_defined",
@@ -175,6 +182,7 @@ const offers: Offer[] = [
       currency: "VND",
       basis: "per_booking",
       source: "prototype",
+      certainty: "estimated",
     },
     policy: {
       cancellation: "provider_defined",

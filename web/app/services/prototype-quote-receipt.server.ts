@@ -4,6 +4,7 @@ import { isProductId } from "../domain/catalog";
 export type PrototypeQuoteReceipt = {
   id: string;
   productType: Quote["productType"];
+  priceState: Quote["priceState"];
   productId: Quote["productId"];
   offerId: string;
   serviceDate: string;
@@ -28,6 +29,7 @@ export function serializePrototypeQuoteReceipt(quote: Quote) {
   const receipt: PrototypeQuoteReceipt = {
     id: quote.id,
     productType: quote.productType,
+    priceState: quote.priceState,
     productId: quote.productId,
     offerId: quote.offerId,
     serviceDate: quote.serviceDate,
@@ -69,6 +71,7 @@ export function parsePrototypeQuoteReceipt(
     typeof receipt.id !== "string" ||
     !uuidLike.test(receipt.id) ||
     !["tour", "ticket", "transfer"].includes(String(receipt.productType)) ||
+    !["estimated", "final"].includes(String(receipt.priceState)) ||
     typeof receipt.productId !== "string" ||
     !isProductId(receipt.productId) ||
     typeof receipt.offerId !== "string" ||
@@ -112,6 +115,7 @@ export function reconcilePrototypeQuote(
 ): Quote {
   const changed =
     receipt.productType !== freshQuote.productType ||
+    receipt.priceState !== freshQuote.priceState ||
     receipt.productId !== freshQuote.productId ||
     receipt.offerId !== freshQuote.offerId ||
     receipt.serviceDate !== freshQuote.serviceDate ||
