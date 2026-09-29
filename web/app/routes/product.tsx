@@ -28,10 +28,15 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
 
   const tomorrow = new Date();
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  const defaultDate = tomorrow.toISOString().slice(0, 10);
+  const requestedDate = url.searchParams.get("date");
+  const initialServiceDate =
+    requestedDate && requestedDate >= defaultDate ? requestedDate : defaultDate;
 
   return {
     product,
-    defaultDate: tomorrow.toISOString().slice(0, 10),
+    defaultDate,
+    initialServiceDate,
     initialPax,
     initialOptionId,
     entities: mapEntities.filter((entity) =>
@@ -49,12 +54,13 @@ export default function ProductRoute() {
     entities,
     mapStyleUrl,
     defaultDate,
+    initialServiceDate,
     initialPax,
     initialOptionId,
   } = useLoaderData<typeof loader>();
   const [optionId, setOptionId] = useState(initialOptionId);
   const [pax, setPax] = useState(initialPax);
-  const [serviceDate, setServiceDate] = useState(defaultDate);
+  const [serviceDate, setServiceDate] = useState(initialServiceDate);
 
   const option = product.options.find((item) => item.id === optionId)!;
   const quantity = product.type === "transfer" ? 1 : pax;
