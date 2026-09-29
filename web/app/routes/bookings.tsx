@@ -71,7 +71,11 @@ export default function BookingsRoute() {
               <BookingItem
                 type={product?.type === "transfer" ? "XE" : product?.type === "ticket" ? "VÉ" : "TOUR"}
                 title={product?.name ?? "Dịch vụ Phú Quốc"}
-                copy="JoTrip sẽ kiểm tra tình trạng dịch vụ. Chỉ sau khi có xác nhận thật, đặt chỗ mới chuyển sang trạng thái đã xác nhận."
+                copy={
+                  product
+                    ? `JoTrip sẽ kiểm tra tình trạng dịch vụ. Sau khi xác nhận, ${product.fulfillmentSummary.toLocaleLowerCase("vi")} sẽ được cập nhật tại đây.`
+                    : "JoTrip sẽ kiểm tra tình trạng dịch vụ. Chỉ sau khi có xác nhận thật, đặt chỗ mới chuyển sang trạng thái đã xác nhận."
+                }
                 status={userState(bookingState)}
               />
             </section>
