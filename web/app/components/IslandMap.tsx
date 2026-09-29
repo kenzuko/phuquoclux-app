@@ -99,8 +99,8 @@ export function IslandMap({
         map.addControl(
           new maplibregl.GeolocateControl({
             positionOptions: { enableHighAccuracy: false },
-            trackUserLocation: true,
-            showUserHeading: true,
+            trackUserLocation: false,
+            showUserHeading: false,
           }),
           "bottom-right",
         );
