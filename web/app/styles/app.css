@@ -94,3 +94,9 @@
 .verification-badge--demo{background:var(--surface);color:var(--muted)}
 
 .booking-tool-static{cursor:default}
+
+.booking-empty{background:#fff;border:1px solid var(--line);border-radius:22px;padding:34px 22px;text-align:center}
+.booking-empty>span{display:grid;place-items:center;width:48px;height:48px;margin:0 auto 12px;border-radius:15px;background:var(--green-100);color:var(--green-800);font-size:20px}
+.booking-empty h2{margin:0;font-size:21px;letter-spacing:-.03em}
+.booking-empty p{max-width:460px;margin:7px auto 16px;color:var(--muted);font-size:10px;line-height:1.55}
+.booking-empty a{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 13px;border-radius:11px;background:var(--green-700);color:#fff;text-decoration:none;font-size:10px;font-weight:850}

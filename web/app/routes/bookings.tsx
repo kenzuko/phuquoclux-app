@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from "react-router";
 import { Brand } from "../components/Brand";
 import { BottomNav } from "../components/BottomNav";
+import { getProductById } from "../domain/catalog";
 
 export function meta() {
   return [
@@ -9,12 +10,20 @@ export function meta() {
   ];
 }
 
+function userState(value: string | null) {
+  if (value === "pending_confirmation") return "Chờ xác nhận";
+  if (value === "pending_payment") return "Chờ thanh toán";
+  if (value === "confirmed") return "Đã xác nhận";
+  return "Đang xử lý";
+}
+
 export default function BookingsRoute() {
   const [params] = useSearchParams();
   const demoRequest = params.get("demo") === "request";
   const quoteId = params.get("quote");
   const bookingId = params.get("booking");
   const bookingState = params.get("state");
+  const product = getProductById(params.get("product") ?? undefined);
 
   return (
     <div>
@@ -35,52 +44,46 @@ export default function BookingsRoute() {
         </section>
 
         {demoRequest ? (
-          <div className="booking-status-banner booking-status-banner--request">
-            <span>…</span>
-            <div>
-              <b>Đã nhận yêu cầu</b>
-              <p>
-                Đây là bản thử nghiệm, chưa phải đặt chỗ đã xác nhận và chưa có giao dịch tiền thật.
-                {bookingId ? ` Mã yêu cầu #${bookingId.slice(0, 8)}.` : ""}
-                {quoteId ? ` Mã giá #${quoteId.slice(0, 8)}.` : ""}
-                {bookingState ? ` Trạng thái hệ thống: ${bookingState}.` : ""}
-              </p>
+          <>
+            <div className="booking-status-banner booking-status-banner--request">
+              <span>…</span>
+              <div>
+                <b>Đã nhận yêu cầu</b>
+                <p>
+                  Đây là bản thử nghiệm, chưa phải đặt chỗ đã xác nhận và chưa có giao dịch tiền thật.
+                  {bookingId ? ` Mã yêu cầu #${bookingId.slice(0, 8)}.` : ""}
+                  {quoteId ? ` Mã giá #${quoteId.slice(0, 8)}.` : ""}
+                </p>
+              </div>
             </div>
-          </div>
-        ) : null}
 
-        <section className="trip-day">
-          <div className="trip-day-head">
-            <div><small>BẢN THỬ NGHIỆM</small><strong>Sau khi đặt</strong></div>
-            <span>Phú Quốc</span>
-          </div>
+            <section className="trip-day">
+              <div className="trip-day-head">
+                <div>
+                  <small>BẢN THỬ NGHIỆM</small>
+                  <strong>Yêu cầu vừa gửi</strong>
+                </div>
+                <span>Phú Quốc</span>
+              </div>
 
-          {demoRequest ? (
-            <BookingItem
-              time="--:--"
-              type="YÊU CẦU"
-              title="Yêu cầu đang chờ xác nhận"
-              copy="JoTrip sẽ kiểm tra tình trạng dịch vụ. Chỉ sau khi có xác nhận thật, đặt chỗ mới chuyển sang trạng thái đã xác nhận."
-              status="Chờ xác nhận"
-            />
-          ) : null}
-
-          <BookingItem
-            time="08:00"
-            type="TRANSFER"
-            title="Xe riêng từ khách sạn"
-            copy="Điểm đón sẽ hiển thị sau khi đặt chỗ thực tế được xác nhận."
-            status="Ví dụ"
-          />
-          <BookingItem
-            time="09:00"
-            type="EXPERIENCE"
-            title="Tour 3 đảo bằng cano"
-            copy="Voucher và hướng dẫn sử dụng sẽ nằm trực tiếp trong đặt chỗ đã xác nhận."
-            status="Ví dụ đã xác nhận"
-            confirmed
-          />
-        </section>
+              <BookingItem
+                type={product?.type === "transfer" ? "XE" : product?.type === "ticket" ? "VÉ" : "TOUR"}
+                title={product?.name ?? "Dịch vụ Phú Quốc"}
+                copy="JoTrip sẽ kiểm tra tình trạng dịch vụ. Chỉ sau khi có xác nhận thật, đặt chỗ mới chuyển sang trạng thái đã xác nhận."
+                status={userState(bookingState)}
+              />
+            </section>
+          </>
+        ) : (
+          <section className="booking-empty">
+            <span>▣</span>
+            <h2>Chưa có đặt chỗ</h2>
+            <p>
+              Khi có đặt chỗ thật, voucher, giờ đón và thông tin sử dụng sẽ xuất hiện tại đây.
+            </p>
+            <Link to="/">Khám phá dịch vụ</Link>
+          </section>
+        )}
 
         <section className="booking-tools">
           <Link to="/map">
@@ -103,33 +106,32 @@ export default function BookingsRoute() {
 }
 
 function BookingItem({
-  time,
   type,
   title,
   copy,
   status,
-  confirmed = false,
 }: {
-  time: string;
   type: string;
   title: string;
   copy: string;
   status: string;
-  confirmed?: boolean;
 }) {
   return (
     <article className="booking-item">
-      <div className="booking-time"><strong>{time}</strong><span>Giờ</span></div>
+      <div className="booking-time">
+        <strong>--:--</strong>
+        <span>Chưa có giờ</span>
+      </div>
       <div className="booking-item-body">
         <div className="booking-type">{type}</div>
         <h2>{title}</h2>
         <p>{copy}</p>
         <div className="booking-actions booking-actions--demo">
-          <span>{confirmed ? "Voucher demo" : "Trạng thái demo"}</span>
-          <span>Hỗ trợ sẽ nối sau</span>
+          <span>Chờ cập nhật</span>
+          <span>Chưa có voucher</span>
         </div>
       </div>
-      <span className={confirmed ? "status-pill confirmed" : "status-pill"}>{status}</span>
+      <span className="status-pill">{status}</span>
     </article>
   );
 }
