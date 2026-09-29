@@ -63,6 +63,22 @@ export function validateCatalog(): CatalogIssue[] {
       });
     }
 
+    if (!product.media.alt.trim()) {
+      issues.push({
+        code: "PRODUCT_MEDIA_ALT_MISSING",
+        message: `${product.id} media alt is required`,
+      });
+    }
+
+    if (product.media.kind === "photo") {
+      if (!product.media.src.startsWith("/")) {
+        issues.push({
+          code: "PRODUCT_MEDIA_SOURCE_INVALID",
+          message: `${product.id} photo must use a controlled app asset path`,
+        });
+      }
+    }
+
     for (const entityId of product.mapEntityIds) {
       if (!entityIds.has(entityId)) {
         issues.push({
