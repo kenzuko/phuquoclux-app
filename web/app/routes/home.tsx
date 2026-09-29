@@ -167,7 +167,11 @@ export default function HomeRoute() {
                       <div className="product-foot">
                         <div>
                           <small>Từ</small>
-                          <b>{money(fromPriceForProduct(product.type) ?? 0)}</b>
+                          <b>
+                            {fromPriceForProduct(product.type) === null
+                              ? "Liên hệ"
+                              : money(fromPriceForProduct(product.type)!)}
+                          </b>
                         </div>
                         <Link to={`/product/${product.type}`}>Xem</Link>
                       </div>
@@ -176,9 +180,9 @@ export default function HomeRoute() {
                 ))}
                 {category === "place" ? (
                   <div className="category-placeholder">
-                    <b>Địa điểm sẽ là discovery-first</b>
+                    <b>Đang bổ sung địa điểm</b>
                     <span>
-                      Chỉ đưa điểm lên khi vị trí và trạng thái hoạt động đủ tin cậy.
+                      Chỉ hiển thị những điểm có vị trí và trạng thái hoạt động đủ tin cậy.
                     </span>
                   </div>
                 ) : null}
