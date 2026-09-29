@@ -88,6 +88,25 @@ function buildSelectionQuery(
   return params.toString();
 }
 
+async function createRouteQuote(
+  input: Parameters<typeof createPrototypeQuote>[0],
+) {
+  try {
+    return await createPrototypeQuote(input);
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    if (
+      code === "OFFER_CAPACITY_EXCEEDED" ||
+      code === "TOO_MANY_PARTICIPANTS"
+    ) {
+      throw new Response("Selected option cannot carry this party size", {
+        status: 409,
+      });
+    }
+    throw error;
+  }
+}
+
 export async function loader({
   params,
   request,
@@ -105,7 +124,7 @@ export async function loader({
     new URL(request.url).searchParams.get("returnTo"),
     "/map",
   );
-  const quote = await createPrototypeQuote({
+  const quote = await createRouteQuote({
     productId: product.id,
     offerId: selection.offer.id,
     pax: selection.pax,
@@ -150,7 +169,7 @@ export async function action({
     readText(form, "quoteReceipt", { required: true, maxLength: 2000 }),
   );
 
-  const freshQuote = await createPrototypeQuote({
+  const freshQuote = await createRouteQuote({
     productId: product.id,
     offerId: selection.offer.id,
     pax: selection.pax,
