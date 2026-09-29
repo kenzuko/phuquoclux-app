@@ -9,6 +9,7 @@ import {
   money,
   productList,
   productPath,
+  productsForMapEntity,
   type MapCategory,
   type MapEntity,
   type ProductId,
@@ -234,7 +235,7 @@ function MapEntitySheet({ entity, onClose }: { entity: MapEntity; onClose: () =>
       </span>
       <strong>{entity.name}</strong>
       <p>{entity.copy}</p>
-      {entity.href ? <Link to={entity.href}>Xem lựa chọn</Link> : null}
+      <RelatedProducts entity={entity} />
     </div>
   );
 }
@@ -242,4 +243,20 @@ function MapEntitySheet({ entity, onClose }: { entity: MapEntity; onClose: () =>
 function displayFromPrice(productId: ProductId) {
   const amount = fromPriceForProduct(productId);
   return amount === null ? "Liên hệ" : money(amount);
+}
+
+function RelatedProducts({ entity }: { entity: MapEntity }) {
+  const related = productsForMapEntity(entity.id);
+
+  if (!related.length) return null;
+
+  return (
+    <div className="entity-related-products">
+      {related.slice(0, 3).map((product) => (
+        <Link key={product.id} to={productPath(product)}>
+          {product.name}
+        </Link>
+      ))}
+    </div>
+  );
 }

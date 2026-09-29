@@ -75,3 +75,24 @@ Shared destination/POI data may be consumed from the wider ecosystem when a stab
 PhuQuocLux should not silently fork coordinates into a second untraceable dataset.
 
 Commerce-specific anchors can remain in PhuQuocLux, but they require their own verification status.
+
+
+## MapEntity does not own commerce navigation
+
+A MapEntity is spatial context, not a product shortcut.
+
+It does not store a single Product URL.
+
+Related Products are resolved by Product → `mapEntityIds` relationships.
+
+This matters because one place may support many products:
+
+```
+An Thới
+  ├── Tour 3 đảo
+  ├── Private canoe
+  ├── Fishing trip
+  └── future experiences
+```
+
+The Map sheet may render several related products while the MapEntity itself remains reusable destination data.

@@ -17,7 +17,6 @@ export type MapEntity = {
   icon: string;
   kicker: string;
   copy: string;
-  href?: string;
   verification: MapVerification;
   priority: number;
   minZoom: number;
@@ -63,7 +62,6 @@ export const mapEntities: MapEntity[] = [
     icon: "🛥",
     kicker: "TOUR · NAM ĐẢO",
     copy: "Điểm xuất phát chính cho trải nghiệm đảo và cano phía Nam.",
-    href: "/product/tour-3-dao-cano",
     verification: "verified",
     priority: 100,
     minZoom: 8.8,
@@ -92,7 +90,6 @@ export const mapEntities: MapEntity[] = [
     icon: "🚗",
     kicker: "TRANSFER",
     copy: "Vị trí tham chiếu của sân bay, không phải điểm đón cụ thể cho từng đặt chỗ.",
-    href: "/product/xe-san-bay-rieng",
     verification: "reference",
     priority: 98,
     minZoom: 8.8,
@@ -192,4 +189,10 @@ export function mapVerificationLabel(verification: MapVerification) {
   if (verification === "verified") return "Đã xác minh vị trí";
   if (verification === "reference") return "Vị trí tham chiếu";
   return "Dữ liệu demo";
+}
+
+export function productsForMapEntity(entityId: string) {
+  return productList.filter((product) =>
+    product.mapEntityIds.includes(entityId),
+  );
 }

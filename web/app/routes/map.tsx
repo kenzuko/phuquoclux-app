@@ -10,7 +10,12 @@ import { BottomNav } from "../components/BottomNav";
 import { Brand } from "../components/Brand";
 import { IslandMap } from "../components/IslandMap";
 import type { MapCategory, MapEntity } from "../domain/catalog";
-import { mapVerificationLabel, money } from "../domain/catalog";
+import {
+  mapVerificationLabel,
+  money,
+  productPath,
+  productsForMapEntity,
+} from "../domain/catalog";
 import { normalizeServiceDate } from "../domain/service-date";
 import {
   discover,
@@ -231,9 +236,11 @@ export default function MapRoute() {
             </span>
             <strong>{selected.name}</strong>
             <p>{selected.copy}</p>
-            {selected.href ? (
-              <Link to={selected.href}>Xem lựa chọn</Link>
-            ) : null}
+            <MapRelatedProducts
+              entity={selected}
+              date={date}
+              pax={pax}
+            />
           </aside>
         ) : (
           <aside className="map-results-sheet">
@@ -291,6 +298,33 @@ export default function MapRoute() {
       </main>
 
       <BottomNav />
+    </div>
+  );
+}
+
+function MapRelatedProducts({
+  entity,
+  date,
+  pax,
+}: {
+  entity: MapEntity;
+  date: string;
+  pax: number;
+}) {
+  const related = productsForMapEntity(entity.id);
+
+  if (!related.length) return null;
+
+  return (
+    <div className="entity-related-products">
+      {related.slice(0, 4).map((product) => (
+        <Link
+          key={product.id}
+          to={`${productPath(product)}?date=${date}&pax=${pax}`}
+        >
+          {product.name}
+        </Link>
+      ))}
     </div>
   );
 }

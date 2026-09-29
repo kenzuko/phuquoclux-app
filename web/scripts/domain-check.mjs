@@ -6,6 +6,7 @@ import {
 } from "../app/domain/commerce.ts";
 import {
   getProductBySlug,
+  productsForMapEntity,
 } from "../app/domain/catalog.ts";
 import { discover } from "../app/domain/discovery.ts";
 import {
@@ -64,6 +65,11 @@ async function run() {
     getProductBySlug("tour-3-dao-cano")?.id,
     "tour-three-islands-cano",
     "route slug must resolve to stable product identity",
+  );
+  equal(
+    productsForMapEntity("an-thoi")[0]?.id,
+    "tour-three-islands-cano",
+    "MapEntity must resolve related Products without owning a direct commerce href",
   );
 
   const tourOffers = offersForProduct("tour-three-islands-cano");
