@@ -12,10 +12,29 @@ const iconByType: Record<Product["type"], string> = {
 };
 
 export function ProductVisual({ product, mode = "card" }: Props) {
+  if (product.media.kind === "photo") {
+    return (
+      <figure
+        className={`product-visual product-visual--photo product-visual--${mode}`}
+      >
+        <img
+          className="product-visual-photo"
+          src={product.media.src}
+          alt={product.media.alt}
+          loading={mode === "card" ? "lazy" : "eager"}
+        />
+        <figcaption>
+          <span>{product.locationLabel}</span>
+          {product.media.credit ? <small>{product.media.credit}</small> : null}
+        </figcaption>
+      </figure>
+    );
+  }
+
   return (
     <div
       className={`product-visual product-visual--${mode} product-visual--${product.type}`}
-      aria-label={product.name}
+      aria-label={product.media.alt}
       role="img"
     >
       <img
