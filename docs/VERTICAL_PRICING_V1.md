@@ -112,3 +112,17 @@ The server pricing function enforces the same constraint.
 A hand-edited URL must not be able to price a 4-seat vehicle for a party above its declared capacity.
 
 The persistence schema stores Offer constraints as JSON so provider-specific capacity rules can evolve without changing Product identity.
+
+
+## Required operational inputs
+
+An Offer may distinguish between:
+
+- operational fields that can be collected;
+- operational fields that are required before a booking request is accepted.
+
+Current transfer V1 requires the destination / hotel field because a useful transfer request cannot be processed without knowing where the traveler needs to go.
+
+The browser marks required fields, and the server validates the same requirement.
+
+Client-side `required` attributes are convenience only; they are not the source of truth.
