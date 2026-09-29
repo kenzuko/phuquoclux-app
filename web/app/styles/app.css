@@ -181,3 +181,22 @@
 @media(max-width:560px){
   .map-page{padding-bottom:env(safe-area-inset-bottom,0px)}
 }
+
+.island-map[data-map-error="true"]::after{
+  content:"Bản đồ tạm thời chưa tải được · danh sách dịch vụ vẫn dùng bình thường";
+  position:absolute;
+  inset:50% auto auto 50%;
+  transform:translate(-50%,-50%);
+  width:min(260px,calc(100% - 32px));
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(255,255,255,.96);
+  box-shadow:0 10px 28px rgba(20,35,20,.12);
+  color:var(--muted);
+  font-size:9px;
+  line-height:1.45;
+  font-weight:800;
+  text-align:center;
+  pointer-events:none;
+}
