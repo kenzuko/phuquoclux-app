@@ -249,6 +249,7 @@ export default function MapRoute() {
           styleUrl={mapStyleUrl}
           category="all"
           onSelect={onSelect}
+          selectedEntityId={selected?.id}
           onViewportChange={onViewportChange}
           initialBounds={initialBounds ?? undefined}
           interaction="full"
