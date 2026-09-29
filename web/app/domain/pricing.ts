@@ -1,5 +1,5 @@
 import type { QuoteLine } from "./commerce";
-import type { Offer } from "./offer";
+import { offerSupportsPax, type Offer } from "./offer";
 
 export type UnitQuantities = Record<string, number>;
 
@@ -40,6 +40,10 @@ export function priceOffer(
   unitQuantities: UnitQuantities = {},
 ): PricedOffer {
   const safePax = Math.max(1, Math.min(20, Math.floor(pax)));
+
+  if (!offerSupportsPax(offer, safePax)) {
+    throw new Error("OFFER_CAPACITY_EXCEEDED");
+  }
 
   if (offer.pricing.mode === "flat") {
     const quantity =
