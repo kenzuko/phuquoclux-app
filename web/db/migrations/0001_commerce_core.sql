@@ -131,6 +131,22 @@ create index if not exists bookings_service_date_idx
 create index if not exists bookings_state_idx
   on bookings(state);
 
+create table if not exists booking_access_tokens (
+  id uuid primary key,
+  booking_id uuid not null references bookings(id) on delete cascade,
+  purpose text not null
+    check (purpose in ('manage_booking')),
+  token_hash text not null unique,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null,
+  revoked_at timestamptz,
+  last_used_at timestamptz,
+  check (expires_at > created_at)
+);
+
+create index if not exists booking_access_tokens_booking_idx
+  on booking_access_tokens(booking_id, expires_at);
+
 create table if not exists booking_events (
   id uuid primary key,
   booking_id uuid not null references bookings(id) on delete cascade,
@@ -221,3 +237,7 @@ comment on table outbox_events is
 
 comment on column bookings.version is
   'Optimistic concurrency version. Every state transition must increment this value.';
+
+
+comment on table booking_access_tokens is
+  'Guest manage-booking capability. Only a hash of the opaque token is stored; raw access tokens are delivered out-of-band and never persisted.';
