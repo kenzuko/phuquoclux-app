@@ -6,6 +6,7 @@ import {
   type Product,
   type ProductType,
 } from "./catalog";
+import { fromPriceForProduct } from "./offer";
 
 export type BoundingBox = {
   west: number;
@@ -157,7 +158,7 @@ export function discover(query: DiscoveryQuery): DiscoveryResult {
     .map(({ product }) => ({
       type: product.type,
       name: product.name,
-      fromPrice: product.fromPrice,
+      fromPrice: fromPriceForProduct(product.type) ?? 0,
       unit: product.unit,
       mapEntityIds: product.mapEntityIds,
     }));
