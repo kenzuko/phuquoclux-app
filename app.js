@@ -1,9 +1,9 @@
 (() => {
   const LOCATIONS = [
-    { id:'duong-dong', name:'Dương Đông', subtitle:'Trung tâm · dịch vụ', lat:10.2172, lng:103.9593, category:'place', icon:'⌂' },
-    { id:'an-thoi', name:'An Thới', subtitle:'Tour đảo · bến tàu', lat:10.0191, lng:104.0150, category:'tour', icon:'🛥' },
-    { id:'ganh-dau', name:'Gành Dầu', subtitle:'Bắc đảo · khám phá', lat:10.3759, lng:103.9000, category:'ticket', icon:'🎟' },
-    { id:'airport-demo', name:'Sân bay PQC', subtitle:'Transfer · demo UI', lat:10.1698, lng:103.9931, category:'transfer', icon:'🚗' }
+    { id:'duong-dong', name:'Dương Đông', subtitle:'Trung tâm · dịch vụ', lat:10.2172, lng:103.9593, category:'place', icon:'⌂', kicker:'KHU VỰC', copy:'Ăn uống, dịch vụ hằng ngày và các điểm quanh trung tâm.', action:'Khám phá khu vực', href:'#' },
+    { id:'an-thoi', name:'An Thới', subtitle:'Tour đảo · bến tàu', lat:10.0191, lng:104.0150, category:'tour', icon:'🛥', kicker:'TOUR · NAM ĐẢO', copy:'Điểm xuất phát chính cho trải nghiệm đảo và cano phía Nam.', action:'Xem Tour 3 đảo', href:'./product.html?type=tour' },
+    { id:'ganh-dau', name:'Gành Dầu', subtitle:'Bắc đảo · khám phá', lat:10.3759, lng:103.9000, category:'ticket', icon:'🎟', kicker:'BẮC ĐẢO', copy:'Khu vực tham quan phía Bắc. Ticket sẽ được gắn theo đúng địa điểm và offer.', action:'Xem vé', href:'./product.html?type=ticket' },
+    { id:'airport-demo', name:'Sân bay PQC', subtitle:'Transfer · demo UI', lat:10.1698, lng:103.9931, category:'transfer', icon:'🚗', kicker:'TRANSFER', copy:'Đặt xe riêng từ sân bay đến khách sạn với thông tin đón rõ ràng.', action:'Đặt xe', href:'./product.html?type=transfer' }
   ];
 
   const maps = [];
@@ -37,11 +37,30 @@
     LOCATIONS.filter(x => activeCategory === 'all' || x.category === activeCategory).forEach(item => {
       const marker = L.marker([item.lat,item.lng], { icon:pinIcon(item) });
       marker.bindPopup(`<div class="pql-popup"><strong>${item.name}</strong><span>${item.subtitle}</span></div>`);
+      marker.on('click', () => showMapEntity(item));
       marker.addTo(holder.layer);
     });
   }
 
-  function rerender() { maps.forEach(renderMarkers); }
+  function showMapEntity(item) {
+    document.querySelectorAll('[data-map-sheet]').forEach(sheet => {
+      sheet.hidden = false;
+      sheet.querySelector('[data-entity-kicker]').textContent = item.kicker || 'TRÊN BẢN ĐỒ';
+      sheet.querySelector('[data-entity-title]').textContent = item.name;
+      sheet.querySelector('[data-entity-copy]').textContent = item.copy || item.subtitle;
+      const action = sheet.querySelector('[data-entity-action]');
+      action.textContent = item.action || 'Xem lựa chọn';
+      action.href = item.href || '#';
+    });
+  }
+
+  function hideMapEntity() {
+    document.querySelectorAll('[data-map-sheet]').forEach(sheet => { sheet.hidden = true; });
+  }
+
+  document.querySelectorAll('.entity-sheet-close').forEach(btn => btn.addEventListener('click', hideMapEntity));
+
+  function rerender() { maps.forEach(renderMarkers); hideMapEntity(); }
 
   document.querySelectorAll('.filter-chip').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -62,7 +81,10 @@
     if (!fullMap) fullMap = createMap('fullMap', 10.4); else setTimeout(() => fullMap.invalidateSize(), 40);
   }
   function closeFullMap() { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
-  ['expandMap','desktopExpand'].forEach(id => document.getElementById(id)?.addEventListener('click', openFullMap));
+  ['expandMap','desktopExpand','bottomMapLink'].forEach(id => document.getElementById(id)?.addEventListener('click', e => {
+    if (id === 'bottomMapLink') e.preventDefault();
+    openFullMap();
+  }));
   document.getElementById('closeMap')?.addEventListener('click', closeFullMap);
   document.addEventListener('keydown', e => {
     if(e.key === 'Escape') closeFullMap();
