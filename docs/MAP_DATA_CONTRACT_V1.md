@@ -100,12 +100,13 @@ The Map sheet may render several related products while the MapEntity itself rem
 
 ## Current location
 
-Full Map mode may expose an opt-in browser geolocation control.
+Full Map mode may expose an opt-in, one-shot browser geolocation control.
 
 Rules:
 
 - never request location automatically on page load;
 - browser permission is required;
+- use one-shot recentering in V1 rather than continuous location tracking;
 - PhuQuocLux does not persist the raw browser coordinate in Booking, Quote or customer records;
 - current-location coordinates are not sent to commerce APIs by the Map component;
 - after the map recenters, the configured map/tile provider may receive normal map resource requests for the viewed area, so provider privacy terms still matter.
