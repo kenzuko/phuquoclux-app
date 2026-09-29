@@ -297,7 +297,7 @@ export default function MapRoute() {
                   {result.entities.length} nơi · {result.products.length} dịch vụ
                 </strong>
               </div>
-              <span>Giá từ</span>
+              <span>Giá hiển thị</span>
             </div>
 
             <div className="map-result-cards">
@@ -324,7 +324,7 @@ export default function MapRoute() {
                     <small>
                       {product.fromPrice === null
                         ? "Liên hệ"
-                        : `${money(product.fromPrice)} ${product.unit}`}
+                        : `${product.priceState === "estimated" ? "Tham khảo " : ""}${money(product.fromPrice)} ${product.unit}`}
                     </small>
                     {product.spatialMatch === "unlocated" ? (
                       <small className="map-result-location">
