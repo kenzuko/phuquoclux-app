@@ -14,13 +14,15 @@ import {
 import { IslandMap } from "../components/IslandMap";
 
 export async function loader({ params, context }: LoaderFunctionArgs) {
-  if (!isProductType(params.type)) {
+  const type = params.type;
+  if (!isProductType(type)) {
     throw new Response("Not found", { status: 404 });
   }
+  const product = products[type];
   return {
-    product: products[params.type],
+    product,
     entities: mapEntities.filter((entity) =>
-      products[params.type!].mapEntityIds.includes(entity.id),
+      product.mapEntityIds.includes(entity.id),
     ),
     mapStyleUrl:
       context.cloudflare.env.MAP_STYLE_URL ??
