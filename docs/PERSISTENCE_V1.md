@@ -70,7 +70,9 @@ A catalog price must never be posted directly to a payment provider.
 
 Booking is separate from payment.
 
-The current state machine remains:
+The state machine supports both instant-pay and request-first products.
+
+Instant-pay path:
 
 ```
 draft
@@ -81,7 +83,20 @@ draft
 → fulfilled
 ```
 
-Request-to-book can enter `pending_confirmation` before payment if the chosen product workflow requires confirmation first.
+Request-first path:
+
+```
+draft
+→ pending_confirmation
+→ pending_payment
+→ paid
+→ confirmed
+→ fulfilled
+```
+
+A provider that can confirm immediately may skip the second confirmation step after payment.
+
+The domain transition guard explicitly allows these branches; UI labels must describe the actual state instead of forcing every vertical into one checkout sequence.
 
 All state changes should write `booking_events`.
 
