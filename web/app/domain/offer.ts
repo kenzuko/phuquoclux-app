@@ -239,3 +239,15 @@ export function fromPriceForProduct(productId: ProductId) {
   if (!prices.length) return null;
   return Math.min(...prices);
 }
+
+
+export function priceCertaintyForProduct(productId: ProductId) {
+  const active = offersForProduct(productId);
+  if (!active.length) return null;
+
+  return active.every(
+    (offer) => offer.pricing.certainty === "final",
+  )
+    ? "final"
+    : "estimated";
+}
