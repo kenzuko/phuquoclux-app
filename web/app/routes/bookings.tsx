@@ -20,9 +20,8 @@ function userState(value: string | null) {
 export default function BookingsRoute() {
   const [params] = useSearchParams();
   const demoRequest = params.get("demo") === "request";
-  const quoteId = params.get("quote");
-  const bookingId = params.get("booking");
   const bookingState = params.get("state");
+  const serviceDate = params.get("date");
   const product = getProductById(params.get("product") ?? undefined);
 
   return (
@@ -51,8 +50,6 @@ export default function BookingsRoute() {
                 <b>Đã nhận yêu cầu</b>
                 <p>
                   Đây là bản thử nghiệm, chưa phải đặt chỗ đã xác nhận và chưa có giao dịch tiền thật.
-                  {bookingId ? ` Mã yêu cầu #${bookingId.slice(0, 8)}.` : ""}
-                  {quoteId ? ` Mã giá #${quoteId.slice(0, 8)}.` : ""}
                 </p>
               </div>
             </div>
@@ -60,7 +57,7 @@ export default function BookingsRoute() {
             <section className="trip-day">
               <div className="trip-day-head">
                 <div>
-                  <small>BẢN THỬ NGHIỆM</small>
+                  <small>{serviceDate ?? "BẢN THỬ NGHIỆM"}</small>
                   <strong>Yêu cầu vừa gửi</strong>
                 </div>
                 <span>Phú Quốc</span>
