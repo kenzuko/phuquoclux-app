@@ -37,3 +37,12 @@ export function normalizeServiceDate(
 }
 
 export const serviceTimeZone = PHU_QUOC_TIME_ZONE;
+
+
+export function formatServiceDate(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return value;
+
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year}`;
+}
