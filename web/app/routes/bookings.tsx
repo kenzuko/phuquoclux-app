@@ -1,5 +1,6 @@
 import { Link, useSearchParams } from "react-router";
 import { Brand } from "../components/Brand";
+import { BottomNav } from "../components/BottomNav";
 
 export default function BookingsRoute() {
   const [params] = useSearchParams();
@@ -59,6 +60,7 @@ export default function BookingsRoute() {
           <button type="button"><span>?</span><div><b>Cần hỗ trợ?</b><small>JoTrip hỗ trợ booking của bạn</small></div></button>
         </section>
       </main>
+      <BottomNav />
     </div>
   );
 }
