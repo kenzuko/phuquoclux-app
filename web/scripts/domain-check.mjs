@@ -30,6 +30,7 @@ import {
   todayInPhuQuoc,
 } from "../app/domain/service-date.ts";
 import {
+  homeUrl,
   mapUrl,
   normalizePax,
   productSlugUrl,
@@ -106,6 +107,12 @@ async function run() {
     mapUrl(intent),
     "/map?date=2026-10-02&pax=4",
     "map URL must carry trip intent",
+  );
+
+  equal(
+    homeUrl(intent),
+    "/?date=2026-10-02&pax=4",
+    "Home URL must carry trip intent",
   );
   equal(
     safeReturnTo("/map?q=cano&date=2026-10-02&pax=4"),
