@@ -92,6 +92,14 @@ export function IslandMap({
           new maplibregl.NavigationControl({ showCompass: false }),
           "bottom-right",
         );
+        map.addControl(
+          new maplibregl.GeolocateControl({
+            positionOptions: { enableHighAccuracy: false },
+            trackUserLocation: true,
+            showUserHeading: true,
+          }),
+          "bottom-right",
+        );
         map.on("moveend", emitViewport);
       }
 
