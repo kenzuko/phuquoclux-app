@@ -14,6 +14,7 @@ import {
   validateCatalog,
 } from "../app/domain/catalog-validation.ts";
 import { discover } from "../app/domain/discovery.ts";
+import { boundsForEntities } from "../app/domain/map-bounds.ts";
 import {
   fromPriceForProduct,
   getOffer,
@@ -153,6 +154,17 @@ async function run() {
   ok(
     !honThomInArea.entities.some((entity) => entity.category === "ticket"),
     "unlocated product must not create a fake map pin",
+  );
+
+  const canoFocus = boundsForEntities(discoveryIntent.entities);
+  ok(Boolean(canoFocus), "search result entities must produce focus bounds");
+  ok(
+    canoFocus.west < 104.015 && canoFocus.east > 104.015,
+    "search focus bounds must contain An Thoi longitude",
+  );
+  ok(
+    canoFocus.south < 10.0191 && canoFocus.north > 10.0191,
+    "search focus bounds must contain An Thoi latitude",
   );
 
   const northOnly = discover({
