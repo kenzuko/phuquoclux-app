@@ -168,3 +168,19 @@ Travel service dates use the Phu Quoc/Vietnam calendar boundary:
 `Asia/Ho_Chi_Minh`
 
 The browser may propose a date, but the server normalizes the transaction date and never accepts a past service date because of timezone drift or a hand-edited URL.
+
+
+## Prototype Quote continuity
+
+The prototype checkout now carries the Quote identity shown on the checkout page through form submission.
+
+On submit the server:
+
+1. reads the displayed Quote receipt;
+2. re-checks current authoritative Offer pricing and Availability;
+3. rejects the request if the displayed Quote has expired or materially changed;
+4. preserves the original Quote id only when the current server-side result still matches.
+
+This is a prototype bridge until Quotes are durably stored in PostgreSQL.
+
+The receipt is not a payment authorization and is not treated as trusted pricing input.
