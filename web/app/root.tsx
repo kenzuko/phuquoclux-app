@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   Links,
   Meta,
@@ -8,7 +9,7 @@ import {
 import "./cloudflare-context";
 import "./styles/app.css";
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi">
       <head>
