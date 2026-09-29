@@ -258,7 +258,9 @@ export default function MapRoute() {
                   <div>
                     <b>{product.name}</b>
                     <small>
-                      {money(product.fromPrice)} {product.unit}
+                      {product.fromPrice === null
+                        ? "Liên hệ"
+                        : `${money(product.fromPrice)} ${product.unit}`}
                     </small>
                   </div>
                   <i>→</i>
