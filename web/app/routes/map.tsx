@@ -27,6 +27,7 @@ import {
   type DiscoveryQuery,
 } from "../domain/discovery";
 import { boundsForEntities } from "../domain/map-bounds";
+import { withReturnTo } from "../domain/navigation";
 
 const allowedCategories: Array<"all" | MapCategory> = [
   "all",
@@ -124,6 +125,9 @@ export default function MapRoute() {
   const [selected, setSelected] = useState<MapEntity | null>(null);
   const [viewport, setViewport] = useState<BoundingBox | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const returnTo = searchParams.toString()
+    ? `/map?${searchParams.toString()}`
+    : "/map";
 
   const onSelect = useCallback((entity: MapEntity) => setSelected(entity), []);
   const onViewportChange = useCallback(
@@ -278,6 +282,7 @@ export default function MapRoute() {
             <MapRelatedProducts
               entity={selected}
               intent={intent}
+              returnTo={returnTo}
             />
           </aside>
         ) : (
@@ -300,7 +305,10 @@ export default function MapRoute() {
                 <Link
                   key={product.productId}
                   className="map-result-card"
-                  to={productSlugUrl(product.slug, intent)}
+                  to={withReturnTo(
+                    productSlugUrl(product.slug, intent),
+                    returnTo,
+                  )}
                 >
                   <span
                     className={`map-result-icon map-result-icon--${product.type}`}
@@ -348,9 +356,11 @@ export default function MapRoute() {
 function MapRelatedProducts({
   entity,
   intent,
+  returnTo,
 }: {
   entity: MapEntity;
   intent: TripIntent;
+  returnTo: string;
 }) {
   const related = productsForMapEntity(entity.id);
 
@@ -361,7 +371,7 @@ function MapRelatedProducts({
       {related.slice(0, 4).map((product) => (
         <Link
           key={product.id}
-          to={productUrl(product, intent)}
+          to={withReturnTo(productUrl(product, intent), returnTo)}
         >
           {product.name}
         </Link>
