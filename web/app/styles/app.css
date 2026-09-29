@@ -301,3 +301,16 @@
   .map-entity-result small{font-size:10px}
   .map-result-verification{font-size:9px}
 }
+
+.home-place-list{display:grid;gap:8px}
+.home-place-card{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;min-height:68px;padding:10px;border:1px solid var(--line);border-radius:15px;background:#fff;color:inherit;text-decoration:none}
+.home-place-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:var(--green-100);font-size:18px}
+.home-place-card>span:nth-child(2)>b,.home-place-card>span:nth-child(2)>small{display:block}
+.home-place-card b{font-size:12px}
+.home-place-card small{margin-top:3px;color:var(--muted);font-size:9px}
+.home-place-card>i{font-style:normal;color:var(--green-700);font-weight:900}
+.home-place-card .verification-badge{margin-top:5px}
+@media(max-width:980px){
+  .home-place-card b{font-size:13px}
+  .home-place-card small{font-size:11px}
+}
