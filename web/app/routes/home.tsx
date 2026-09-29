@@ -16,7 +16,10 @@ import {
 } from "../domain/catalog";
 import type { BoundingBox } from "../domain/discovery";
 import { todayInPhuQuoc } from "../domain/service-date";
-import { fromPriceForProduct } from "../domain/offer";
+import {
+  fromPriceForProduct,
+  priceCertaintyForProduct,
+} from "../domain/offer";
 import {
   mapUrl,
   productUrl,
@@ -218,7 +221,9 @@ export default function HomeRoute() {
                       <span>{product.lead}</span>
                       <div className="product-foot">
                         <div>
-                          <small>Từ</small>
+                          <small>
+                            {priceLabel(product.id)}
+                          </small>
                           <b>{displayFromPrice(product.id)}</b>
                         </div>
                         <Link to={productUrl(product, intent)}>Xem</Link>
@@ -334,4 +339,11 @@ function RelatedProducts({
 function quickProductUrl(productId: ProductId, intent: TripIntent) {
   const product = getProductById(productId);
   return product ? productUrl(product, intent) : mapUrl(intent);
+}
+
+
+function priceLabel(productId: ProductId) {
+  const state = priceCertaintyForProduct(productId);
+  if (state === "estimated") return "Tham khảo từ";
+  return "Từ";
 }
