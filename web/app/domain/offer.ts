@@ -47,6 +47,10 @@ export type UnitMixPricing = {
 
 export type OfferPricing = FlatPricing | UnitMixPricing;
 
+export type OfferConstraints = {
+  maxPax?: number;
+};
+
 export type Offer = {
   id: string;
   productId: ProductId;
@@ -59,6 +63,7 @@ export type Offer = {
     cancellation: "provider_defined" | "non_refundable" | "flexible";
     confirmation: "instant" | "request";
   };
+  constraints?: OfferConstraints;
   operationalFields: OperationalField[];
 };
 
@@ -148,6 +153,7 @@ const offers: Offer[] = [
       cancellation: "provider_defined",
       confirmation: "request",
     },
+    constraints: { maxPax: 4 },
     operationalFields: ["hotel_or_pickup", "flight_number", "guest_note"],
   },
   {
@@ -169,6 +175,7 @@ const offers: Offer[] = [
       cancellation: "provider_defined",
       confirmation: "request",
     },
+    constraints: { maxPax: 7 },
     operationalFields: ["hotel_or_pickup", "flight_number", "guest_note"],
   },
   {
@@ -190,6 +197,7 @@ const offers: Offer[] = [
       cancellation: "provider_defined",
       confirmation: "request",
     },
+    constraints: { maxPax: 16 },
     operationalFields: ["hotel_or_pickup", "flight_number", "guest_note"],
   },
 ];
@@ -250,4 +258,20 @@ export function priceCertaintyForProduct(productId: ProductId) {
   )
     ? "final"
     : "estimated";
+}
+
+
+export function offerSupportsPax(offer: Offer, pax: number) {
+  const maxPax = offer.constraints?.maxPax;
+  return maxPax === undefined || pax <= maxPax;
+}
+
+export function maxPaxForProduct(productId: ProductId) {
+  const active = offersForProduct(productId);
+  const constrained = active
+    .map((offer) => offer.constraints?.maxPax)
+    .filter((value): value is number => value !== undefined);
+
+  if (!constrained.length) return 20;
+  return Math.min(20, Math.max(...constrained));
 }
