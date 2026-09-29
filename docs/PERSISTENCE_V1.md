@@ -17,8 +17,11 @@ offers
 quotes
 quote_lines
 bookings
+booking_access_tokens
 booking_events
 payments
+outbox_events
+webhook_receipts
 idempotency_keys
 ```
 
@@ -112,6 +115,14 @@ In production:
 4. never create a second booking because a browser retried a POST.
 
 The current prototype passes the key but does not yet persist or enforce it.
+
+## Guest access
+
+Guest checkout requires a durable way for the traveler to return to a booking.
+
+`booking_access_tokens` stores only a hash of an opaque access capability. Raw manage-booking tokens are never persisted and must not be used as analytics identifiers.
+
+See `docs/GUEST_BOOKING_ACCESS_V1.md`.
 
 ## Personal data
 
