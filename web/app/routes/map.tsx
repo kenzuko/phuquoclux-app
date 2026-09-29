@@ -330,7 +330,7 @@ export default function MapRoute() {
         )}
       </main>
 
-      <BottomNav />
+      <BottomNav intent={intent} />
     </div>
   );
 }
