@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { MapCategory, MapEntity } from "../domain/catalog";
+import type { BoundingBox } from "../domain/discovery";
 
 type Props = {
   entities: MapEntity[];
   styleUrl: string;
   category: "all" | MapCategory;
   onSelect: (entity: MapEntity) => void;
+  onViewportChange?: (bounds: BoundingBox) => void;
   className?: string;
   interaction?: "embedded" | "full";
 };
@@ -17,6 +19,7 @@ export function IslandMap({
   styleUrl,
   category,
   onSelect,
+  onViewportChange,
   className = "",
   interaction = "full",
 }: Props) {
@@ -70,14 +73,29 @@ export function IslandMap({
         touchZoomRotate: full,
       });
 
+      const emitViewport = () => {
+        if (!onViewportChange) return;
+        const bounds = map.getBounds();
+        onViewportChange({
+          west: bounds.getWest(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          north: bounds.getNorth(),
+        });
+      };
+
       if (full) {
         map.addControl(
           new maplibregl.NavigationControl({ showCompass: false }),
           "bottom-right",
         );
+        map.on("moveend", emitViewport);
       }
 
-      map.once("load", () => setReady(true));
+      map.once("load", () => {
+        setReady(true);
+        emitViewport();
+      });
       mapRef.current = map;
 
       resizeObserver = new ResizeObserver(() => map.resize());
@@ -95,7 +113,7 @@ export function IslandMap({
       mapRef.current = null;
       setReady(false);
     };
-  }, [interaction, shouldMount, styleUrl]);
+  }, [interaction, onViewportChange, shouldMount, styleUrl]);
 
   useEffect(() => {
     if (!ready || !mapRef.current) return;
