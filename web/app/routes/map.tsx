@@ -11,7 +11,11 @@ import { Brand } from "../components/Brand";
 import { IslandMap } from "../components/IslandMap";
 import type { MapCategory, MapEntity } from "../domain/catalog";
 import { money } from "../domain/catalog";
-import { discover, type DiscoveryQuery } from "../domain/discovery";
+import {
+  discover,
+  type BoundingBox,
+  type DiscoveryQuery,
+} from "../domain/discovery";
 
 const allowedCategories: Array<"all" | MapCategory> = [
   "all",
@@ -21,21 +25,51 @@ const allowedCategories: Array<"all" | MapCategory> = [
   "place",
 ];
 
+const boundKeys = ["west", "south", "east", "north"] as const;
+
 function parseCategory(value: string | null): DiscoveryQuery["category"] {
   return allowedCategories.includes(value as "all" | MapCategory)
     ? (value as "all" | MapCategory)
     : "all";
 }
 
+function parseNumber(value: string | null) {
+  if (value === null || value.trim() === "") return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function parseBounds(searchParams: URLSearchParams): BoundingBox | undefined {
+  const west = parseNumber(searchParams.get("west"));
+  const south = parseNumber(searchParams.get("south"));
+  const east = parseNumber(searchParams.get("east"));
+  const north = parseNumber(searchParams.get("north"));
+
+  if (
+    west === undefined ||
+    south === undefined ||
+    east === undefined ||
+    north === undefined ||
+    west >= east ||
+    south >= north
+  ) {
+    return undefined;
+  }
+
+  return { west, south, east, north };
+}
+
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const category = parseCategory(url.searchParams.get("category"));
   const q = url.searchParams.get("q") ?? undefined;
+  const bounds = parseBounds(url.searchParams);
 
   return {
-    result: discover({ category, q }),
+    result: discover({ category, q, bounds }),
     category,
     q: q ?? "",
+    hasAreaSearch: Boolean(bounds),
     mapStyleUrl:
       context.cloudflare.env.MAP_STYLE_URL ??
       "https://demotiles.maplibre.org/style.json",
@@ -43,15 +77,40 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 }
 
 export default function MapRoute() {
-  const { result, category, q, mapStyleUrl } = useLoaderData<typeof loader>();
+  const { result, category, q, hasAreaSearch, mapStyleUrl } =
+    useLoaderData<typeof loader>();
   const [selected, setSelected] = useState<MapEntity | null>(null);
+  const [viewport, setViewport] = useState<BoundingBox | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+
   const onSelect = useCallback((entity: MapEntity) => setSelected(entity), []);
+  const onViewportChange = useCallback(
+    (bounds: BoundingBox) => setViewport(bounds),
+    [],
+  );
 
   function changeCategory(next: "all" | MapCategory) {
     const params = new URLSearchParams(searchParams);
     if (next === "all") params.delete("category");
     else params.set("category", next);
+    setSearchParams(params);
+    setSelected(null);
+  }
+
+  function searchThisArea() {
+    if (!viewport) return;
+
+    const params = new URLSearchParams(searchParams);
+    for (const key of boundKeys) {
+      params.set(key, viewport[key].toFixed(5));
+    }
+    setSearchParams(params);
+    setSelected(null);
+  }
+
+  function clearAreaSearch() {
+    const params = new URLSearchParams(searchParams);
+    for (const key of boundKeys) params.delete(key);
     setSearchParams(params);
     setSelected(null);
   }
@@ -73,7 +132,9 @@ export default function MapRoute() {
             aria-label="Tìm trên bản đồ Phú Quốc"
           />
         </Form>
-        <Link className="map-close-link" to="/">Đóng ×</Link>
+        <Link className="map-close-link" to="/">
+          Đóng ×
+        </Link>
       </header>
 
       <div className="map-filter-row">
@@ -93,6 +154,15 @@ export default function MapRoute() {
             {label}
           </button>
         ))}
+        {hasAreaSearch ? (
+          <button
+            className="area-reset"
+            type="button"
+            onClick={clearAreaSearch}
+          >
+            Toàn đảo ×
+          </button>
+        ) : null}
       </div>
 
       <main className="full-map-stage">
@@ -101,11 +171,17 @@ export default function MapRoute() {
           styleUrl={mapStyleUrl}
           category="all"
           onSelect={onSelect}
+          onViewportChange={onViewportChange}
           interaction="full"
         />
 
-        <button className="search-area-cta" type="button">
-          ⌕ Tìm trong khu vực này
+        <button
+          className="search-area-cta"
+          type="button"
+          onClick={searchThisArea}
+          disabled={!viewport}
+        >
+          ⌕ {hasAreaSearch ? "Cập nhật khu vực này" : "Tìm trong khu vực này"}
         </button>
 
         {selected ? (
@@ -121,14 +197,18 @@ export default function MapRoute() {
             <small>{selected.kicker}</small>
             <strong>{selected.name}</strong>
             <p>{selected.copy}</p>
-            {selected.href ? <Link to={selected.href}>Xem lựa chọn</Link> : null}
+            {selected.href ? (
+              <Link to={selected.href}>Xem lựa chọn</Link>
+            ) : null}
           </aside>
         ) : (
           <aside className="map-results-sheet">
             <span className="sheet-grabber" />
             <div className="map-results-head">
               <div>
-                <small>TRONG KHU VỰC NÀY</small>
+                <small>
+                  {hasAreaSearch ? "TRONG KHU VỰC ĐÃ CHỌN" : "TRÊN BẢN ĐỒ"}
+                </small>
                 <strong>
                   {result.entities.length} nơi · {result.products.length} dịch vụ
                 </strong>
@@ -143,12 +223,20 @@ export default function MapRoute() {
                   className="map-result-card"
                   to={`/product/${product.type}`}
                 >
-                  <span className={`map-result-icon map-result-icon--${product.type}`}>
-                    {product.type === "tour" ? "🛥" : product.type === "ticket" ? "🎟" : "🚗"}
+                  <span
+                    className={`map-result-icon map-result-icon--${product.type}`}
+                  >
+                    {product.type === "tour"
+                      ? "🛥"
+                      : product.type === "ticket"
+                        ? "🎟"
+                        : "🚗"}
                   </span>
                   <div>
                     <b>{product.name}</b>
-                    <small>{money(product.fromPrice)} {product.unit}</small>
+                    <small>
+                      {money(product.fromPrice)} {product.unit}
+                    </small>
                   </div>
                   <i>→</i>
                 </Link>
@@ -156,7 +244,9 @@ export default function MapRoute() {
               {!result.products.length ? (
                 <div className="map-empty">
                   <b>Chưa có dịch vụ phù hợp</b>
-                  <span>Thử đổi bộ lọc hoặc từ khóa tìm kiếm.</span>
+                  <span>
+                    Thử đổi bộ lọc, từ khóa hoặc quay lại tìm trên toàn đảo.
+                  </span>
                 </div>
               ) : null}
             </div>
