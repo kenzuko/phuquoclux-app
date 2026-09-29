@@ -167,11 +167,7 @@ export default function HomeRoute() {
                       <div className="product-foot">
                         <div>
                           <small>Từ</small>
-                          <b>
-                            {fromPriceForProduct(product.type) === null
-                              ? "Liên hệ"
-                              : money(fromPriceForProduct(product.type)!)}
-                          </b>
+                          <b>{displayFromPrice(product.type)}</b>
                         </div>
                         <Link to={`/product/${product.type}`}>Xem</Link>
                       </div>
@@ -239,4 +235,9 @@ function MapEntitySheet({ entity, onClose }: { entity: MapEntity; onClose: () =>
       {entity.href ? <Link to={entity.href}>Xem lựa chọn</Link> : null}
     </div>
   );
+}
+
+function displayFromPrice(type: keyof typeof products) {
+  const amount = fromPriceForProduct(type);
+  return amount === null ? "Liên hệ" : money(amount);
 }
