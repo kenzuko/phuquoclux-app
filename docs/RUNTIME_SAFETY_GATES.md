@@ -45,3 +45,22 @@ Before live commerce can be enabled, all of these must exist:
 7. reconciliation and failure handling.
 
 Changing a Worker variable must never be enough to accidentally turn prototype prices into real transactions.
+
+
+## Production deploy gate
+
+Merging code to `main` must not be enough to publish the app.
+
+The production workflow now requires all of these:
+
+1. repository variable `PHUQUOCLUX_DEPLOY_ENABLED=true`;
+2. repository variable `PHUQUOCLUX_MAP_STYLE_URL` set to the approved production map style;
+3. the map style must not be the MapLibre demo tile endpoint;
+4. Cloudflare API token and account id must be present;
+5. typecheck, domain checks and production build must pass.
+
+If any gate is missing, deployment is skipped.
+
+The deploy command keeps `COMMERCE_MODE=prototype` until live-commerce readiness is separately approved.
+
+DNS/custom-domain changes remain a separate operational step and are not performed by this workflow.
