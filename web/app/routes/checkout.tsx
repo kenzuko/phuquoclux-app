@@ -23,6 +23,11 @@ import {
   readText,
   readUuid,
 } from "../services/request-validation.server";
+import {
+  parsePrototypeQuoteReceipt,
+  reconcilePrototypeQuote,
+  serializePrototypeQuoteReceipt,
+} from "../services/prototype-quote-receipt.server";
 
 function parseSelection(request: Request) {
   const url = new URL(request.url);
@@ -68,6 +73,7 @@ export async function loader({
     offer,
     pax: selection.pax,
     quote,
+    quoteReceipt: serializePrototypeQuoteReceipt(quote),
     requestId: crypto.randomUUID(),
   };
 }
@@ -86,13 +92,20 @@ export async function action({
   assertSameOriginMutation(request);
 
   const selection = parseSelection(request);
-  const quote = await createPrototypeQuote({
+  const form = await request.formData();
+  const requestId = readUuid(form, "requestId");
+  const receipt = parsePrototypeQuoteReceipt(
+    readText(form, "quoteReceipt", { required: true, maxLength: 1600 }),
+  );
+
+  const freshQuote = await createPrototypeQuote({
     type,
     offerId: selection.offerId,
     pax: selection.pax,
     serviceDate: selection.serviceDate,
     requestId: context.cloudflare.requestId,
   });
+  const quote = reconcilePrototypeQuote(receipt, freshQuote);
   assertQuoteBookable(quote);
 
   const offer = getOffer(type, quote.offerId);
@@ -101,8 +114,6 @@ export async function action({
   }
 
   const operationalFields = new Set(offer.operationalFields);
-  const form = await request.formData();
-  const requestId = readUuid(form, "requestId");
   const name = readText(form, "name", { required: true, maxLength: 120 });
   const phone = readPhone(form);
   const email = readEmail(form);
@@ -139,7 +150,7 @@ export async function action({
 }
 
 export default function CheckoutRoute() {
-  const { product, offer, pax, quote, requestId } =
+  const { product, offer, pax, quote, quoteReceipt, requestId } =
     useLoaderData<typeof loader>();
   const expiresAt = new Date(quote.expiresAt).toLocaleTimeString("vi-VN", {
     hour: "2-digit",
@@ -172,6 +183,7 @@ export default function CheckoutRoute() {
             )}&date=${quote.serviceDate}`}
           >
             <input type="hidden" name="requestId" value={requestId} />
+            <input type="hidden" name="quoteReceipt" value={quoteReceipt} />
 
             <section className="checkout-section">
               <p className="section-kicker">NGƯỜI ĐẶT</p>
