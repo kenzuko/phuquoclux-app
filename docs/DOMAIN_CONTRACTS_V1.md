@@ -19,7 +19,7 @@ Keep Map discovery, Product, Offer, commerce state and supplier integrations sep
 It returns:
 
 - MapEntities;
-- product summaries;
+- product summaries with stable Product id + public slug;
 - only `from_price` display values.
 
 **Discovery never claims availability.**
@@ -32,18 +32,39 @@ Example:
 
 `/api/discovery?category=tour&west=103.90&south=9.95&east=104.05&north=10.10`
 
+## Product identity
+
+Product category is not Product identity.
+
+A Product has:
+
+- stable internal `id`;
+- public `slug`;
+- `type` for category/filtering.
+
+Public routes use slug:
+
+```
+/product/:slug
+/checkout/:slug
+```
+
+Commerce state uses Product id.
+
+See `PRODUCT_IDENTITY_V1.md`.
+
 ## Product and Offer
 
 Product is the discoverable thing.
 
-Offer is the commercial variant.
+Offer is the commercial variant and belongs to a Product id.
 
-Examples:
+Example:
 
 ```
-Product: Tour 3 đảo bằng cano
-  ├── Offer: Ghép đoàn
-  └── Offer: Cano riêng
+Product: tour-three-islands-cano
+  ├── Offer: shared
+  └── Offer: private
 ```
 
 Each Offer owns:
@@ -55,7 +76,7 @@ Each Offer owns:
 - policy summary;
 - operational fields.
 
-The app no longer models Offer pricing as a multiplier on Product.
+The app does not model Offer pricing as a multiplier on Product and Product no longer duplicates transaction pricing.
 
 ## Availability
 
@@ -81,8 +102,8 @@ Do not convert `unknown` or stale cache into `available`.
 
 A Quote is a priced snapshot for:
 
-- product;
-- offer;
+- stable Product id;
+- Offer;
 - service date;
 - pax;
 - availability snapshot.
@@ -139,11 +160,13 @@ A provider that does not expose live availability must not implement the product
 
 PostgreSQL is the intended transactional source of truth.
 
-Repository contracts now exist for:
+Repository contracts exist for:
 
 - Quote;
 - Booking;
-- idempotency.
+- idempotency;
+- outbox;
+- webhook receipts.
 
 No cache or Map state may implement the production booking ledger.
 
@@ -160,7 +183,6 @@ It does not know:
 
 This boundary is non-negotiable for the Map-first architecture.
 
-
 ## Service date
 
 Travel service dates use the Phu Quoc/Vietnam calendar boundary:
@@ -169,10 +191,9 @@ Travel service dates use the Phu Quoc/Vietnam calendar boundary:
 
 The browser may propose a date, but the server normalizes the transaction date and never accepts a past service date because of timezone drift or a hand-edited URL.
 
-
 ## Prototype Quote continuity
 
-The prototype checkout now carries the Quote identity shown on the checkout page through form submission.
+The prototype checkout carries the Quote identity shown on the checkout page through form submission.
 
 On submit the server:
 

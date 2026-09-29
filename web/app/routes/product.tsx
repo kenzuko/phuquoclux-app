@@ -6,10 +6,9 @@ import {
 } from "react-router";
 import { Brand } from "../components/Brand";
 import {
-  isProductType,
+  getProductBySlug,
   mapEntities,
   money,
-  products,
 } from "../domain/catalog";
 import {
   fromPriceForProduct,
@@ -20,13 +19,12 @@ import { normalizeServiceDate, todayInPhuQuoc } from "../domain/service-date";
 import { IslandMap } from "../components/IslandMap";
 
 export async function loader({ params, context, request }: LoaderFunctionArgs) {
-  const type = params.type;
-  if (!isProductType(type)) {
+  const product = getProductBySlug(params.slug);
+  if (!product) {
     throw new Response("Not found", { status: 404 });
   }
 
-  const product = products[type];
-  const offers = offersForProduct(type);
+  const offers = offersForProduct(product.id);
   const url = new URL(request.url);
   const initialPax = Math.max(
     1,
@@ -36,7 +34,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
     url.searchParams.get("offer") ??
     url.searchParams.get("option") ??
     undefined;
-  const initialOffer = getOffer(type, requestedOffer);
+  const initialOffer = getOffer(product.id, requestedOffer);
 
   if (!initialOffer) {
     throw new Response("No offer configured", { status: 503 });
@@ -50,7 +48,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   return {
     product,
     offers,
-    fromPrice: fromPriceForProduct(type),
+    fromPrice: fromPriceForProduct(product.id),
     defaultDate,
     initialServiceDate,
     initialPax,
@@ -111,8 +109,8 @@ export default function ProductRoute() {
       offer: offerId,
       date: serviceDate,
     });
-    return `/checkout/${product.type}?${query}`;
-  }, [offerId, pax, product.type, serviceDate]);
+    return `/checkout/${product.slug}?${query}`;
+  }, [offerId, pax, product.slug, serviceDate]);
 
   return (
     <div>
@@ -164,7 +162,7 @@ export default function ProductRoute() {
                 </div>
                 <div>
                   <small>Voucher</small>
-                  <b>Trong booking</b>
+                  <b>Trong đặt chỗ</b>
                 </div>
                 <div>
                   <small>Hỗ trợ</small>

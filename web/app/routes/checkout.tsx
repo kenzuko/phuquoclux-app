@@ -7,7 +7,7 @@ import {
   useLoaderData,
 } from "react-router";
 import { Brand } from "../components/Brand";
-import { isProductType, money, products } from "../domain/catalog";
+import { getProductBySlug, money } from "../domain/catalog";
 import { assertQuoteBookable } from "../domain/commerce";
 import { getOffer } from "../domain/offer";
 import { createPrototypeQuote } from "../services/quote.server";
@@ -46,23 +46,22 @@ export async function loader({
   request,
   context,
 }: LoaderFunctionArgs) {
-  const type = params.type;
-  if (!isProductType(type)) {
+  const product = getProductBySlug(params.slug);
+  if (!product) {
     throw new Response("Not found", { status: 404 });
   }
 
   assertPrototypeCommerce(getCommerceMode(context.cloudflare.env));
 
   const selection = parseSelection(request);
-  const product = products[type];
   const quote = await createPrototypeQuote({
-    type,
+    productId: product.id,
     offerId: selection.offerId,
     pax: selection.pax,
     serviceDate: selection.serviceDate,
     requestId: context.cloudflare.requestId,
   });
-  const offer = getOffer(type, quote.offerId);
+  const offer = getOffer(product.id, quote.offerId);
 
   if (!offer) {
     throw new Response("Offer unavailable", { status: 503 });
@@ -83,8 +82,8 @@ export async function action({
   request,
   context,
 }: ActionFunctionArgs) {
-  const type = params.type;
-  if (!isProductType(type)) {
+  const product = getProductBySlug(params.slug);
+  if (!product) {
     throw new Response("Not found", { status: 404 });
   }
 
@@ -99,7 +98,7 @@ export async function action({
   );
 
   const freshQuote = await createPrototypeQuote({
-    type,
+    productId: product.id,
     offerId: selection.offerId,
     pax: selection.pax,
     serviceDate: selection.serviceDate,
@@ -108,7 +107,7 @@ export async function action({
   const quote = reconcilePrototypeQuote(receipt, freshQuote);
   assertQuoteBookable(quote);
 
-  const offer = getOffer(type, quote.offerId);
+  const offer = getOffer(product.id, quote.offerId);
   if (!offer) {
     throw new Response("Offer unavailable", { status: 503 });
   }
@@ -140,7 +139,7 @@ export async function action({
 
   const next = new URLSearchParams({
     demo: "request",
-    type,
+    product: product.id,
     quote: quote.id,
     booking: booking.id,
     state: booking.state,
@@ -174,7 +173,7 @@ export default function CheckoutRoute() {
       <main className="checkout-main">
         <Link
           className="back-link"
-          to={`/product/${product.type}?pax=${pax}&offer=${encodeURIComponent(
+          to={`/product/${product.slug}?pax=${pax}&offer=${encodeURIComponent(
             offer.id,
           )}&date=${quote.serviceDate}`}
         >
@@ -185,7 +184,7 @@ export default function CheckoutRoute() {
           <Form
             className="checkout-form"
             method="post"
-            action={`/checkout/${product.type}?pax=${pax}&offer=${encodeURIComponent(
+            action={`/checkout/${product.slug}?pax=${pax}&offer=${encodeURIComponent(
               offer.id,
             )}&date=${quote.serviceDate}`}
           >

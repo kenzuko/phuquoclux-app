@@ -1,9 +1,10 @@
 import {
   mapEntities,
-  products,
+  productList,
   type MapCategory,
   type MapEntity,
   type Product,
+  type ProductId,
   type ProductType,
 } from "./catalog";
 import { fromPriceForProduct } from "./offer";
@@ -24,6 +25,8 @@ export type DiscoveryQuery = {
 };
 
 export type DiscoveryProductSummary = {
+  productId: ProductId;
+  slug: string;
   type: ProductType;
   name: string;
   fromPrice: number | null;
@@ -79,6 +82,7 @@ function textScore(query: string, fields: string[]) {
 function productScore(product: Product, query: string) {
   return textScore(query, [
     product.name,
+    product.slug,
     product.kicker,
     product.lead,
     product.locationLabel,
@@ -110,7 +114,7 @@ export function discover(query: DiscoveryQuery): DiscoveryResult {
   const search = query.q?.trim() ?? "";
   const category = query.category ?? "all";
 
-  const rankedProducts = Object.values(products)
+  const rankedProducts = productList
     .map((product) => ({ product, score: productScore(product, search) }))
     .filter(({ product, score }) => {
       const categoryOk =
@@ -148,24 +152,27 @@ export function discover(query: DiscoveryQuery): DiscoveryResult {
     rankedEntities.map(({ entity }) => entity.id),
   );
 
-  const productList = rankedProducts
+  const products = rankedProducts
     .filter(({ product }) => {
       if (!query.bounds) return true;
+      if (!product.mapEntityIds.length) return false;
       return product.mapEntityIds.some((entityId) =>
         visibleEntityIds.has(entityId),
       );
     })
     .map(({ product }) => ({
+      productId: product.id,
+      slug: product.slug,
       type: product.type,
       name: product.name,
-      fromPrice: fromPriceForProduct(product.type),
+      fromPrice: fromPriceForProduct(product.id),
       unit: product.unit,
       mapEntityIds: product.mapEntityIds,
     }));
 
   return {
     entities: rankedEntities.map(({ entity }) => entity),
-    products: productList,
+    products,
     meta: {
       generatedAt: new Date().toISOString(),
       availabilityIncluded: false,

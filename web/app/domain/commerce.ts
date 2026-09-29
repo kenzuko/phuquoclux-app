@@ -1,4 +1,4 @@
-import type { ProductType } from "./catalog";
+import type { ProductId, ProductType } from "./catalog";
 
 export type Currency = "VND";
 
@@ -15,7 +15,7 @@ export type AvailabilityState =
   | "unknown";
 
 export type AvailabilityRequest = {
-  productId: string;
+  productId: ProductId;
   offerId: string;
   serviceDate: string;
   pax: number;
@@ -43,7 +43,7 @@ export type Quote = {
   id: string;
   status: QuoteStatus;
   productType: ProductType;
-  productId: string;
+  productId: ProductId;
   offerId: string;
   serviceDate: string;
   pax: number;
@@ -94,7 +94,7 @@ export type Booking = {
   customerId?: string;
   contact: BookingContact;
   productType: ProductType;
-  productId: string;
+  productId: ProductId;
   offerId: string;
   quoteId: string;
   state: BookingState;

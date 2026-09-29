@@ -253,9 +253,9 @@ export default function MapRoute() {
             <div className="map-result-cards">
               {result.products.map((product) => (
                 <Link
-                  key={product.type}
+                  key={product.productId}
                   className="map-result-card"
-                  to={`/product/${product.type}?date=${date}&pax=${pax}`}
+                  to={`/product/${product.slug}?date=${date}&pax=${pax}`}
                 >
                   <span
                     className={`map-result-icon map-result-icon--${product.type}`}

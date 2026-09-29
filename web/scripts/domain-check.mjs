@@ -4,6 +4,9 @@ import {
   canTransitionBooking,
   createBookingTransitionEvent,
 } from "../app/domain/commerce.ts";
+import {
+  getProductBySlug,
+} from "../app/domain/catalog.ts";
 import { discover } from "../app/domain/discovery.ts";
 import {
   fromPriceForProduct,
@@ -19,6 +22,11 @@ import { createPrototypeQuote } from "../app/services/quote.server.ts";
 import {
   getCommerceMode,
 } from "../app/services/commerce-mode.server.ts";
+import {
+  parsePrototypeQuoteReceipt,
+  reconcilePrototypeQuote,
+  serializePrototypeQuoteReceipt,
+} from "../app/services/prototype-quote-receipt.server.ts";
 
 function ok(condition, message) {
   if (!condition) throw new Error(message);
@@ -57,21 +65,34 @@ async function run() {
     "future service date must be preserved",
   );
 
-  const tourOffers = offersForProduct("tour");
-  equal(tourOffers.length, 2, "tour must expose two active offers");
   equal(
-    getOffer("tour", "tour:private")?.price.basis,
+    getProductBySlug("tour-3-dao-cano")?.id,
+    "tour-three-islands-cano",
+    "route slug must resolve to stable product identity",
+  );
+
+  const tourOffers = offersForProduct("tour-three-islands-cano");
+  equal(tourOffers.length, 2, "tour product must expose two active offers");
+  equal(
+    getOffer(
+      "tour-three-islands-cano",
+      "tour-three-islands-cano:private",
+    )?.price.basis,
     "per_booking",
     "private tour must price per booking",
   );
   equal(
-    fromPriceForProduct("tour"),
+    fromPriceForProduct("tour-three-islands-cano"),
     850_000,
     "product from-price must be derived from active offers",
   );
 
   const intent = discover({ q: "cano", category: "all" });
-  equal(intent.products[0]?.type, "tour", "cano intent must rank tour first");
+  equal(
+    intent.products[0]?.productId,
+    "tour-three-islands-cano",
+    "cano intent must rank the tour product first",
+  );
   ok(
     intent.entities.some((entity) => entity.id === "an-thoi"),
     "tour intent must keep its linked An Thoi map entity",
@@ -96,12 +117,17 @@ async function run() {
   );
 
   const sharedQuote = await createPrototypeQuote({
-    type: "tour",
-    offerId: "tour:shared",
+    productId: "tour-three-islands-cano",
+    offerId: "tour-three-islands-cano:shared",
     pax: 3,
     serviceDate: "2026-10-02",
     requestId: "domain-check-shared",
   });
+  equal(
+    sharedQuote.productId,
+    "tour-three-islands-cano",
+    "Quote must carry stable product identity",
+  );
   equal(
     sharedQuote.total.amount,
     2_550_000,
@@ -114,9 +140,37 @@ async function run() {
   );
   assertQuoteBookable(sharedQuote, new Date(sharedQuote.createdAt));
 
+  const receipt = parsePrototypeQuoteReceipt(
+    serializePrototypeQuoteReceipt(sharedQuote),
+    new Date(sharedQuote.createdAt),
+  );
+  const reconciled = reconcilePrototypeQuote(receipt, sharedQuote);
+  equal(
+    reconciled.id,
+    sharedQuote.id,
+    "checkout must retain the Quote identity shown to the traveler",
+  );
+
+  let changedQuoteCaught = false;
+  try {
+    reconcilePrototypeQuote(receipt, {
+      ...sharedQuote,
+      total: {
+        ...sharedQuote.total,
+        amount: sharedQuote.total.amount + 1,
+      },
+    });
+  } catch {
+    changedQuoteCaught = true;
+  }
+  ok(
+    changedQuoteCaught,
+    "changed authoritative price must invalidate the displayed Quote",
+  );
+
   const privateQuote = await createPrototypeQuote({
-    type: "tour",
-    offerId: "tour:private",
+    productId: "tour-three-islands-cano",
+    offerId: "tour-three-islands-cano:private",
     pax: 6,
     serviceDate: "2026-10-02",
     requestId: "domain-check-private",

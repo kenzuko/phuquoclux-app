@@ -1,9 +1,10 @@
 import type { Quote } from "../domain/commerce";
+import { isProductId } from "../domain/catalog";
 
 export type PrototypeQuoteReceipt = {
   id: string;
   productType: Quote["productType"];
-  productId: string;
+  productId: Quote["productId"];
   offerId: string;
   serviceDate: string;
   pax: number;
@@ -58,6 +59,7 @@ export function parsePrototypeQuoteReceipt(
     !uuidLike.test(receipt.id) ||
     !["tour", "ticket", "transfer"].includes(String(receipt.productType)) ||
     typeof receipt.productId !== "string" ||
+    !isProductId(receipt.productId) ||
     typeof receipt.offerId !== "string" ||
     typeof receipt.serviceDate !== "string" ||
     typeof receipt.pax !== "number" ||

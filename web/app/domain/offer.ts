@@ -1,5 +1,5 @@
 import type { Currency } from "./commerce";
-import type { ProductType } from "./catalog";
+import type { ProductId } from "./catalog";
 
 export type PriceBasis = "per_person" | "per_booking";
 
@@ -23,7 +23,7 @@ export type OperationalField =
 
 export type Offer = {
   id: string;
-  productType: ProductType;
+  productId: ProductId;
   label: string;
   status: OfferStatus;
   providerId: string;
@@ -43,8 +43,8 @@ export type Offer = {
 
 const offers: Offer[] = [
   {
-    id: "tour:shared",
-    productType: "tour",
+    id: "tour-three-islands-cano:shared",
+    productId: "tour-three-islands-cano",
     label: "Ghép đoàn",
     status: "active",
     providerId: "jotrip-manual-request",
@@ -62,8 +62,8 @@ const offers: Offer[] = [
     operationalFields: ["hotel_or_pickup", "guest_note"],
   },
   {
-    id: "tour:private",
-    productType: "tour",
+    id: "tour-three-islands-cano:private",
+    productId: "tour-three-islands-cano",
     label: "Cano riêng",
     status: "active",
     providerId: "jotrip-manual-request",
@@ -81,8 +81,8 @@ const offers: Offer[] = [
     operationalFields: ["hotel_or_pickup", "guest_note"],
   },
   {
-    id: "ticket:adult",
-    productType: "ticket",
+    id: "hon-thom-cable-car:adult",
+    productId: "hon-thom-cable-car",
     label: "Người lớn",
     status: "active",
     providerId: "jotrip-manual-request",
@@ -100,8 +100,8 @@ const offers: Offer[] = [
     operationalFields: ["guest_note"],
   },
   {
-    id: "ticket:child",
-    productType: "ticket",
+    id: "hon-thom-cable-car:child",
+    productId: "hon-thom-cable-car",
     label: "Trẻ em",
     status: "active",
     providerId: "jotrip-manual-request",
@@ -119,8 +119,8 @@ const offers: Offer[] = [
     operationalFields: ["guest_note"],
   },
   {
-    id: "transfer:sedan",
-    productType: "transfer",
+    id: "airport-private-transfer:sedan",
+    productId: "airport-private-transfer",
     label: "Sedan 4 chỗ",
     status: "active",
     providerId: "jotrip-manual-request",
@@ -138,8 +138,8 @@ const offers: Offer[] = [
     operationalFields: ["hotel_or_pickup", "flight_number", "guest_note"],
   },
   {
-    id: "transfer:suv",
-    productType: "transfer",
+    id: "airport-private-transfer:suv",
+    productId: "airport-private-transfer",
     label: "SUV 7 chỗ",
     status: "active",
     providerId: "jotrip-manual-request",
@@ -157,8 +157,8 @@ const offers: Offer[] = [
     operationalFields: ["hotel_or_pickup", "flight_number", "guest_note"],
   },
   {
-    id: "transfer:van",
-    productType: "transfer",
+    id: "airport-private-transfer:van",
+    productId: "airport-private-transfer",
     label: "Van 16 chỗ",
     status: "active",
     providerId: "jotrip-manual-request",
@@ -177,22 +177,24 @@ const offers: Offer[] = [
   },
 ];
 
-export function offersForProduct(type: ProductType) {
+export function offersForProduct(productId: ProductId) {
   return offers.filter(
-    (offer) => offer.productType === type && offer.status === "active",
+    (offer) =>
+      offer.productId === productId &&
+      offer.status === "active",
   );
 }
 
-export function getOffer(type: ProductType, offerId?: string) {
-  const productOffers = offersForProduct(type);
+export function getOffer(productId: ProductId, offerId?: string) {
+  const productOffers = offersForProduct(productId);
   return (
     productOffers.find((offer) => offer.id === offerId) ??
     productOffers[0]
   );
 }
 
-export function fromPriceForProduct(type: ProductType) {
-  const active = offersForProduct(type);
+export function fromPriceForProduct(productId: ProductId) {
+  const active = offersForProduct(productId);
   if (!active.length) return null;
 
   return active.reduce(

@@ -3,6 +3,7 @@
 
 create table if not exists products (
   id text primary key,
+  slug text not null unique,
   product_type text not null
     check (product_type in ('tour', 'ticket', 'transfer')),
   name text not null,
@@ -206,6 +207,9 @@ create table if not exists idempotency_keys (
   created_at timestamptz not null default now(),
   expires_at timestamptz
 );
+
+comment on table products is
+  'Stable product identity. Slug is public-facing and may change without changing id.';
 
 comment on table bookings is
   'Authoritative booking ledger. Cache/Map state must never replace this table.';

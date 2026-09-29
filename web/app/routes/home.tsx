@@ -5,11 +5,13 @@ import { Brand } from "../components/Brand";
 import { IslandMap } from "../components/IslandMap";
 import {
   mapEntities,
+  mapVerificationLabel,
   money,
-  products,
+  productList,
+  productPath,
   type MapCategory,
   type MapEntity,
-  mapVerificationLabel,
+  type ProductId,
 } from "../domain/catalog";
 import type { BoundingBox } from "../domain/discovery";
 import { todayInPhuQuoc } from "../domain/service-date";
@@ -139,9 +141,9 @@ export default function HomeRoute() {
               <p className="section-kicker">DỊCH VỤ NHANH</p>
               <h2>Bạn đang cần gì?</h2>
               <div className="service-grid">
-                <Service href="/product/transfer" icon="🚗" title="Đón sân bay" copy="Xe riêng, giá rõ ràng" />
-                <Service href="/product/ticket" icon="🎟" title="Vé Hòn Thơm" copy="Chọn ngày, nhận voucher" />
-                <Service href="/product/tour" icon="🛥" title="Tour hôm nay" copy="Xem tour và lựa chọn" />
+                <Service href="/product/xe-san-bay-rieng" icon="🚗" title="Đón sân bay" copy="Xe riêng, giá rõ ràng" />
+                <Service href="/product/ve-cap-treo-hon-thom" icon="🎟" title="Vé Hòn Thơm" copy="Chọn ngày, nhận voucher" />
+                <Service href="/product/tour-3-dao-cano" icon="🛥" title="Tour hôm nay" copy="Xem tour và lựa chọn" />
                 <Service href="/map" icon="⌖" title="Mở bản đồ" copy="Khám phá theo khu vực" />
               </div>
             </section>
@@ -150,13 +152,13 @@ export default function HomeRoute() {
               <p className="section-kicker">GỢI Ý Ở PHÚ QUỐC</p>
               <h2>Dễ đặt, dễ đi</h2>
               <div className="product-list">
-                {Object.values(products)
+                {productList
                   .filter(
                     (product) =>
                       category === "all" || product.type === category,
                   )
                   .map((product) => (
-                  <article className="product-card" key={product.type}>
+                  <article className="product-card" key={product.id}>
                     <div className={`product-art product-art--${product.type}`}>
                       <span>{product.type === "tour" ? "◌" : product.type === "ticket" ? "⌁" : "→"}</span>
                     </div>
@@ -167,9 +169,9 @@ export default function HomeRoute() {
                       <div className="product-foot">
                         <div>
                           <small>Từ</small>
-                          <b>{displayFromPrice(product.type)}</b>
+                          <b>{displayFromPrice(product.id)}</b>
                         </div>
-                        <Link to={`/product/${product.type}`}>Xem</Link>
+                        <Link to={productPath(product)}>Xem</Link>
                       </div>
                     </div>
                   </article>
@@ -237,7 +239,7 @@ function MapEntitySheet({ entity, onClose }: { entity: MapEntity; onClose: () =>
   );
 }
 
-function displayFromPrice(type: keyof typeof products) {
-  const amount = fromPriceForProduct(type);
+function displayFromPrice(productId: ProductId) {
+  const amount = fromPriceForProduct(productId);
   return amount === null ? "Liên hệ" : money(amount);
 }

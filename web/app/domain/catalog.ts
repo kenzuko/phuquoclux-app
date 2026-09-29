@@ -1,6 +1,10 @@
 export type ProductType = "tour" | "ticket" | "transfer";
-export type MapCategory = ProductType | "place";
+export type ProductId =
+  | "tour-three-islands-cano"
+  | "hon-thom-cable-car"
+  | "airport-private-transfer";
 
+export type MapCategory = ProductType | "place";
 export type MapVerification = "verified" | "reference" | "demo";
 
 export type MapEntity = {
@@ -20,6 +24,8 @@ export type MapEntity = {
 };
 
 export type Product = {
+  id: ProductId;
+  slug: string;
   type: ProductType;
   name: string;
   kicker: string;
@@ -57,7 +63,7 @@ export const mapEntities: MapEntity[] = [
     icon: "🛥",
     kicker: "TOUR · NAM ĐẢO",
     copy: "Điểm xuất phát chính cho trải nghiệm đảo và cano phía Nam.",
-    href: "/product/tour",
+    href: "/product/tour-3-dao-cano",
     verification: "verified",
     priority: 100,
     minZoom: 8.8,
@@ -71,7 +77,7 @@ export const mapEntities: MapEntity[] = [
     category: "place",
     icon: "⌖",
     kicker: "BẮC ĐẢO",
-    copy: "Khu vực tham quan phía Bắc. Chỉ gắn sản phẩm khi vị trí và offer đã được xác minh.",
+    copy: "Khu vực tham quan phía Bắc. Chỉ gắn sản phẩm khi vị trí và dịch vụ đã được xác minh.",
     verification: "reference",
     priority: 72,
     minZoom: 9.2,
@@ -85,16 +91,18 @@ export const mapEntities: MapEntity[] = [
     category: "transfer",
     icon: "🚗",
     kicker: "TRANSFER",
-    copy: "Vị trí tham chiếu của sân bay, không phải điểm đón cụ thể cho từng booking.",
-    href: "/product/transfer",
+    copy: "Vị trí tham chiếu của sân bay, không phải điểm đón cụ thể cho từng đặt chỗ.",
+    href: "/product/xe-san-bay-rieng",
     verification: "reference",
     priority: 98,
     minZoom: 8.8,
   },
 ];
 
-export const products: Record<ProductType, Product> = {
-  tour: {
+export const products: Record<ProductId, Product> = {
+  "tour-three-islands-cano": {
+    id: "tour-three-islands-cano",
+    slug: "tour-3-dao-cano",
     type: "tour",
     name: "Tour 3 đảo bằng cano",
     kicker: "NAM ĐẢO · 7 GIỜ",
@@ -115,7 +123,9 @@ export const products: Record<ProductType, Product> = {
     ],
     mapEntityIds: ["an-thoi"],
   },
-  ticket: {
+  "hon-thom-cable-car": {
+    id: "hon-thom-cable-car",
+    slug: "ve-cap-treo-hon-thom",
     type: "ticket",
     name: "Vé cáp treo Hòn Thơm",
     kicker: "HÒN THƠM · VÉ ĐIỆN TỬ",
@@ -133,7 +143,9 @@ export const products: Record<ProductType, Product> = {
     ],
     mapEntityIds: [],
   },
-  transfer: {
+  "airport-private-transfer": {
+    id: "airport-private-transfer",
+    slug: "xe-san-bay-rieng",
     type: "transfer",
     name: "Sân bay → khách sạn",
     kicker: "PQC · PRIVATE TRANSFER",
@@ -153,8 +165,23 @@ export const products: Record<ProductType, Product> = {
   },
 };
 
-export function isProductType(value: string | undefined): value is ProductType {
-  return value === "tour" || value === "ticket" || value === "transfer";
+export const productList = Object.values(products);
+
+export function isProductId(value: string | undefined): value is ProductId {
+  return Boolean(value && value in products);
+}
+
+export function getProductById(value: string | undefined) {
+  return isProductId(value) ? products[value] : undefined;
+}
+
+export function getProductBySlug(slug: string | undefined) {
+  if (!slug) return undefined;
+  return productList.find((product) => product.slug === slug);
+}
+
+export function productPath(product: Product) {
+  return `/product/${product.slug}`;
 }
 
 export function money(value: number) {
