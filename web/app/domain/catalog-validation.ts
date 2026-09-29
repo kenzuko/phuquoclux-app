@@ -128,6 +128,16 @@ export function validateCatalog(): CatalogIssue[] {
         });
       }
 
+      for (const requiredField of offer.requiredOperationalFields ?? []) {
+        if (!offer.operationalFields.includes(requiredField)) {
+          issues.push({
+            code: "OFFER_REQUIRED_FIELD_NOT_DECLARED",
+            message:
+              `${offer.id} requires ${requiredField} but does not expose it`,
+          });
+        }
+      }
+
       if (
         offer.constraints?.maxPax !== undefined &&
         (
