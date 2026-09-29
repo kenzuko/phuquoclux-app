@@ -2,6 +2,13 @@ import { Link, useSearchParams } from "react-router";
 import { Brand } from "../components/Brand";
 import { BottomNav } from "../components/BottomNav";
 
+export function meta() {
+  return [
+    { title: "Đặt chỗ của tôi | PhuQuocLux" },
+    { name: "robots", content: "noindex,nofollow" },
+  ];
+}
+
 export default function BookingsRoute() {
   const [params] = useSearchParams();
   const demoRequest = params.get("demo") === "request";
