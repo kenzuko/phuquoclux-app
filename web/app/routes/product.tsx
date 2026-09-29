@@ -27,6 +27,7 @@ import { normalizeServiceDate, todayInPhuQuoc } from "../domain/service-date";
 import { mapUrl, normalizePax } from "../domain/trip-intent";
 import { safeReturnTo } from "../domain/navigation";
 import { IslandMap } from "../components/IslandMap";
+import { ProductVisual } from "../components/ProductVisual";
 
 export async function loader({ params, context, request }: LoaderFunctionArgs) {
   const product = getProductBySlug(params.slug);
@@ -203,9 +204,7 @@ export default function ProductRoute() {
               ))}
             </div>
           </div>
-          <div className={`product-hero-art product-hero-art--${product.type}`}>
-            <span>{product.locationLabel}</span>
-          </div>
+          <ProductVisual product={product} mode="hero" />
         </section>
 
         <section className="detail-grid">
