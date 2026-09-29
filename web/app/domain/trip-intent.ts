@@ -51,3 +51,9 @@ export function mapUrl(
   appendTripIntent(params, intent);
   return `/map?${params.toString()}`;
 }
+
+
+export function homeUrl(intent: TripIntent) {
+  const params = appendTripIntent(new URLSearchParams(), intent);
+  return `/?${params.toString()}`;
+}
