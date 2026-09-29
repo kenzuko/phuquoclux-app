@@ -11,6 +11,7 @@ import { Brand } from "../components/Brand";
 import { IslandMap } from "../components/IslandMap";
 import type { MapCategory, MapEntity } from "../domain/catalog";
 import { money } from "../domain/catalog";
+import { normalizeServiceDate } from "../domain/service-date";
 import {
   discover,
   type BoundingBox,
@@ -64,11 +65,18 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const category = parseCategory(url.searchParams.get("category"));
   const q = url.searchParams.get("q") ?? undefined;
   const bounds = parseBounds(url.searchParams);
+  const date = normalizeServiceDate(url.searchParams.get("date") ?? undefined);
+  const pax = Math.max(
+    1,
+    Math.min(20, Number(url.searchParams.get("pax")) || 2),
+  );
 
   return {
-    result: discover({ category, q, bounds }),
+    result: discover({ category, q, bounds, date, pax }),
     category,
     q: q ?? "",
+    date,
+    pax,
     hasAreaSearch: Boolean(bounds),
     mapStyleUrl:
       context.cloudflare.env.MAP_STYLE_URL ??
@@ -77,7 +85,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 }
 
 export default function MapRoute() {
-  const { result, category, q, hasAreaSearch, mapStyleUrl } =
+  const { result, category, q, date, pax, hasAreaSearch, mapStyleUrl } =
     useLoaderData<typeof loader>();
   const [selected, setSelected] = useState<MapEntity | null>(null);
   const [viewport, setViewport] = useState<BoundingBox | null>(null);
@@ -123,6 +131,8 @@ export default function MapRoute() {
           {category !== "all" ? (
             <input type="hidden" name="category" value={category} />
           ) : null}
+          <input type="hidden" name="date" value={date} />
+          <input type="hidden" name="pax" value={pax} />
           <span>⌕</span>
           <input
             key={q}
@@ -221,7 +231,7 @@ export default function MapRoute() {
                 <Link
                   key={product.type}
                   className="map-result-card"
-                  to={`/product/${product.type}`}
+                  to={`/product/${product.type}?date=${date}&pax=${pax}`}
                 >
                   <span
                     className={`map-result-icon map-result-icon--${product.type}`}
