@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { Link, type LoaderFunctionArgs, useLoaderData } from "react-router";
+import { Form, Link, type LoaderFunctionArgs, useLoaderData } from "react-router";
+import { BottomNav } from "../components/BottomNav";
 import { Brand } from "../components/Brand";
 import { IslandMap } from "../components/IslandMap";
 import {
@@ -52,17 +53,17 @@ export default function HomeRoute() {
           </h1>
         </section>
 
-        <section className="search-panel">
+        <Form className="search-panel" method="get" action="/map">
           <label className="search-box">
             <span>⌕</span>
-            <input placeholder="Tour, vé, xe, khách sạn..." />
+            <input name="q" placeholder="Tour, vé, xe, khách sạn..." />
           </label>
           <div className="trip-controls">
             <button type="button"><small>Ngày đi</small><b>Hôm nay</b></button>
             <button type="button"><small>Số khách</small><b>2 khách</b></button>
             <button className="primary-button" type="button">Tìm kiếm</button>
           </div>
-        </section>
+        </Form>
 
         <section className="discovery-grid">
           <div className="discovery-content">
@@ -144,6 +145,7 @@ export default function HomeRoute() {
           </aside>
         </section>
       </main>
+      <BottomNav />
     </div>
   );
 }
