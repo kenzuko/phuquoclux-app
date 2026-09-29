@@ -10,6 +10,7 @@ import { Brand } from "../components/Brand";
 import { getProductBySlug, money, type ProductId } from "../domain/catalog";
 import { assertQuoteBookable } from "../domain/commerce";
 import { getOffer, type Offer } from "../domain/offer";
+import { formatServiceDate } from "../domain/service-date";
 import {
   appendUnitQuantities,
   unitQuantitiesFromSearch,
@@ -305,7 +306,7 @@ export default function CheckoutRoute() {
               </div>
               <div>
                 <span>Ngày sử dụng</span>
-                <b>{quote.serviceDate}</b>
+                <b>{formatServiceDate(quote.serviceDate)}</b>
               </div>
               <div>
                 <span>Tổng số khách</span>
