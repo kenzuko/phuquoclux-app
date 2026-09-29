@@ -70,6 +70,13 @@ export function validateCatalog(): CatalogIssue[] {
       });
     }
 
+    if (!product.fulfillmentSummary.trim()) {
+      issues.push({
+        code: "PRODUCT_FULFILLMENT_MISSING",
+        message: `${product.id} fulfillment summary is required`,
+      });
+    }
+
     if (product.media.kind === "photo") {
       if (!product.media.src.startsWith("/")) {
         issues.push({
