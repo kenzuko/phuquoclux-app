@@ -7,6 +7,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useNavigation,
   useRouteError,
 } from "react-router";
 import "./cloudflare-context";
@@ -43,7 +44,21 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const navigation = useNavigation();
+  const busy = navigation.state !== "idle";
+
+  return (
+    <>
+      {busy ? (
+        <div
+          className="navigation-progress"
+          role="progressbar"
+          aria-label="Đang tải"
+        />
+      ) : null}
+      <Outlet />
+    </>
+  );
 }
 
 export function ErrorBoundary() {
