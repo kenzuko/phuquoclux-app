@@ -8,7 +8,7 @@ import {
   mapVerificationLabel,
   money,
   productList,
-  productPath,
+  getProductById,
   productsForMapEntity,
   type MapCategory,
   type MapEntity,
@@ -17,6 +17,11 @@ import {
 import type { BoundingBox } from "../domain/discovery";
 import { todayInPhuQuoc } from "../domain/service-date";
 import { fromPriceForProduct } from "../domain/offer";
+import {
+  mapUrl,
+  productUrl,
+  type TripIntent,
+} from "../domain/trip-intent";
 
 export async function loader({ context }: LoaderFunctionArgs) {
   return {
@@ -38,12 +43,19 @@ const filters: Array<{ id: "all" | MapCategory; label: string }> = [
 export default function HomeRoute() {
   const { mapStyleUrl, today } = useLoaderData<typeof loader>();
   const [category, setCategory] = useState<"all" | MapCategory>("all");
+  const [serviceDate, setServiceDate] = useState(today);
+  const [pax, setPax] = useState(2);
   const [selected, setSelected] = useState<MapEntity | null>(null);
   const [desktopViewport, setDesktopViewport] = useState<BoundingBox | null>(null);
   const onSelect = useCallback((entity: MapEntity) => setSelected(entity), []);
   const onDesktopViewportChange = useCallback(
     (bounds: BoundingBox) => setDesktopViewport(bounds),
     [],
+  );
+
+  const intent = useMemo<TripIntent>(
+    () => ({ date: serviceDate, pax }),
+    [pax, serviceDate],
   );
 
   const mapAreaUrl = useMemo(() => {
@@ -55,9 +67,8 @@ export default function HomeRoute() {
       params.set("east", desktopViewport.east.toFixed(5));
       params.set("north", desktopViewport.north.toFixed(5));
     }
-    const query = params.toString();
-    return query ? `/map?${query}` : "/map";
-  }, [category, desktopViewport]);
+    return mapUrl(intent, params);
+  }, [category, desktopViewport, intent]);
 
   return (
     <div className="page-shell">
@@ -89,11 +100,21 @@ export default function HomeRoute() {
           <div className="trip-controls">
             <label className="trip-field">
               <small>Ngày đi</small>
-              <input type="date" name="date" defaultValue={today} min={today} />
+              <input
+                type="date"
+                name="date"
+                value={serviceDate}
+                min={today}
+                onChange={(event) => setServiceDate(event.target.value)}
+              />
             </label>
             <label className="trip-field">
               <small>Số khách</small>
-              <select name="pax" defaultValue="2">
+              <select
+                name="pax"
+                value={pax}
+                onChange={(event) => setPax(Number(event.target.value))}
+              >
                 {Array.from({ length: 10 }, (_, index) => index + 1).map(
                   (value) => (
                     <option key={value} value={value}>
@@ -135,17 +156,43 @@ export default function HomeRoute() {
                 onSelect={onSelect}
                 interaction="embedded"
               />
-              {selected ? <MapEntitySheet entity={selected} onClose={() => setSelected(null)} /> : null}
+              {selected ? (
+                <MapEntitySheet
+                  entity={selected}
+                  intent={intent}
+                  onClose={() => setSelected(null)}
+                />
+              ) : null}
             </div>
 
             <section className="quick-section">
               <p className="section-kicker">DỊCH VỤ NHANH</p>
               <h2>Bạn đang cần gì?</h2>
               <div className="service-grid">
-                <Service href="/product/xe-san-bay-rieng" icon="🚗" title="Đón sân bay" copy="Xe riêng, giá rõ ràng" />
-                <Service href="/product/ve-cap-treo-hon-thom" icon="🎟" title="Vé Hòn Thơm" copy="Chọn ngày, nhận voucher" />
-                <Service href="/product/tour-3-dao-cano" icon="🛥" title="Tour hôm nay" copy="Xem tour và lựa chọn" />
-                <Service href="/map" icon="⌖" title="Mở bản đồ" copy="Khám phá theo khu vực" />
+                <Service
+                  href={quickProductUrl("airport-private-transfer", intent)}
+                  icon="🚗"
+                  title="Đón sân bay"
+                  copy="Xe riêng, giá rõ ràng"
+                />
+                <Service
+                  href={quickProductUrl("hon-thom-cable-car", intent)}
+                  icon="🎟"
+                  title="Vé Hòn Thơm"
+                  copy="Chọn ngày, nhận voucher"
+                />
+                <Service
+                  href={quickProductUrl("tour-three-islands-cano", intent)}
+                  icon="🛥"
+                  title="Tour hôm nay"
+                  copy="Xem tour và lựa chọn"
+                />
+                <Service
+                  href={mapUrl(intent)}
+                  icon="⌖"
+                  title="Mở bản đồ"
+                  copy="Khám phá theo khu vực"
+                />
               </div>
             </section>
 
@@ -172,7 +219,7 @@ export default function HomeRoute() {
                           <small>Từ</small>
                           <b>{displayFromPrice(product.id)}</b>
                         </div>
-                        <Link to={productPath(product)}>Xem</Link>
+                        <Link to={productUrl(product, intent)}>Xem</Link>
                       </div>
                     </div>
                   </article>
@@ -205,7 +252,13 @@ export default function HomeRoute() {
                 onViewportChange={onDesktopViewportChange}
                 interaction="full"
               />
-              {selected ? <MapEntitySheet entity={selected} onClose={() => setSelected(null)} /> : null}
+              {selected ? (
+                <MapEntitySheet
+                  entity={selected}
+                  intent={intent}
+                  onClose={() => setSelected(null)}
+                />
+              ) : null}
             </div>
           </aside>
         </section>
@@ -225,7 +278,15 @@ function Service({ href, icon, title, copy }: { href: string; icon: string; titl
   );
 }
 
-function MapEntitySheet({ entity, onClose }: { entity: MapEntity; onClose: () => void }) {
+function MapEntitySheet({
+  entity,
+  intent,
+  onClose,
+}: {
+  entity: MapEntity;
+  intent: TripIntent;
+  onClose: () => void;
+}) {
   return (
     <div className="entity-sheet">
       <button className="entity-close" type="button" onClick={onClose}>×</button>
@@ -235,7 +296,7 @@ function MapEntitySheet({ entity, onClose }: { entity: MapEntity; onClose: () =>
       </span>
       <strong>{entity.name}</strong>
       <p>{entity.copy}</p>
-      <RelatedProducts entity={entity} />
+      <RelatedProducts entity={entity} intent={intent} />
     </div>
   );
 }
@@ -245,7 +306,13 @@ function displayFromPrice(productId: ProductId) {
   return amount === null ? "Liên hệ" : money(amount);
 }
 
-function RelatedProducts({ entity }: { entity: MapEntity }) {
+function RelatedProducts({
+  entity,
+  intent,
+}: {
+  entity: MapEntity;
+  intent: TripIntent;
+}) {
   const related = productsForMapEntity(entity.id);
 
   if (!related.length) return null;
@@ -253,10 +320,16 @@ function RelatedProducts({ entity }: { entity: MapEntity }) {
   return (
     <div className="entity-related-products">
       {related.slice(0, 3).map((product) => (
-        <Link key={product.id} to={productPath(product)}>
+        <Link key={product.id} to={productUrl(product, intent)}>
           {product.name}
         </Link>
       ))}
     </div>
   );
+}
+
+
+function quickProductUrl(productId: ProductId, intent: TripIntent) {
+  const product = getProductById(productId);
+  return product ? productUrl(product, intent) : mapUrl(intent);
 }
