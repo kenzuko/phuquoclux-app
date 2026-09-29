@@ -183,7 +183,10 @@ export function IslandMap({
           const el = document.createElement("button");
           el.type = "button";
           el.className = `map-pin map-pin--${entity.category} map-pin--${entity.verification}`;
-          el.textContent = entity.icon;
+          const icon = document.createElement("span");
+          icon.className = "map-pin-icon";
+          icon.textContent = entity.icon;
+          el.append(icon);
           el.title = entity.name;
           el.setAttribute("aria-label", entity.name);
           el.addEventListener("click", () => onSelect(entity));
