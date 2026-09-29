@@ -179,8 +179,7 @@ export async function action({
   const next = new URLSearchParams({
     demo: "request",
     product: product.id,
-    quote: quote.id,
-    booking: booking.id,
+    date: booking.serviceDate,
     state: booking.state,
   });
 
