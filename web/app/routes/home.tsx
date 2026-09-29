@@ -27,7 +27,7 @@ const filters: Array<{ id: "all" | MapCategory; label: string }> = [
   { id: "tour", label: "Tour" },
   { id: "ticket", label: "Vé" },
   { id: "transfer", label: "Xe" },
-  { id: "place", label: "Ăn uống" },
+  { id: "place", label: "Địa điểm" },
 ];
 
 export default function HomeRoute() {
@@ -59,7 +59,7 @@ export default function HomeRoute() {
       <header className="topbar">
         <Brand />
         <div className="top-actions">
-          <button className="icon-button" type="button">VI</button>
+          <span className="icon-button language-indicator" aria-label="Ngôn ngữ hiện tại: Tiếng Việt">VI</span>
           <Link className="header-link" to="/bookings">Đặt chỗ</Link>
         </div>
       </header>
@@ -79,7 +79,7 @@ export default function HomeRoute() {
           ) : null}
           <label className="search-box">
             <span>⌕</span>
-            <input name="q" placeholder="Tour, vé, xe, khách sạn..." />
+            <input name="q" placeholder="Tour, vé, xe, địa điểm..." />
           </label>
           <div className="trip-controls">
             <label className="trip-field">
@@ -140,7 +140,7 @@ export default function HomeRoute() {
                 <Service href="/product/transfer" icon="🚗" title="Đón sân bay" copy="Xe riêng, giá rõ ràng" />
                 <Service href="/product/ticket" icon="🎟" title="Vé Hòn Thơm" copy="Chọn ngày, nhận voucher" />
                 <Service href="/product/tour" icon="🛥" title="Tour hôm nay" copy="Xem tour và lựa chọn" />
-                <Service href="#" icon="⛴" title="Tàu & phà" copy="Lịch chạy theo ngày" />
+                <Service href="/map" icon="⌖" title="Mở bản đồ" copy="Khám phá theo khu vực" />
               </div>
             </section>
 
@@ -171,10 +171,9 @@ export default function HomeRoute() {
                 ))}
                 {category === "place" ? (
                   <div className="category-placeholder">
-                    <b>Ăn uống sẽ là discovery-first</b>
+                    <b>Địa điểm sẽ là discovery-first</b>
                     <span>
-                      Chỉ đưa nhà hàng/địa điểm lên khi dữ liệu vị trí và trạng thái
-                      hoạt động đủ tin cậy.
+                      Chỉ đưa điểm lên khi vị trí và trạng thái hoạt động đủ tin cậy.
                     </span>
                   </div>
                 ) : null}
