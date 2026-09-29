@@ -15,6 +15,7 @@ export type PrototypeQuoteInput = {
   offerId?: string;
   pax: number;
   serviceDate?: string;
+  requestId?: string;
 };
 
 function vnd(amount: number) {
@@ -51,12 +52,16 @@ export async function createPrototypeQuote(
   const productId = `product:${input.type}`;
   const totalAmount = offer.price.amount * quantity;
 
-  const availability = await checkAvailabilityForOffer(offer, {
-    productId,
-    offerId: offer.id,
-    serviceDate,
-    pax,
-  });
+  const availability = await checkAvailabilityForOffer(
+    offer,
+    {
+      productId,
+      offerId: offer.id,
+      serviceDate,
+      pax,
+    },
+    input.requestId,
+  );
 
   const priceExpiry = new Date(now.getTime() + 15 * 60 * 1000).toISOString();
   const expiresAt = earlierExpiry(priceExpiry, availability.expiresAt);
