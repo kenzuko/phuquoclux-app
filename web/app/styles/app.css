@@ -121,3 +121,5 @@
 .trip-empty-actions .secondary{background:#fff;color:var(--green-800);border:1px solid var(--line)}
 
 .map-result-card .map-result-location{color:#8a5a18;margin-top:3px;font-size:7px;font-weight:800}
+
+.product-map-link{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;min-height:38px;padding:0 12px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--green-800);text-decoration:none;font-size:9px;font-weight:850}
