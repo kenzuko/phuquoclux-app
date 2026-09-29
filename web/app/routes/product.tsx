@@ -124,6 +124,7 @@ export default function ProductRoute() {
                     styleUrl={mapStyleUrl}
                     category="all"
                     onSelect={() => undefined}
+                    interaction="embedded"
                   />
                 </div>
               ) : (
