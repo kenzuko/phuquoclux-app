@@ -49,3 +49,8 @@
 .map-verification-note{margin-top:15px;border:1px dashed #c7d1c4;background:var(--surface);border-radius:16px;padding:16px}
 .map-verification-note b{font-size:11px}
 .map-verification-note p{margin:5px 0 0;color:var(--muted);font-size:10px;line-height:1.5}
+
+.category-placeholder{border:1px dashed #c7d1c4;background:var(--surface);border-radius:15px;padding:14px}
+.category-placeholder b,.category-placeholder span{display:block}
+.category-placeholder b{font-size:11px}
+.category-placeholder span{margin-top:4px;color:var(--muted);font-size:9px;line-height:1.45}
