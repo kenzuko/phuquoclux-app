@@ -159,3 +159,12 @@ It does not know:
 - inventory ledger.
 
 This boundary is non-negotiable for the Map-first architecture.
+
+
+## Service date
+
+Travel service dates use the Phu Quoc/Vietnam calendar boundary:
+
+`Asia/Ho_Chi_Minh`
+
+The browser may propose a date, but the server normalizes the transaction date and never accepts a past service date because of timezone drift or a hand-edited URL.
