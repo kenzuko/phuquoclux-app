@@ -11,7 +11,11 @@ import {
   money,
   products,
 } from "../domain/catalog";
-import { getOffer, offersForProduct } from "../domain/offer";
+import {
+  fromPriceForProduct,
+  getOffer,
+  offersForProduct,
+} from "../domain/offer";
 import { normalizeServiceDate, todayInPhuQuoc } from "../domain/service-date";
 import { IslandMap } from "../components/IslandMap";
 
@@ -46,6 +50,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
   return {
     product,
     offers,
+    fromPrice: fromPriceForProduct(type),
     defaultDate,
     initialServiceDate,
     initialPax,
@@ -65,6 +70,7 @@ export default function ProductRoute() {
   const {
     product,
     offers,
+    fromPrice,
     entities,
     mapStyleUrl,
     defaultDate,
@@ -136,7 +142,7 @@ export default function ProductRoute() {
                 </div>
                 <div>
                   <small>Giá từ</small>
-                  <b>{money(product.fromPrice)}</b>
+                  <b>{fromPrice === null ? "Liên hệ" : money(fromPrice)}</b>
                 </div>
                 <div>
                   <small>Voucher</small>
@@ -202,7 +208,7 @@ export default function ProductRoute() {
           <aside className="booking-card">
             <div className="booking-price">
               <small>Từ</small>
-              <strong>{money(product.fromPrice)}</strong>
+              <strong>{fromPrice === null ? "Liên hệ" : money(fromPrice)}</strong>
               <span>{product.unit}</span>
             </div>
 
