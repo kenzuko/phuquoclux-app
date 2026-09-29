@@ -22,6 +22,19 @@ export type MapEntity = {
   minZoom: number;
 };
 
+export type ProductMedia =
+  | {
+      kind: "placeholder";
+      alt: string;
+    }
+  | {
+      kind: "photo";
+      src: string;
+      alt: string;
+      credit?: string;
+      sourceUrl?: string;
+    };
+
 export type Product = {
   id: ProductId;
   slug: string;
@@ -29,6 +42,7 @@ export type Product = {
   name: string;
   kicker: string;
   lead: string;
+  media: ProductMedia;
   unit: string;
   duration?: string;
   locationLabel: string;
@@ -104,6 +118,10 @@ export const products: Record<ProductId, Product> = {
     name: "Tour 3 đảo bằng cano",
     kicker: "NAM ĐẢO · 7 GIỜ",
     lead: "Đón khách sạn · Ăn trưa · Lặn ngắm san hô",
+    media: {
+      kind: "placeholder",
+      alt: "Tour 3 đảo bằng cano ở Nam đảo Phú Quốc",
+    },
     unit: "/ khách",
     duration: "Khoảng 7 giờ",
     locationLabel: "An Thới",
@@ -127,6 +145,10 @@ export const products: Record<ProductId, Product> = {
     name: "Vé cáp treo Hòn Thơm",
     kicker: "HÒN THƠM · VÉ ĐIỆN TỬ",
     lead: "Chọn ngày · Voucher trên điện thoại · Đi thẳng đến cổng",
+    media: {
+      kind: "placeholder",
+      alt: "Vé cáp treo Hòn Thơm Phú Quốc",
+    },
     unit: "/ vé",
     locationLabel: "Nam đảo",
     chips: ["Voucher điện tử", "Chọn ngày", "Hướng dẫn sử dụng"],
@@ -147,6 +169,10 @@ export const products: Record<ProductId, Product> = {
     name: "Sân bay → khách sạn",
     kicker: "PQC · PRIVATE TRANSFER",
     lead: "Đón theo chuyến bay · Không ghép khách · Hỗ trợ hành lý",
+    media: {
+      kind: "placeholder",
+      alt: "Xe riêng đón sân bay Phú Quốc",
+    },
     unit: "/ xe",
     locationLabel: "Sân bay PQC",
     chips: ["Xe riêng", "Theo chuyến bay", "Hỗ trợ hành lý"],
