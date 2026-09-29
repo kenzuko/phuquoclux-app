@@ -26,7 +26,7 @@ export type DiscoveryQuery = {
 export type DiscoveryProductSummary = {
   type: ProductType;
   name: string;
-  fromPrice: number;
+  fromPrice: number | null;
   unit: string;
   mapEntityIds: string[];
 };
@@ -158,7 +158,7 @@ export function discover(query: DiscoveryQuery): DiscoveryResult {
     .map(({ product }) => ({
       type: product.type,
       name: product.name,
-      fromPrice: fromPriceForProduct(product.type) ?? 0,
+      fromPrice: fromPriceForProduct(product.type),
       unit: product.unit,
       mapEntityIds: product.mapEntityIds,
     }));
