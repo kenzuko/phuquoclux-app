@@ -5,6 +5,10 @@ import type {
   Quote,
   QuoteStatus,
 } from "../domain/commerce";
+import type {
+  BookingAccessGrant,
+  NewBookingAccessGrant,
+} from "../domain/booking-access";
 
 export interface QuoteRepository {
   save(quote: Quote): Promise<void>;
@@ -24,6 +28,15 @@ export interface BookingRepository {
   ): Promise<Booking>;
 }
 
+export interface BookingAccessRepository {
+  create(grant: NewBookingAccessGrant): Promise<BookingAccessGrant>;
+  findByTokenHash(
+    tokenHash: string,
+  ): Promise<BookingAccessGrant | null>;
+  revoke(id: string, revokedAt: string): Promise<void>;
+  touch(id: string, lastUsedAt: string): Promise<void>;
+}
+
 export interface IdempotencyRepository {
   findBookingId(requestId: string): Promise<string | null>;
   claim(requestId: string, bookingId: string): Promise<boolean>;
@@ -32,6 +45,7 @@ export interface IdempotencyRepository {
 export type CommerceRepositories = {
   quotes: QuoteRepository;
   bookings: BookingRepository;
+  bookingAccess: BookingAccessRepository;
   idempotency: IdempotencyRepository;
 };
 
