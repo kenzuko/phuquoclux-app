@@ -117,9 +117,9 @@ function BookingItem({
         <div className="booking-type">{type}</div>
         <h2>{title}</h2>
         <p>{copy}</p>
-        <div className="booking-actions">
-          <button type="button">{confirmed ? "Mở voucher" : "Xem trạng thái"}</button>
-          <button type="button">Liên hệ hỗ trợ</button>
+        <div className="booking-actions booking-actions--demo">
+          <span>{confirmed ? "Voucher demo" : "Trạng thái demo"}</span>
+          <span>Hỗ trợ sẽ nối sau</span>
         </div>
       </div>
       <span className={confirmed ? "status-pill confirmed" : "status-pill"}>{status}</span>
