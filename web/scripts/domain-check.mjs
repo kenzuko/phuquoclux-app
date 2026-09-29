@@ -21,6 +21,7 @@ import {
   offersForProduct,
 } from "../app/domain/offer.ts";
 import {
+  formatServiceDate,
   normalizeServiceDate,
   todayInPhuQuoc,
 } from "../app/domain/service-date.ts";
@@ -75,6 +76,11 @@ async function run() {
     normalizeServiceDate("2026-09-28", fixedNow),
     "2026-09-29",
     "past service date must be normalized to today",
+  );
+  equal(
+    formatServiceDate("2026-10-02"),
+    "02/10/2026",
+    "traveler-facing date must not depend on browser timezone",
   );
   equal(normalizePax("99"), 20, "trip pax must be capped at 20");
   const intent = tripIntentFromUrl(
