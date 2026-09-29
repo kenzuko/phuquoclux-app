@@ -70,7 +70,7 @@
 }
 
 .island-map{background:#edf2e9}
-.island-map[data-map-loading="true"]::after{content:"Đang tải bản đồ…";position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:999px;padding:8px 11px;color:var(--muted);font-size:9px;font-weight:800;box-shadow:0 6px 18px rgba(20,35,20,.08);pointer-events:none}
+.island-map[data-map-loading="true"]::after{content:"Đang tải bản đồ…";position:absolute;z-index:20;inset:50% auto auto 50%;transform:translate(-50%,-50%);background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:999px;padding:8px 11px;color:var(--muted);font-size:9px;font-weight:800;box-shadow:0 6px 18px rgba(20,35,20,.08);pointer-events:none}
 
 .error-page{min-height:100dvh;display:grid;place-items:center;padding:24px;background:var(--surface)}
 .error-card{width:min(520px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:var(--shadow)}
@@ -185,6 +185,7 @@
 .island-map[data-map-error="true"]::after{
   content:"Bản đồ tạm thời chưa tải được · danh sách dịch vụ vẫn dùng bình thường";
   position:absolute;
+  z-index:20;
   inset:50% auto auto 50%;
   transform:translate(-50%,-50%);
   width:min(260px,calc(100% - 32px));
