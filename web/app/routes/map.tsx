@@ -13,10 +13,14 @@ import type { MapCategory, MapEntity } from "../domain/catalog";
 import {
   mapVerificationLabel,
   money,
-  productPath,
   productsForMapEntity,
 } from "../domain/catalog";
-import { normalizeServiceDate } from "../domain/service-date";
+import {
+  productSlugUrl,
+  productUrl,
+  tripIntentFromUrl,
+  type TripIntent,
+} from "../domain/trip-intent";
 import {
   discover,
   type BoundingBox,
@@ -70,18 +74,19 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const category = parseCategory(url.searchParams.get("category"));
   const q = url.searchParams.get("q") ?? undefined;
   const bounds = parseBounds(url.searchParams);
-  const date = normalizeServiceDate(url.searchParams.get("date") ?? undefined);
-  const pax = Math.max(
-    1,
-    Math.min(20, Number(url.searchParams.get("pax")) || 2),
-  );
+  const intent = tripIntentFromUrl(url);
 
   return {
-    result: discover({ category, q, bounds, date, pax }),
+    result: discover({
+      category,
+      q,
+      bounds,
+      date: intent.date,
+      pax: intent.pax,
+    }),
     category,
     q: q ?? "",
-    date,
-    pax,
+    intent,
     hasAreaSearch: Boolean(bounds),
     initialBounds: bounds ?? null,
     mapStyleUrl:
@@ -106,8 +111,7 @@ export default function MapRoute() {
     result,
     category,
     q,
-    date,
-    pax,
+    intent,
     hasAreaSearch,
     initialBounds,
     mapStyleUrl,
@@ -156,8 +160,8 @@ export default function MapRoute() {
           {category !== "all" ? (
             <input type="hidden" name="category" value={category} />
           ) : null}
-          <input type="hidden" name="date" value={date} />
-          <input type="hidden" name="pax" value={pax} />
+          <input type="hidden" name="date" value={intent.date} />
+          <input type="hidden" name="pax" value={intent.pax} />
           <span>⌕</span>
           <input
             key={q}
@@ -238,8 +242,7 @@ export default function MapRoute() {
             <p>{selected.copy}</p>
             <MapRelatedProducts
               entity={selected}
-              date={date}
-              pax={pax}
+              intent={intent}
             />
           </aside>
         ) : (
@@ -262,7 +265,7 @@ export default function MapRoute() {
                 <Link
                   key={product.productId}
                   className="map-result-card"
-                  to={`/product/${product.slug}?date=${date}&pax=${pax}`}
+                  to={productSlugUrl(product.slug, intent)}
                 >
                   <span
                     className={`map-result-icon map-result-icon--${product.type}`}
@@ -304,12 +307,10 @@ export default function MapRoute() {
 
 function MapRelatedProducts({
   entity,
-  date,
-  pax,
+  intent,
 }: {
   entity: MapEntity;
-  date: string;
-  pax: number;
+  intent: TripIntent;
 }) {
   const related = productsForMapEntity(entity.id);
 
@@ -320,7 +321,7 @@ function MapRelatedProducts({
       {related.slice(0, 4).map((product) => (
         <Link
           key={product.id}
-          to={`${productPath(product)}?date=${date}&pax=${pax}`}
+          to={productUrl(product, intent)}
         >
           {product.name}
         </Link>
