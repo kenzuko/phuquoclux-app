@@ -98,6 +98,7 @@ export type Booking = {
   offerId: string;
   quoteId: string;
   state: BookingState;
+  version: number;
   paymentStatus: PaymentStatus;
   serviceDate: string;
   pax: number;
@@ -113,6 +114,7 @@ export type BookingEvent = {
   bookingId: string;
   fromState: BookingState;
   toState: BookingState;
+  version: number;
   reason?: string;
   createdAt: string;
 };
@@ -146,6 +148,24 @@ export function assertBookingTransition(
   if (!canTransitionBooking(from, to)) {
     throw new Error(`INVALID_BOOKING_TRANSITION:${from}->${to}`);
   }
+}
+
+export function createBookingTransitionEvent(
+  booking: Booking,
+  toState: BookingState,
+  reason?: string,
+): BookingEvent {
+  assertBookingTransition(booking.state, toState);
+
+  return {
+    id: crypto.randomUUID(),
+    bookingId: booking.id,
+    fromState: booking.state,
+    toState,
+    version: booking.version + 1,
+    reason,
+    createdAt: new Date().toISOString(),
+  };
 }
 
 export function assertQuoteBookable(quote: Quote, now = new Date()) {
