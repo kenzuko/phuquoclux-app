@@ -170,6 +170,34 @@ create unique index if not exists payments_provider_ref_uidx
   on payments(provider, provider_reference)
   where provider_reference is not null;
 
+create table if not exists outbox_events (
+  id uuid primary key,
+  event_name text not null,
+  aggregate_type text not null,
+  aggregate_id text not null,
+  aggregate_version bigint not null check (aggregate_version > 0),
+  payload jsonb not null,
+  status text not null default 'pending'
+    check (status in ('pending', 'published', 'failed')),
+  attempts integer not null default 0 check (attempts >= 0),
+  next_attempt_at timestamptz,
+  published_at timestamptz,
+  last_error text,
+  created_at timestamptz not null default now(),
+  unique (aggregate_type, aggregate_id, aggregate_version, event_name)
+);
+
+create index if not exists outbox_events_pending_idx
+  on outbox_events(status, next_attempt_at, created_at);
+
+create table if not exists webhook_receipts (
+  provider text not null,
+  provider_event_id text not null,
+  processed_at timestamptz not null,
+  payload_hash text,
+  primary key (provider, provider_event_id)
+);
+
 create table if not exists idempotency_keys (
   request_id uuid primary key,
   scope text not null,
@@ -181,6 +209,9 @@ create table if not exists idempotency_keys (
 
 comment on table bookings is
   'Authoritative booking ledger. Cache/Map state must never replace this table.';
+
+comment on table outbox_events is
+  'Transactional integration outbox. Ops/provider notifications are published from committed domain events, not inline checkout side effects.';
 
 comment on column bookings.version is
   'Optimistic concurrency version. Every state transition must increment this value.';
