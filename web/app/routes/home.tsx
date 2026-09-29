@@ -352,8 +352,18 @@ function RelatedProducts({
   return (
     <div className="entity-related-products">
       {related.slice(0, 3).map((product) => (
-        <Link key={product.id} to={productUrl(product, intent)}>
-          {product.name}
+        <Link
+          className="entity-product-link"
+          key={product.id}
+          to={productUrl(product, intent)}
+        >
+          <span>
+            <b>{product.name}</b>
+            <small>
+              {priceLabel(product.id)} {displayFromPrice(product.id)}
+            </small>
+          </span>
+          <i>→</i>
         </Link>
       ))}
     </div>
