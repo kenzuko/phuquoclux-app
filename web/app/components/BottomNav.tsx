@@ -1,6 +1,7 @@
 import { NavLink } from "react-router";
 import {
   appendTripIntent,
+  homeUrl,
   mapUrl,
   type TripIntent,
 } from "../domain/trip-intent";
@@ -13,9 +14,7 @@ type Item = {
 };
 
 export function BottomNav({ intent }: { intent?: TripIntent }) {
-  const homeTo = intent
-    ? `/?${appendTripIntent(new URLSearchParams(), intent).toString()}`
-    : "/";
+  const homeTo = intent ? homeUrl(intent) : "/";
   const mapTo = intent ? mapUrl(intent) : "/map";
   const tripTo = intent
     ? `/trip?${appendTripIntent(new URLSearchParams(), intent).toString()}`
