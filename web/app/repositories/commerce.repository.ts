@@ -18,6 +18,7 @@ export interface BookingRepository {
   findByRequestId(requestId: string): Promise<Booking | null>;
   transition(
     id: string,
+    expectedVersion: number,
     expectedFrom: BookingState,
     event: BookingEvent,
   ): Promise<Booking>;
