@@ -86,3 +86,9 @@
 
 .language-indicator{cursor:default;user-select:none}
 .booking-actions--demo span{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 9px;font-size:8px;font-weight:800;color:var(--muted)}
+
+.map-pin--reference{opacity:.82;border-style:dashed}
+.map-pin--demo{opacity:.58}
+.verification-badge{display:inline-flex!important;width:max-content;margin-top:6px;padding:4px 7px;border-radius:999px;background:var(--green-100);color:var(--green-800);font-size:7px!important;line-height:1;font-weight:850;letter-spacing:.03em}
+.verification-badge--reference{background:var(--orange-soft);color:#795019}
+.verification-badge--demo{background:var(--surface);color:var(--muted)}
