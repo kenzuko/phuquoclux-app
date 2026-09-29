@@ -184,7 +184,7 @@ export default function HomeRoute() {
                 <Service
                   href={quickProductUrl("tour-three-islands-cano", intent)}
                   icon="🛥"
-                  title="Tour hôm nay"
+                  title="Tour 3 đảo"
                   copy="Xem tour và lựa chọn"
                 />
                 <Service
