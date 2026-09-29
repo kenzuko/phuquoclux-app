@@ -9,6 +9,7 @@ type Props = {
   category: "all" | MapCategory;
   onSelect: (entity: MapEntity) => void;
   className?: string;
+  interaction?: "embedded" | "full";
 };
 
 export function IslandMap({
@@ -17,13 +18,35 @@ export function IslandMap({
   category,
   onSelect,
   className = "",
+  interaction = "full",
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Array<{ remove: () => void }>>([]);
   const [ready, setReady] = useState(false);
+  const [shouldMount, setShouldMount] = useState(false);
 
   useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldMount(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "180px" },
+    );
+
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!shouldMount) return;
+
     let cancelled = false;
     let resizeObserver: ResizeObserver | undefined;
 
@@ -32,15 +55,28 @@ export function IslandMap({
       const maplibregl = await import("maplibre-gl");
       if (cancelled || !hostRef.current) return;
 
+      const full = interaction === "full";
       const map = new maplibregl.Map({
         container: hostRef.current,
         style: styleUrl,
         center: [103.965, 10.205],
         zoom: 9.6,
         attributionControl: true,
+        dragPan: full,
+        scrollZoom: full,
+        boxZoom: full,
+        doubleClickZoom: full,
+        keyboard: full,
+        touchZoomRotate: full,
       });
 
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
+      if (full) {
+        map.addControl(
+          new maplibregl.NavigationControl({ showCompass: false }),
+          "bottom-right",
+        );
+      }
+
       map.once("load", () => setReady(true));
       mapRef.current = map;
 
@@ -57,8 +93,9 @@ export function IslandMap({
       markersRef.current = [];
       mapRef.current?.remove();
       mapRef.current = null;
+      setReady(false);
     };
-  }, [styleUrl]);
+  }, [interaction, shouldMount, styleUrl]);
 
   useEffect(() => {
     if (!ready || !mapRef.current) return;
@@ -80,9 +117,13 @@ export function IslandMap({
           el.className = `map-pin map-pin--${entity.category}`;
           el.textContent = entity.icon;
           el.title = entity.name;
+          el.setAttribute("aria-label", entity.name);
           el.addEventListener("click", () => onSelect(entity));
 
-          const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
+          const marker = new maplibregl.Marker({
+            element: el,
+            anchor: "bottom",
+          })
             .setLngLat([entity.lng, entity.lat])
             .addTo(mapRef.current!);
 
@@ -96,5 +137,11 @@ export function IslandMap({
     };
   }, [category, entities, onSelect, ready]);
 
-  return <div ref={hostRef} className={`island-map ${className}`} />;
+  return (
+    <div
+      ref={hostRef}
+      className={`island-map island-map--${interaction} ${className}`}
+      data-map-loading={shouldMount && !ready ? "true" : undefined}
+    />
+  );
 }
