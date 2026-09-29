@@ -26,6 +26,7 @@ import {
   type BoundingBox,
   type DiscoveryQuery,
 } from "../domain/discovery";
+import { boundsForEntities } from "../domain/map-bounds";
 
 const allowedCategories: Array<"all" | MapCategory> = [
   "all",
@@ -76,19 +77,23 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const bounds = parseBounds(url.searchParams);
   const intent = tripIntentFromUrl(url);
 
+  const result = discover({
+    category,
+    q,
+    bounds,
+    date: intent.date,
+    pax: intent.pax,
+  });
+  const searchFocusBounds =
+    !bounds && q ? boundsForEntities(result.entities) : undefined;
+
   return {
-    result: discover({
-      category,
-      q,
-      bounds,
-      date: intent.date,
-      pax: intent.pax,
-    }),
+    result,
     category,
     q: q ?? "",
     intent,
     hasAreaSearch: Boolean(bounds),
-    initialBounds: bounds ?? null,
+    initialBounds: bounds ?? searchFocusBounds ?? null,
     mapStyleUrl:
       context.cloudflare.env.MAP_STYLE_URL ??
       "https://demotiles.maplibre.org/style.json",
