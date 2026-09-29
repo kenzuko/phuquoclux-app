@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Form, Link, type LoaderFunctionArgs, useLoaderData } from "react-router";
 import { BottomNav } from "../components/BottomNav";
 import { Brand } from "../components/Brand";
@@ -10,9 +10,12 @@ import {
   type MapCategory,
   type MapEntity,
 } from "../domain/catalog";
+import type { BoundingBox } from "../domain/discovery";
+import { todayInPhuQuoc } from "../domain/service-date";
 
 export async function loader({ context }: LoaderFunctionArgs) {
   return {
+    today: todayInPhuQuoc(),
     mapStyleUrl:
       context.cloudflare.env.MAP_STYLE_URL ??
       "https://demotiles.maplibre.org/style.json",
@@ -28,10 +31,28 @@ const filters: Array<{ id: "all" | MapCategory; label: string }> = [
 ];
 
 export default function HomeRoute() {
-  const { mapStyleUrl } = useLoaderData<typeof loader>();
+  const { mapStyleUrl, today } = useLoaderData<typeof loader>();
   const [category, setCategory] = useState<"all" | MapCategory>("all");
   const [selected, setSelected] = useState<MapEntity | null>(null);
+  const [desktopViewport, setDesktopViewport] = useState<BoundingBox | null>(null);
   const onSelect = useCallback((entity: MapEntity) => setSelected(entity), []);
+  const onDesktopViewportChange = useCallback(
+    (bounds: BoundingBox) => setDesktopViewport(bounds),
+    [],
+  );
+
+  const mapAreaUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    if (category !== "all") params.set("category", category);
+    if (desktopViewport) {
+      params.set("west", desktopViewport.west.toFixed(5));
+      params.set("south", desktopViewport.south.toFixed(5));
+      params.set("east", desktopViewport.east.toFixed(5));
+      params.set("north", desktopViewport.north.toFixed(5));
+    }
+    const query = params.toString();
+    return query ? `/map?${query}` : "/map";
+  }, [category, desktopViewport]);
 
   return (
     <div className="page-shell">
@@ -53,14 +74,33 @@ export default function HomeRoute() {
         </section>
 
         <Form className="search-panel" method="get" action="/map">
+          {category !== "all" ? (
+            <input type="hidden" name="category" value={category} />
+          ) : null}
           <label className="search-box">
             <span>⌕</span>
             <input name="q" placeholder="Tour, vé, xe, khách sạn..." />
           </label>
           <div className="trip-controls">
-            <button type="button"><small>Ngày đi</small><b>Hôm nay</b></button>
-            <button type="button"><small>Số khách</small><b>2 khách</b></button>
-            <button className="primary-button" type="button">Tìm kiếm</button>
+            <label className="trip-field">
+              <small>Ngày đi</small>
+              <input type="date" name="date" defaultValue={today} min={today} />
+            </label>
+            <label className="trip-field">
+              <small>Số khách</small>
+              <select name="pax" defaultValue="2">
+                {Array.from({ length: 10 }, (_, index) => index + 1).map(
+                  (value) => (
+                    <option key={value} value={value}>
+                      {value} khách
+                    </option>
+                  ),
+                )}
+              </select>
+            </label>
+            <button className="primary-button" type="submit">
+              Tìm kiếm
+            </button>
           </div>
         </Form>
 
@@ -145,7 +185,9 @@ export default function HomeRoute() {
           <aside className="desktop-map-card">
             <div className="map-card-head">
               <div><small>KHÁM PHÁ TRÊN BẢN ĐỒ</small><b>Phú Quốc</b></div>
-              <button type="button">Tìm khu vực này</button>
+              <Link className="map-area-link" to={mapAreaUrl}>
+                Tìm khu vực này
+              </Link>
             </div>
             <div className="desktop-map-stage">
               <IslandMap
@@ -153,6 +195,7 @@ export default function HomeRoute() {
                 styleUrl={mapStyleUrl}
                 category={category}
                 onSelect={onSelect}
+                onViewportChange={onDesktopViewportChange}
                 interaction="full"
               />
               {selected ? <MapEntitySheet entity={selected} onClose={() => setSelected(null)} /> : null}
