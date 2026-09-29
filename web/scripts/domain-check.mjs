@@ -233,6 +233,13 @@ async function run() {
     "cano intent must rank the tour product first",
   );
 
+  const typoIntent = discover({ q: "hon thm", category: "all" });
+  equal(
+    typoIntent.products[0]?.productId,
+    "hon-thom-cable-car",
+    "one-character typo in a meaningful search token must still resolve",
+  );
+
   const honThomInArea = discover({
     q: "hòn thơm",
     bounds: {
