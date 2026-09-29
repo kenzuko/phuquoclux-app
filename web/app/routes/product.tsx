@@ -13,6 +13,8 @@ import {
 import {
   fromPriceForProduct,
   getOffer,
+  maxPaxForProduct,
+  offerSupportsPax,
   offersForProduct,
   priceCertaintyForProduct,
 } from "../domain/offer";
@@ -37,12 +39,20 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
 
   const offers = offersForProduct(product.id);
   const url = new URL(request.url);
-  const initialPax = normalizePax(url.searchParams.get("pax"), 2);
+  const initialPax = Math.min(
+    normalizePax(url.searchParams.get("pax"), 2),
+    maxPaxForProduct(product.id),
+  );
   const requestedOffer =
     url.searchParams.get("offer") ??
     url.searchParams.get("option") ??
     undefined;
-  const initialOffer = getOffer(product.id, requestedOffer);
+  const requestedInitialOffer = getOffer(product.id, requestedOffer);
+  const initialOffer =
+    requestedInitialOffer &&
+    offerSupportsPax(requestedInitialOffer, initialPax)
+      ? requestedInitialOffer
+      : offers.find((offer) => offerSupportsPax(offer, initialPax));
 
   if (!initialOffer) {
     throw new Response("No offer configured", { status: 503 });
@@ -65,6 +75,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
     defaultDate,
     initialServiceDate,
     initialPax,
+    maxPax: maxPaxForProduct(product.id),
     initialOfferId: initialOffer.id,
     returnTo,
     initialUnitQuantities: unitQuantitiesFromSearch(
@@ -112,6 +123,7 @@ export default function ProductRoute() {
     defaultDate,
     initialServiceDate,
     initialPax,
+    maxPax,
     initialOfferId,
     returnTo,
     initialUnitQuantities,
@@ -154,6 +166,32 @@ export default function ProductRoute() {
         ? defaultUnitQuantities(next, pax)
         : {},
     );
+  }
+
+  function changePax(delta: number) {
+    const nextPax = Math.max(
+      1,
+      Math.min(maxPax, pax + delta),
+    );
+
+    if (nextPax === pax) return;
+
+    if (!offerSupportsPax(offer, nextPax)) {
+      const compatible = offers.find((item) =>
+        offerSupportsPax(item, nextPax),
+      );
+
+      if (compatible) {
+        setOfferId(compatible.id);
+        setUnitQuantities(
+          compatible.pricing.mode === "unit_mix"
+            ? defaultUnitQuantities(compatible, nextPax)
+            : {},
+        );
+      }
+    }
+
+    setPax(nextPax);
   }
 
   function changeUnit(code: string, delta: number) {
@@ -323,8 +361,12 @@ export default function ProductRoute() {
                       key={item.id}
                       className={offerId === item.id ? "is-selected" : ""}
                       onClick={() => chooseOffer(item.id)}
+                      disabled={!offerSupportsPax(item, pax)}
                     >
-                      {item.label}
+                      <span>{item.label}</span>
+                      {item.constraints?.maxPax ? (
+                        <small>Tối đa {item.constraints.maxPax} khách</small>
+                      ) : null}
                     </button>
                   ))}
                 </div>
@@ -368,14 +410,14 @@ export default function ProductRoute() {
                 <div className="quantity-control">
                   <button
                     type="button"
-                    onClick={() => setPax((value) => Math.max(1, value - 1))}
+                    onClick={() => changePax(-1)}
                   >
                     −
                   </button>
                   <b>{pax}</b>
                   <button
                     type="button"
-                    onClick={() => setPax((value) => Math.min(20, value + 1))}
+                    onClick={() => changePax(1)}
                   >
                     +
                   </button>
