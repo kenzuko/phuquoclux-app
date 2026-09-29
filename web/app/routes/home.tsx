@@ -163,6 +163,9 @@ export default function HomeRoute() {
                 selectedEntityId={selected?.id}
                 interaction="embedded"
               />
+              <Link className="mobile-map-expand" to={mapAreaUrl}>
+                Mở bản đồ ↗
+              </Link>
               {selected ? (
                 <MapEntitySheet
                   entity={selected}
