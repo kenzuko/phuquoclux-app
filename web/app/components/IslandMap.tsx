@@ -30,6 +30,7 @@ export function IslandMap({
   const markersRef = useRef<Array<{ remove: () => void }>>([]);
   const [ready, setReady] = useState(false);
   const [shouldMount, setShouldMount] = useState(false);
+  const [zoom, setZoom] = useState(9.6);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -94,10 +95,14 @@ export function IslandMap({
         map.on("moveend", emitViewport);
       }
 
+      const syncZoom = () => setZoom(map.getZoom());
+
       map.once("load", () => {
         setReady(true);
+        syncZoom();
         emitViewport();
       });
+      map.on("zoomend", syncZoom);
       mapRef.current = map;
 
       resizeObserver = new ResizeObserver(() => map.resize());
@@ -144,12 +149,17 @@ export function IslandMap({
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
 
+      const markerLimit = interaction === "embedded" ? 80 : 220;
+
       entities
         .filter((entity) => category === "all" || entity.category === category)
+        .filter((entity) => zoom >= entity.minZoom)
+        .sort((a, b) => b.priority - a.priority)
+        .slice(0, markerLimit)
         .forEach((entity) => {
           const el = document.createElement("button");
           el.type = "button";
-          el.className = `map-pin map-pin--${entity.category}`;
+          el.className = `map-pin map-pin--${entity.category} map-pin--${entity.verification}`;
           el.textContent = entity.icon;
           el.title = entity.name;
           el.setAttribute("aria-label", entity.name);
@@ -170,7 +180,7 @@ export function IslandMap({
     return () => {
       cancelled = true;
     };
-  }, [category, entities, onSelect, ready]);
+  }, [category, entities, interaction, onSelect, ready, zoom]);
 
   return (
     <div
