@@ -29,6 +29,7 @@ export function IslandMap({
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<Array<{ remove: () => void }>>([]);
   const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [shouldMount, setShouldMount] = useState(false);
   const [zoom, setZoom] = useState(9.6);
 
@@ -55,11 +56,14 @@ export function IslandMap({
 
     let cancelled = false;
     let resizeObserver: ResizeObserver | undefined;
+    let loadTimer: ReturnType<typeof setTimeout> | undefined;
 
     async function mount() {
       if (!hostRef.current || mapRef.current) return;
-      const maplibregl = await import("maplibre-gl");
-      if (cancelled || !hostRef.current) return;
+
+      try {
+        const maplibregl = await import("maplibre-gl");
+        if (cancelled || !hostRef.current) return;
 
       const full = interaction === "full";
       const map = new maplibregl.Map({
@@ -105,28 +109,39 @@ export function IslandMap({
 
       const syncZoom = () => setZoom(map.getZoom());
 
-      map.once("load", () => {
-        setReady(true);
-        syncZoom();
-        emitViewport();
-      });
+        loadTimer = setTimeout(() => {
+          if (!map.loaded()) setFailed(true);
+        }, 12000);
+
+        map.once("load", () => {
+          if (loadTimer) clearTimeout(loadTimer);
+          setFailed(false);
+          setReady(true);
+          syncZoom();
+          emitViewport();
+        });
       map.on("zoomend", syncZoom);
       mapRef.current = map;
 
-      resizeObserver = new ResizeObserver(() => map.resize());
-      resizeObserver.observe(hostRef.current);
+        resizeObserver = new ResizeObserver(() => map.resize());
+        resizeObserver.observe(hostRef.current);
+      } catch {
+        if (!cancelled) setFailed(true);
+      }
     }
 
     void mount();
 
     return () => {
       cancelled = true;
+      if (loadTimer) clearTimeout(loadTimer);
       resizeObserver?.disconnect();
       markersRef.current.forEach((marker) => marker.remove());
       markersRef.current = [];
       mapRef.current?.remove();
       mapRef.current = null;
       setReady(false);
+      setFailed(false);
     };
   }, [interaction, onViewportChange, shouldMount, styleUrl]);
 
@@ -194,7 +209,9 @@ export function IslandMap({
     <div
       ref={hostRef}
       className={`island-map island-map--${interaction} ${className}`}
-      data-map-loading={shouldMount && !ready ? "true" : undefined}
+      data-map-loading={shouldMount && !ready && !failed ? "true" : undefined}
+      data-map-error={failed ? "true" : undefined}
+      aria-label={failed ? "Bản đồ tạm thời chưa tải được" : undefined}
     />
   );
 }
