@@ -19,8 +19,12 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
     throw new Response("Not found", { status: 404 });
   }
   const product = products[type];
+  const tomorrow = new Date();
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+
   return {
     product,
+    defaultDate: tomorrow.toISOString().slice(0, 10),
     entities: mapEntities.filter((entity) =>
       product.mapEntityIds.includes(entity.id),
     ),
@@ -31,9 +35,10 @@ export async function loader({ params, context }: LoaderFunctionArgs) {
 }
 
 export default function ProductRoute() {
-  const { product, entities, mapStyleUrl } = useLoaderData<typeof loader>();
+  const { product, entities, mapStyleUrl, defaultDate } = useLoaderData<typeof loader>();
   const [optionId, setOptionId] = useState(product.options[0].id);
   const [pax, setPax] = useState(2);
+  const [serviceDate, setServiceDate] = useState(defaultDate);
 
   const option = product.options.find((item) => item.id === optionId)!;
   const quantity = product.type === "transfer" ? 1 : pax;
@@ -43,9 +48,10 @@ export default function ProductRoute() {
     const query = new URLSearchParams({
       pax: String(pax),
       option: optionId,
+      date: serviceDate,
     });
     return `/checkout/${product.type}?${query}`;
-  }, [optionId, pax, product.type]);
+  }, [optionId, pax, product.type, serviceDate]);
 
   return (
     <div>
@@ -119,7 +125,12 @@ export default function ProductRoute() {
 
             <label className="booking-field">
               <span>Ngày sử dụng</span>
-              <input type="date" />
+              <input
+                type="date"
+                value={serviceDate}
+                min={defaultDate}
+                onChange={(event) => setServiceDate(event.target.value)}
+              />
             </label>
 
             <div className="booking-field">
@@ -148,12 +159,14 @@ export default function ProductRoute() {
             </div>
 
             <div className="booking-total">
-              <small>Tạm tính</small>
+              <small>Ước tính</small>
               <strong>{money(total)}</strong>
             </div>
 
             <Link className="booking-cta" to={checkoutUrl}>Tiếp tục đặt</Link>
-            <p className="microcopy">Chưa có giao dịch tiền ở bước này.</p>
+            <p className="microcopy">
+              Giá cuối cùng được tạo thành Quote ở checkout. Chưa xác nhận availability.
+            </p>
           </aside>
         </section>
       </main>
