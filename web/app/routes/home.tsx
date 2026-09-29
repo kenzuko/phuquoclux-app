@@ -13,6 +13,7 @@ import {
 } from "../domain/catalog";
 import type { BoundingBox } from "../domain/discovery";
 import { todayInPhuQuoc } from "../domain/service-date";
+import { fromPriceForProduct } from "../domain/offer";
 
 export async function loader({ context }: LoaderFunctionArgs) {
   return {
@@ -164,7 +165,10 @@ export default function HomeRoute() {
                       <h3>{product.name}</h3>
                       <span>{product.lead}</span>
                       <div className="product-foot">
-                        <div><small>Từ</small><b>{money(product.fromPrice)}</b></div>
+                        <div>
+                          <small>Từ</small>
+                          <b>{money(fromPriceForProduct(product.type) ?? 0)}</b>
+                        </div>
                         <Link to={`/product/${product.type}`}>Xem</Link>
                       </div>
                     </div>
