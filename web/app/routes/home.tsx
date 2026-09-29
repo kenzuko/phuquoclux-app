@@ -240,6 +240,30 @@ export default function HomeRoute() {
                 ) : null}
               </div>
             </section>
+
+            <section className="home-trust">
+              <div className="home-trust-head">
+                <div>
+                  <p className="section-kicker">VẬN HÀNH TẠI PHÚ QUỐC</p>
+                  <h2>PhuQuocLux, vận hành bởi JoTrip</h2>
+                </div>
+                <span>Local operations</span>
+              </div>
+              <div className="home-trust-grid">
+                <div>
+                  <b>Giá rõ trạng thái</b>
+                  <p>Giá tham khảo và giá có thể thanh toán được phân biệt rõ.</p>
+                </div>
+                <div>
+                  <b>Không giả còn chỗ</b>
+                  <p>Chỉ báo tình trạng khi có dữ liệu đủ tin cậy.</p>
+                </div>
+                <div>
+                  <b>Sau khi đặt vẫn ở đây</b>
+                  <p>Voucher, điểm đón và hỗ trợ được gom trong Đặt chỗ.</p>
+                </div>
+              </div>
+            </section>
           </div>
 
           <aside className="desktop-map-card">
