@@ -12,6 +12,10 @@ import { assertQuoteBookable } from "../domain/commerce";
 import { getOffer } from "../domain/offer";
 import { createPrototypeQuote } from "../services/quote.server";
 import { createPrototypeBookingRequest } from "../services/booking.server";
+import {
+  assertPrototypeCommerce,
+  getCommerceMode,
+} from "../services/commerce-mode.server";
 
 function parseSelection(request: Request) {
   const url = new URL(request.url);
@@ -25,11 +29,17 @@ function parseSelection(request: Request) {
   };
 }
 
-export async function loader({ params, request }: LoaderFunctionArgs) {
+export async function loader({
+  params,
+  request,
+  context,
+}: LoaderFunctionArgs) {
   const type = params.type;
   if (!isProductType(type)) {
     throw new Response("Not found", { status: 404 });
   }
+
+  assertPrototypeCommerce(getCommerceMode(context.cloudflare.env));
 
   const selection = parseSelection(request);
   const product = products[type];
@@ -54,11 +64,17 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   };
 }
 
-export async function action({ params, request }: ActionFunctionArgs) {
+export async function action({
+  params,
+  request,
+  context,
+}: ActionFunctionArgs) {
   const type = params.type;
   if (!isProductType(type)) {
     throw new Response("Not found", { status: 404 });
   }
+
+  assertPrototypeCommerce(getCommerceMode(context.cloudflare.env));
 
   const selection = parseSelection(request);
   const quote = await createPrototypeQuote({
