@@ -39,6 +39,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 2
 
+      - name: Domain checks
+        run: npm run test:domain
+
       - name: Build
         run: npm run build
 
