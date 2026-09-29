@@ -50,8 +50,10 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
     initialServiceDate,
     initialPax,
     initialOfferId: initialOffer.id,
-    entities: mapEntities.filter((entity) =>
-      product.mapEntityIds.includes(entity.id),
+    entities: mapEntities.filter(
+      (entity) =>
+        product.mapEntityIds.includes(entity.id) &&
+        entity.verification === "verified",
     ),
     mapStyleUrl:
       context.cloudflare.env.MAP_STYLE_URL ??
