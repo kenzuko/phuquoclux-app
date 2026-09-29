@@ -190,3 +190,13 @@ export function getOffer(type: ProductType, offerId?: string) {
     productOffers[0]
   );
 }
+
+export function fromPriceForProduct(type: ProductType) {
+  const active = offersForProduct(type);
+  if (!active.length) return null;
+
+  return active.reduce(
+    (lowest, offer) => Math.min(lowest, offer.price.amount),
+    active[0].price.amount,
+  );
+}
