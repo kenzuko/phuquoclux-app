@@ -20,6 +20,7 @@ import {
   priceCertaintyForProduct,
 } from "../domain/offer";
 import {
+  homeUrl,
   productSlugUrl,
   productUrl,
   tripIntentFromUrl,
@@ -196,7 +197,7 @@ export default function MapRoute() {
             aria-label="Tìm trên bản đồ Phú Quốc"
           />
         </Form>
-        <Link className="map-close-link" to="/">
+        <Link className="map-close-link" to={homeUrl(intent)}>
           Đóng ×
         </Link>
       </header>
