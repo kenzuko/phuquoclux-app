@@ -36,6 +36,7 @@ create table if not exists offers (
     check (price_state in ('estimated', 'final')),
   headline_unit_code text,
   policy jsonb not null default '{}'::jsonb,
+  constraints jsonb not null default '{}'::jsonb,
   operational_fields jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
