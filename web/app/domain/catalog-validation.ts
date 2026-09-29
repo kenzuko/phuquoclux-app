@@ -121,6 +121,20 @@ export function validateCatalog(): CatalogIssue[] {
         });
       }
 
+      if (
+        offer.constraints?.maxPax !== undefined &&
+        (
+          !Number.isInteger(offer.constraints.maxPax) ||
+          offer.constraints.maxPax < 1 ||
+          offer.constraints.maxPax > 20
+        )
+      ) {
+        issues.push({
+          code: "OFFER_MAX_PAX_INVALID",
+          message: `${offer.id} maxPax must be an integer from 1 to 20`,
+        });
+      }
+
       if (offer.pricing.mode === "flat") {
         if (offer.pricing.amount <= 0) {
           issues.push({
