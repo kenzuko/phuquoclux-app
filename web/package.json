@@ -8,7 +8,8 @@
     "build": "react-router build",
     "preview": "npm run build && vite preview",
     "typecheck": "react-router typegen && tsc --noEmit",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "check": "npm run typecheck && npm run build && wrangler deploy --dry-run"
   },
   "dependencies": {
     "maplibre-gl": "6.11.2",
