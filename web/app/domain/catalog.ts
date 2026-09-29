@@ -30,6 +30,7 @@ export type Product = {
   duration?: string;
   locationLabel: string;
   chips: string[];
+  searchTerms: string[];
   options: ProductOption[];
   mapEntityIds: string[];
 };
@@ -94,6 +95,16 @@ export const products: Record<ProductType, Product> = {
     duration: "Khoảng 7 giờ",
     locationLabel: "An Thới",
     chips: ["Đón khách sạn", "Ăn trưa", "Lặn ngắm san hô"],
+    searchTerms: [
+      "3 đảo",
+      "ba đảo",
+      "cano",
+      "tour đảo",
+      "island tour",
+      "snorkeling",
+      "an thới",
+      "an thoi",
+    ],
     options: [
       { id: "shared", label: "Ghép đoàn", multiplier: 1 },
       { id: "private", label: "Cano riêng", multiplier: 5.2 },
@@ -109,6 +120,14 @@ export const products: Record<ProductType, Product> = {
     unit: "/ vé",
     locationLabel: "Nam đảo",
     chips: ["Voucher điện tử", "Chọn ngày", "Hướng dẫn sử dụng"],
+    searchTerms: [
+      "hòn thơm",
+      "hon thom",
+      "vé hòn thơm",
+      "cáp treo",
+      "cable car",
+      "sun world",
+    ],
     options: [
       { id: "adult", label: "Người lớn", multiplier: 1 },
       { id: "child", label: "Trẻ em", multiplier: 0.72 },
@@ -124,6 +143,14 @@ export const products: Record<ProductType, Product> = {
     unit: "/ xe",
     locationLabel: "Sân bay PQC",
     chips: ["Xe riêng", "Theo chuyến bay", "Hỗ trợ hành lý"],
+    searchTerms: [
+      "xe sân bay",
+      "đón sân bay",
+      "airport transfer",
+      "private car",
+      "pqc",
+      "taxi sân bay",
+    ],
     options: [
       { id: "sedan", label: "Sedan 4 chỗ", multiplier: 1 },
       { id: "suv", label: "SUV 7 chỗ", multiplier: 1.45 },
