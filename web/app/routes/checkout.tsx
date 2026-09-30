@@ -30,6 +30,8 @@ import {
 import {
   assertSameOriginMutation,
   readEmail,
+  readFlightNumber,
+  readInteger,
   readPhone,
   readText,
   readUuid,
@@ -208,9 +210,15 @@ export async function action({
     required: requiredOperationalFields.has("hotel_or_pickup"),
     maxLength: 300,
   });
-  const flightNumber = readText(form, "flightNumber", {
-    required: requiredOperationalFields.has("flight_number"),
-    maxLength: 32,
+  const flightNumber = readFlightNumber(
+    form,
+    "flightNumber",
+    requiredOperationalFields.has("flight_number"),
+  );
+  const luggageCount = readInteger(form, "luggageCount", {
+    required: requiredOperationalFields.has("luggage_count"),
+    min: 0,
+    max: 20,
   });
   const guestNote = readText(form, "note", {
     required: requiredOperationalFields.has("guest_note"),
@@ -227,6 +235,9 @@ export async function action({
         : undefined,
       flightNumber: operationalFields.has("flight_number")
         ? flightNumber || undefined
+        : undefined,
+      luggageCount: operationalFields.has("luggage_count")
+        ? luggageCount
         : undefined,
       guestNote: operationalFields.has("guest_note")
         ? guestNote || undefined
@@ -345,6 +356,22 @@ export default function CheckoutRoute() {
                       placeholder="Ví dụ: VN1825"
                       autoCapitalize="characters"
                       autoComplete="off"
+                    />
+                  </label>
+                ) : null}
+                {offer.operationalFields.includes("luggage_count") ? (
+                  <label>
+                    <span>Số kiện hành lý ký gửi</span>
+                    <input
+                      name="luggageCount"
+                      type="number"
+                      min="0"
+                      max="20"
+                      inputMode="numeric"
+                      defaultValue="0"
+                      required={offer.requiredOperationalFields?.includes(
+                        "luggage_count",
+                      )}
                     />
                   </label>
                 ) : null}
