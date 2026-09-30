@@ -14,7 +14,9 @@
     "test:visual": "playwright test",
     "build:pages": "vite build --config vite.pages.config.ts",
     "dev:pages": "vite --config vite.pages.config.ts --host 127.0.0.1 --port 4174",
-    "test:pages": "playwright test --config playwright.pages.config.ts"
+    "test:pages": "playwright test --config playwright.pages.config.ts",
+    "supplier:template": "tsx scripts/supplier-intake-check.mjs --template",
+    "supplier:check": "tsx scripts/supplier-intake-check.mjs"
   },
   "dependencies": {
     "maplibre-gl": "6.11.2",
