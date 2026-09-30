@@ -34,9 +34,11 @@ Answers: what happens now, where is my voucher, when/where do I meet, who helps 
 
 ## Prototype rules
 
-- Guest checkout first.
+- Guest checkout is the planned production journey, not an operational capability today.
 - Product detail does not pretend availability is confirmed until the availability layer exists.
-- Payment is explicitly a prototype; no fake transaction.
+- The current public checkout previews the selection without collecting guest data or accepting a booking; POST fails with HTTP 503.
+- My Bookings is empty until durable booking storage and guest access exist. Query parameters cannot assert a confirmed booking.
+- Payment is not enabled; no fake transaction, fake request receipt or fake confirmation.
 - Route/map preview is informative, not the source of booking truth.
 - Different verticals ask for different operational data.
 - Booking remains the post-purchase source of truth.

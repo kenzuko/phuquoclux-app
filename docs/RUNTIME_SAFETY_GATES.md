@@ -16,10 +16,16 @@ Current repository default:
 
 Prototype mode may:
 
-- create server-side Quote objects;
-- use prototype Offer prices;
-- return request-to-book states;
-- validate Product → Offer → Availability → Quote → Booking UX.
+- create ephemeral server-side Quote objects for reviewing date, party, option and estimated prices;
+- use clearly labeled prototype Offer prices;
+- validate Product → Offer → Availability → Quote domain behavior in offline tests.
+
+The PUBLIC checkout route is a read-only selection review. Until durable PostgreSQL storage, idempotency and guest access/delivery exist:
+
+- no public checkout form may collect guest name, phone, email or operational PII;
+- any direct POST to /checkout/:slug returns HTTP 503 before reading the body;
+- /bookings displays no unpersisted or URL-spoofed confirmation;
+- an in-memory Booking domain test is NOT a real booking or a request sent to JoTrip.
 
 It does **not** imply:
 
