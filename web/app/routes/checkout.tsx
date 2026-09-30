@@ -271,7 +271,7 @@ export default function CheckoutRoute() {
         <span className="secure-label">Chưa thu tiền</span>
       </header>
 
-      <main className="checkout-main">
+      <main id="main-content" className="checkout-main">
         <Link
           className="back-link"
           to={`/product/${product.slug}?${selectionQuery}`}
