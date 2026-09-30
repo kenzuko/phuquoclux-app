@@ -25,6 +25,7 @@ test("Home: actual React layout, no horizontal overflow, renderable map", async 
   await open(page);
   await expect(page.getByText("PHUQUOCLUX V1 - XEM THỬ")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Phú Quốc", exact: true })).toBeVisible();
+  await expect(page.locator(".search-panel select[name=pax]")).toHaveValue("2");
   await readyMap(page);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   expect(overflow).toBeLessThanOrEqual(2);
@@ -33,6 +34,16 @@ test("Home: actual React layout, no horizontal overflow, renderable map", async 
     path: `pages-preview-evidence/home-${testInfo.project.name}.png`,
     animations: "disabled",
   });
+});
+
+test("Home search uses the static router and preserves party intent", async ({ page }) => {
+  await open(page);
+  await page.locator('.search-panel input[name="q"]').fill("cano");
+  await page.locator('.search-panel select[name="pax"]').selectOption("4");
+  await page.getByRole("button", { name: "Tìm kiếm" }).click();
+  await expect(page).toHaveURL(/#\\/map\\?/);
+  await expect(page.locator(".map-result-card").filter({ hasText: "Tour 3 đảo bằng cano" })).toBeVisible();
+  await expect(page.locator(".map-result-card").first()).toHaveAttribute("href", /pax=4/);
 });
 
 test("Map: search results and 4-person intent survive static routing", async ({ page }, testInfo) => {
