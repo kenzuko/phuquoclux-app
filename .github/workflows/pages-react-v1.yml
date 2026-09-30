@@ -51,3 +51,43 @@ jobs:
             web/dist-pages
           if-no-files-found: ignore
           retention-days: 5
+
+  publish-next:
+    name: Publish tested React preview to gh-pages/next
+    if: github.event_name == 'push'
+    needs: test-static-preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout preview branch
+        uses: actions/checkout@v4
+      - name: Download precisely the tested build
+        uses: actions/download-artifact@v4
+        with:
+          name: phuquoclux-pages-react-v1
+          path: web/.pages-artifact
+      - name: Update only the next directory on gh-pages
+        env:
+          BUILD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test -f web/.pages-artifact/dist-pages/index.html
+          ls web/.pages-artifact/dist-pages/assets/maplibre-gl-worker-*.js >/dev/null
+          git fetch origin gh-pages:refs/remotes/origin/gh-pages
+          PUBLISH_DIR="$RUNNER_TEMP/phuquoclux-gh-pages"
+          git worktree add --detach "$PUBLISH_DIR" origin/gh-pages
+          rm -rf "$PUBLISH_DIR/next"
+          mkdir -p "$PUBLISH_DIR/next"
+          cp -a web/.pages-artifact/dist-pages/. "$PUBLISH_DIR/next/"
+          cd "$PUBLISH_DIR"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add next/
+          if git diff --cached --quiet; then
+            echo "Already deployed, gh-pages unchanged."
+          else
+            git commit -m "preview(pages): publish React V1 build ${BUILD_SHA}"
+            git push origin HEAD:gh-pages
+          fi
