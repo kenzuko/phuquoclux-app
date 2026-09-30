@@ -35,6 +35,7 @@ The committed template contains no source evidence and no authoritative prices.
 
 From the web directory:
 
+    mkdir -p .private
     npm run supplier:template > .private/supplier-intake-20261001.csv
     npm run supplier:check -- .private/supplier-intake-20261001.csv
 
