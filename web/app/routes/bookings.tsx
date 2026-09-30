@@ -32,7 +32,7 @@ export default function BookingsRoute() {
         <Link className="header-link" to="/">Khám phá thêm</Link>
       </header>
 
-      <main className="bookings-main">
+      <main id="main-content" className="bookings-main">
         <section className="bookings-intro">
           <p className="eyebrow">ĐẶT CHỖ CỦA TÔI</p>
           <h1>
