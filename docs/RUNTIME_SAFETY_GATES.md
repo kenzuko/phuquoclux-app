@@ -64,3 +64,26 @@ If any gate is missing, deployment is skipped.
 The deploy command keeps `COMMERCE_MODE=prototype` until live-commerce readiness is separately approved.
 
 DNS/custom-domain changes remain a separate operational step and are not performed by this workflow.
+
+
+## Isolated preview deploy
+
+Visual QA uses a separate manual Worker:
+
+```
+phuquoclux-app-preview
+```
+
+The preview workflow:
+
+- runs only from `workflow_dispatch`;
+- requires `PHUQUOCLUX_PREVIEW_ENABLED=true`;
+- requires Cloudflare credentials;
+- runs full typecheck, domain checks, build and Worker dry-run first;
+- keeps `COMMERCE_MODE=prototype`;
+- uses Workers.dev only;
+- does not attach `phuquoclux.com` or change DNS.
+
+The MapLibre demo style is acceptable only in this isolated preview.
+
+Production keeps the stricter map-style gate.
