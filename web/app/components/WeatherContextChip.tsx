@@ -25,6 +25,8 @@ export function WeatherContextChip({
     );
   }
 
+  const icon = weather.rainRateMmH >= 0.1 ? "🌦" : "☀";
+
   return (
     <a
       className="weather-context-chip"
@@ -36,7 +38,7 @@ export function WeatherContextChip({
         `${weather.temperatureC} độ C, ${weather.rainLabel}.`
       }
     >
-      <span>☀</span>
+      <span>{icon}</span>
       <span>
         <b>
           {weather.pointName} · {Math.round(weather.temperatureC)}°C
