@@ -9,6 +9,7 @@ import {
 import { BottomNav } from "../components/BottomNav";
 import { Brand } from "../components/Brand";
 import { IslandMap } from "../components/IslandMap";
+import { WeatherContextChip } from "../components/WeatherContextChip";
 import type { MapCategory, MapEntity } from "../domain/catalog";
 import {
   mapVerificationLabel,
@@ -33,6 +34,7 @@ import {
 } from "../domain/discovery";
 import { boundsForEntities } from "../domain/map-bounds";
 import { withReturnTo } from "../domain/navigation";
+import { useWeatherContext } from "../hooks/use-weather-context";
 
 const allowedCategories: Array<"all" | MapCategory> = [
   "all",
@@ -131,6 +133,7 @@ export default function MapRoute() {
   const [sheetExpanded, setSheetExpanded] = useState(false);
   const [viewport, setViewport] = useState<BoundingBox | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const selectedWeather = useWeatherContext(selected?.weatherPointId);
   const entityResults =
     category === "place"
       ? result.entities
@@ -303,6 +306,10 @@ export default function MapRoute() {
             </span>
             <strong>{selected.name}</strong>
             <p>{selected.copy}</p>
+            <WeatherContextChip
+              weather={selectedWeather}
+              variant="inline"
+            />
             <MapRelatedProducts
               entity={selected}
               intent={intent}
