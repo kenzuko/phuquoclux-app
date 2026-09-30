@@ -261,7 +261,7 @@ export default function HomeRoute() {
                               <em
                                 className={`verification-badge verification-badge--${entity.verification}`}
                               >
-                                {mapVerificationLabel(entity.verification)}
+                                {mapVerificationLabel(entity)}
                               </em>
                             </span>
                             <i>→</i>
@@ -355,7 +355,7 @@ function MapEntitySheet({
       <button className="entity-close" type="button" onClick={onClose}>×</button>
       <small>{entity.kicker}</small>
       <span className={`verification-badge verification-badge--${entity.verification}`}>
-        {mapVerificationLabel(entity.verification)}
+        {mapVerificationLabel(entity)}
       </span>
       <strong>{entity.name}</strong>
       <p>{entity.copy}</p>
