@@ -19,6 +19,7 @@ export type OfferStatus = "active" | "paused" | "retired";
 export type OperationalField =
   | "hotel_or_pickup"
   | "flight_number"
+  | "luggage_count"
   | "guest_note";
 
 export type FlatPricing = {
@@ -155,7 +156,12 @@ const offers: Offer[] = [
       confirmation: "request",
     },
     constraints: { maxPax: 4 },
-    operationalFields: ["hotel_or_pickup", "flight_number", "guest_note"],
+    operationalFields: [
+      "hotel_or_pickup",
+      "flight_number",
+      "luggage_count",
+      "guest_note",
+    ],
     requiredOperationalFields: ["hotel_or_pickup", "flight_number"],
   },
   {
@@ -178,7 +184,12 @@ const offers: Offer[] = [
       confirmation: "request",
     },
     constraints: { maxPax: 7 },
-    operationalFields: ["hotel_or_pickup", "flight_number", "guest_note"],
+    operationalFields: [
+      "hotel_or_pickup",
+      "flight_number",
+      "luggage_count",
+      "guest_note",
+    ],
     requiredOperationalFields: ["hotel_or_pickup", "flight_number"],
   },
   {
@@ -201,7 +212,12 @@ const offers: Offer[] = [
       confirmation: "request",
     },
     constraints: { maxPax: 16 },
-    operationalFields: ["hotel_or_pickup", "flight_number", "guest_note"],
+    operationalFields: [
+      "hotel_or_pickup",
+      "flight_number",
+      "luggage_count",
+      "guest_note",
+    ],
     requiredOperationalFields: ["hotel_or_pickup", "flight_number"],
   },
 ];
