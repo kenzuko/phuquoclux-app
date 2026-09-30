@@ -140,12 +140,37 @@ test("Product: transfer does not silently shrink a large party", async ({ page }
   await capture(page, `04-transfer-capacity-${testInfo.project.name}.png`);
 });
 
-test("Checkout: guest request discloses estimate and never claims confirmation", async ({ page }, testInfo) => {
+test("Checkout: review selection without collecting guest PII or pretending to accept a request", async ({ page }, testInfo) => {
   await page.goto("/product/tour-3-dao-cano?pax=3");
   await page.getByRole("link", { name: "Tiếp tục đặt" }).click();
+  await expect(page.getByRole("heading", { name: "Kiểm tra lựa chọn" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Thông tin liên hệ" })).toBeVisible();
-  await expect(page.getByText("Chưa thu tiền")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Cần xác nhận tình trạng" })).toBeVisible();
+  await expect(page.getByText("Chưa nhận đặt chỗ")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Chưa tiếp nhận yêu cầu" })).toBeVisible();
+  await expect(page.locator(".checkout-form input, .checkout-form textarea, .checkout-form form")).toHaveCount(0);
+  await expect(page.locator('button[type="submit"]')).toHaveCount(0);
   await assertNoHorizontalOverflow(page);
   await capture(page, `05-checkout-${testInfo.project.name}.png`);
+});
+
+test("Checkout: direct POST fails closed before accepting personal information", async ({ request }) => {
+  const response = await request.post("/checkout/tour-3-dao-cano?pax=3", {
+    form: {
+      name: "NOT_A_REAL_GUEST_SENTINEL",
+      email: "not-a-real-person.invalid",
+      phone: "000000000000",
+    },
+  });
+  expect(response.status()).toBe(503);
+  expect(response.headers()["cache-control"]).toContain("no-store");
+  const body = await response.text();
+  expect(body).not.toContain("NOT_A_REAL_GUEST_SENTINEL");
+});
+
+test("Bookings: URL query parameters cannot manufacture a confirmation", async ({ page }) => {
+  await page.goto("/bookings?demo=request&state=confirmed&product=tour-three-islands-cano");
+  await expect(page.getByRole("heading", { name: "Chưa có đặt chỗ" })).toBeVisible();
+  await expect(page.getByText("Đã nhận yêu cầu")).toHaveCount(0);
+  await expect(page.getByText("Đã xác nhận", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("URL từ bản demo cũ không phải xác nhận đặt chỗ.", { exact: false })).toBeVisible();
 });
