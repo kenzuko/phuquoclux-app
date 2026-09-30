@@ -13,15 +13,24 @@ Every MapEntity carries:
 - coordinate;
 - category;
 - verification status;
+- coordinate scope;
 - display priority;
 - minimum zoom;
 - optional Product link.
 
 Verification states:
 
-- `verified` - coordinate/anchor is trusted for product/location presentation;
-- `reference` - useful geographic reference, but not a precise commerce/pickup point;
+- `verified` - coordinate/anchor is trusted for its declared scope;
+- `reference` - useful geographic reference, but not authoritative enough for a precise commerce/pickup claim;
 - `demo` - development-only data.
+
+Coordinate scopes:
+
+- `area` - representative point for a named area, not an exact meeting point;
+- `site` - representative point for a facility/site;
+- `exact` - precise point that may be presented as an exact location.
+
+Verification and precision are separate. A verified area point must still be labeled as a verified area, not as an exact pickup point.
 
 ## Commerce rule
 
@@ -112,3 +121,13 @@ Rules:
 - after the map recenters, the configured map/tile provider may receive normal map resource requests for the viewed area, so provider privacy terms still matter.
 
 Embedded Home/Product maps do not request current location.
+
+
+## Current V1 precision labels
+
+- Dương Đông: verified `area`
+- An Thới: verified `area`
+- Gành Dầu: reference `area`
+- PQC: reference `site`
+
+This prevents a trusted area anchor from being accidentally described to travelers as an exact meeting or pickup point.
