@@ -192,6 +192,14 @@ export default function MapRoute() {
           ) : null}
           <input type="hidden" name="date" value={intent.date} />
           <input type="hidden" name="pax" value={intent.pax} />
+          {hasAreaSearch && initialBounds ? (
+            <>
+              <input type="hidden" name="west" value={initialBounds.west} />
+              <input type="hidden" name="south" value={initialBounds.south} />
+              <input type="hidden" name="east" value={initialBounds.east} />
+              <input type="hidden" name="north" value={initialBounds.north} />
+            </>
+          ) : null}
           <span>⌕</span>
           <input
             key={q}
