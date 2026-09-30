@@ -171,6 +171,10 @@ async function run() {
     "stale Weather runtime must never be labeled live",
   );
 
+  equal(normalizePax(null), 2, "missing pax should default to 2");
+  equal(normalizePax(""), 2, "empty pax should default to 2");
+  equal(normalizePax(undefined), 2, "undefined pax should default to 2");
+  equal(normalizePax("1"), 1, "explicit solo traveler must be preserved");
   equal(normalizePax("99"), 20, "trip pax must be capped at 20");
   const intent = tripIntentFromUrl(
     new URL("https://phuquoclux.com/map?date=2026-10-02&pax=4"),
