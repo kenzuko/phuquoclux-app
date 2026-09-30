@@ -32,7 +32,7 @@ export default function TripRoute() {
         </Link>
       </header>
 
-      <main className="bookings-main">
+      <main id="main-content" className="bookings-main">
         <section className="bookings-intro">
           <p className="eyebrow">HÀNH TRÌNH</p>
           <h1>
