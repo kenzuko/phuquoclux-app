@@ -406,6 +406,7 @@ export default function ProductRoute() {
                       <div className="quantity-control">
                         <button
                           type="button"
+                          aria-label={`Giảm ${unit.label}`}
                           onClick={() => changeUnit(unit.code, -1)}
                         >
                           −
@@ -413,6 +414,7 @@ export default function ProductRoute() {
                         <b>{unitQuantities[unit.code] ?? 0}</b>
                         <button
                           type="button"
+                          aria-label={`Tăng ${unit.label}`}
                           onClick={() => changeUnit(unit.code, 1)}
                         >
                           +
@@ -425,6 +427,7 @@ export default function ProductRoute() {
                 <div className="quantity-control">
                   <button
                     type="button"
+                    aria-label="Giảm số khách"
                     onClick={() => changePax(-1)}
                   >
                     −
@@ -432,6 +435,7 @@ export default function ProductRoute() {
                   <b>{pax}</b>
                   <button
                     type="button"
+                    aria-label="Tăng số khách"
                     onClick={() => changePax(1)}
                   >
                     +
@@ -440,7 +444,7 @@ export default function ProductRoute() {
               )}
             </div>
 
-            <div className="booking-total">
+            <div className="booking-total" aria-live="polite">
               <small>
                 {priced.priceState === "estimated" ? "Tạm tính tham khảo" : "Tạm tính"}
               </small>
