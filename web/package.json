@@ -11,7 +11,10 @@
     "deploy": "npm run build && wrangler deploy",
     "check": "npm run typecheck && npm run test:domain && npm run build && wrangler deploy --dry-run",
     "test:domain": "tsx scripts/domain-check.mjs",
-    "test:visual": "playwright test"
+    "test:visual": "playwright test",
+    "build:pages": "vite build --config vite.pages.config.ts",
+    "dev:pages": "vite --config vite.pages.config.ts --host 127.0.0.1 --port 4174",
+    "test:pages": "playwright test --config playwright.pages.config.ts"
   },
   "dependencies": {
     "maplibre-gl": "6.11.2",

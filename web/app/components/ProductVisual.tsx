@@ -19,7 +19,7 @@ export function ProductVisual({ product, mode = "card" }: Props) {
       >
         <img
           className="product-visual-photo"
-          src={product.media.src}
+          src={import.meta.env.VITE_PAGES_PREVIEW === "1" && product.media.src.startsWith("/") ? `${import.meta.env.BASE_URL}${product.media.src.slice(1)}` : product.media.src}
           alt={product.media.alt}
           loading={mode === "card" ? "lazy" : "eager"}
         />
@@ -39,7 +39,7 @@ export function ProductVisual({ product, mode = "card" }: Props) {
     >
       <img
         className="product-visual-mark"
-        src="/assets/phuquoclux-mark.webp"
+        src={import.meta.env.VITE_PAGES_PREVIEW === "1" ? `${import.meta.env.BASE_URL}assets/phuquoclux-mark.webp` : "/assets/phuquoclux-mark.webp"}
         alt=""
         aria-hidden="true"
       />
