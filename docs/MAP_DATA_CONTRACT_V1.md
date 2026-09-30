@@ -14,6 +14,7 @@ Every MapEntity carries:
 - category;
 - verification status;
 - coordinate scope;
+- provenance source id / system;
 - display priority;
 - minimum zoom;
 - optional Product link.
@@ -131,3 +132,33 @@ Embedded Home/Product maps do not request current location.
 - PQC: reference `site`
 
 This prevents a trusted area anchor from being accidentally described to travelers as an exact meeting or pickup point.
+
+
+## Provenance
+
+Every MapEntity retains an internal provenance record:
+
+- source system;
+- source id;
+- verification date when the entity is marked verified.
+
+Current source systems include:
+
+- `openpq`
+- `jotrip-weather`
+- `phuquoclux`
+
+This metadata is not customer-facing attribution. It exists so coordinates can be audited and refreshed without silently forking location truth.
+
+A `verified` MapEntity without a verification date fails catalog validation.
+
+## Shared Hòn Thơm anchors
+
+PhuQuocLux now reuses two verified Open Phu Quoc location anchors rather than inventing a cable-car pin:
+
+- `place_sunset_town` - Sunset Town area anchor, verified 22/09/2026
+- `place_aquatopia` - Aquatopia site centroid on Hòn Thơm, verified 22/09/2026
+
+The Hòn Thơm ticket product links to both.
+
+Neither pin is described as an exact cable-car gate. Their area/site coordinate scopes remain visible to the traveler.
