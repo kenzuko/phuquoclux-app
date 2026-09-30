@@ -198,6 +198,9 @@ export async function action({
   }
 
   const operationalFields = new Set(selection.offer.operationalFields);
+  const requiredOperationalFields = new Set(
+    selection.offer.requiredOperationalFields ?? [],
+  );
   const name = readText(form, "name", { required: true, maxLength: 120 });
   const phone = readPhone(form);
   const email = readEmail(form);
