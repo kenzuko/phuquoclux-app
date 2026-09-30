@@ -46,6 +46,9 @@ export function Layout({ children }: { children: ReactNode }) {
         <Links />
       </head>
       <body>
+        <a className="skip-link" href="#main-content">
+          Bỏ qua điều hướng
+        </a>
         {children}
         <ScrollRestoration />
         <Scripts />
