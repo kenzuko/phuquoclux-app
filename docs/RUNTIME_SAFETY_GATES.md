@@ -87,3 +87,14 @@ The preview workflow:
 The MapLibre demo style is acceptable only in this isolated preview.
 
 Production keeps the stricter map-style gate.
+
+
+## Preview before merging
+
+GitHub's manual `workflow_dispatch` UI depends on the workflow being present on the default branch. A feature PR cannot rely on that path alone.
+
+The isolated preview workflow also accepts a **same-repository** pull-request event, but only for `feat/react-router-v1` with the `preview-approved` label.
+
+The existing `PHUQUOCLUX_PREVIEW_ENABLED=true` variable and Cloudflare credentials are still required inside the job. If they are absent, deployment is skipped.
+
+This gives the team a safe way to deploy the branch to `phuquoclux-app-preview` for live Map and mobile visual QA **without merging or touching production DNS**.

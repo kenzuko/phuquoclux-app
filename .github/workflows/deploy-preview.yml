@@ -2,6 +2,11 @@ name: Deploy PhuQuocLux Preview
 
 on:
   workflow_dispatch:
+  pull_request:
+    types: [labeled, synchronize]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-preview.yml"
 
 concurrency:
   group: deploy-phuquoclux-preview
@@ -12,6 +17,13 @@ permissions:
 
 jobs:
   preview:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        github.event.pull_request.head.ref == 'feat/react-router-v1' &&
+        contains(github.event.pull_request.labels.*.name, 'preview-approved')
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
