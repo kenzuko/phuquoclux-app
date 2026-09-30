@@ -41,7 +41,7 @@ test("Home search uses the static router and preserves party intent", async ({ p
   await page.locator('.search-panel input[name="q"]').fill("cano");
   await page.locator('.search-panel select[name="pax"]').selectOption("4");
   await page.getByRole("button", { name: "Tìm kiếm" }).click();
-  await expect(page).toHaveURL(/#\\/map\\?/);
+  await expect.poll(() => new URL(page.url()).hash.startsWith("#/map?")).toBe(true);
   await expect(page.locator(".map-result-card").filter({ hasText: "Tour 3 đảo bằng cano" })).toBeVisible();
   await expect(page.locator(".map-result-card").first()).toHaveAttribute("href", /pax=4/);
 });
