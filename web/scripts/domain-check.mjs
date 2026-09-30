@@ -18,6 +18,8 @@ import {
 import { discover } from "../app/domain/discovery.ts";
 import { boundsForEntities } from "../app/domain/map-bounds.ts";
 import {
+  cancellationPolicyLabel,
+  confirmationPolicyLabel,
   fromPriceForProduct,
   getOffer,
   maxPaxForProduct,
@@ -235,6 +237,16 @@ async function run() {
   ok(
     sedan.requiredOperationalFields?.includes("flight_number"),
     "airport pickup must require the flight number before request submission",
+  );
+
+  equal(
+    confirmationPolicyLabel(sedan),
+    "Cần JoTrip xác nhận",
+    "request-first Offers must expose a clear traveler confirmation label",
+  );
+  ok(
+    cancellationPolicyLabel(sedan).includes("JoTrip xác nhận"),
+    "provider-defined cancellation must not be presented as a fake fixed policy",
   );
 
   let capacityCaught = false;
