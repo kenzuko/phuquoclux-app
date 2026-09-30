@@ -20,6 +20,7 @@ import { boundsForEntities } from "../app/domain/map-bounds.ts";
 import {
   cancellationPolicyLabel,
   confirmationPolicyLabel,
+  findOffer,
   fromPriceForProduct,
   getOffer,
   maxPaxForProduct,
@@ -136,6 +137,12 @@ async function run() {
     normalizeServiceDate("2026-09-28", fixedNow),
     "2026-09-29",
     "past service date must be normalized to today",
+  );
+
+  equal(
+    normalizeServiceDate("2026-02-30", fixedNow),
+    "2026-09-29",
+    "impossible service date must fail safe to today",
   );
   equal(
     formatServiceDate("2026-10-02"),
@@ -258,6 +265,12 @@ async function run() {
 
   const tourOffers = offersForProduct("tour-three-islands-cano");
   equal(tourOffers.length, 2, "tour product must expose two active offers");
+
+  equal(
+    findOffer("tour-three-islands-cano", "not-a-real-offer"),
+    undefined,
+    "strict Offer lookup must not silently substitute another Offer",
+  );
   equal(
     getOffer(
       "tour-three-islands-cano",
