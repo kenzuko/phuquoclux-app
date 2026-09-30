@@ -163,6 +163,26 @@ export function IslandMap({
   }, [initialBounds, ready]);
 
   useEffect(() => {
+    if (
+      !ready ||
+      !mapRef.current ||
+      !selectedEntityId ||
+      interaction !== "full"
+    ) {
+      return;
+    }
+
+    const entity = entities.find((item) => item.id === selectedEntityId);
+    if (!entity) return;
+
+    mapRef.current.easeTo({
+      center: [entity.lng, entity.lat],
+      zoom: Math.max(mapRef.current.getZoom(), 11.8),
+      duration: 420,
+    });
+  }, [entities, interaction, ready, selectedEntityId]);
+
+  useEffect(() => {
     if (!ready || !mapRef.current) return;
 
     let cancelled = false;
@@ -198,6 +218,10 @@ export function IslandMap({
           el.append(icon);
           el.title = entity.name;
           el.setAttribute("aria-label", entity.name);
+          el.setAttribute(
+            "aria-pressed",
+            entity.id === selectedEntityId ? "true" : "false",
+          );
           el.addEventListener("click", () => onSelect(entity));
 
           const marker = new maplibregl.Marker({
