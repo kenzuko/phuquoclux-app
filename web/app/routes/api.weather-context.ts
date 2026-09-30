@@ -1,11 +1,16 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getWeatherContext } from "../services/weather-context.server";
+import type { WeatherPointId } from "../domain/weather-context";
 
-const allowedPoints = new Set([
+const allowedPoints = new Set<WeatherPointId>([
   "duong_dong",
   "an_thoi",
   "ganh_dau",
 ]);
+
+function isWeatherPointId(value: string): value is WeatherPointId {
+  return allowedPoints.has(value as WeatherPointId);
+}
 
 export async function loader({
   request,
@@ -14,7 +19,7 @@ export async function loader({
   const url = new URL(request.url);
   const pointId = url.searchParams.get("point") ?? "duong_dong";
 
-  if (!allowedPoints.has(pointId)) {
+  if (!isWeatherPointId(pointId)) {
     return Response.json(
       { ok: false, error: "unsupported_point" },
       {
