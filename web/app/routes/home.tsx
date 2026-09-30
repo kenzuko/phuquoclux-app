@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Form, Link, type LoaderFunctionArgs, useLoaderData } from "react-router";
 import { BottomNav } from "../components/BottomNav";
 import { Brand } from "../components/Brand";
@@ -28,18 +28,12 @@ import {
   tripIntentFromUrl,
   type TripIntent,
 } from "../domain/trip-intent";
-import { getWeatherContext } from "../services/weather-context.server";
+import type { WeatherContextSummary } from "../domain/weather-context";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
-  const weather = await getWeatherContext(
-    context.cloudflare.env,
-    "duong_dong",
-  );
-
   return {
     today: todayInPhuQuoc(),
     initialIntent: tripIntentFromUrl(new URL(request.url)),
-    weather,
     mapStyleUrl:
       context.cloudflare.env.MAP_STYLE_URL ??
       "https://demotiles.maplibre.org/style.json",
@@ -55,13 +49,39 @@ const filters: Array<{ id: "all" | MapCategory; label: string }> = [
 ];
 
 export default function HomeRoute() {
-  const { mapStyleUrl, today, initialIntent, weather } =
+  const { mapStyleUrl, today, initialIntent } =
     useLoaderData<typeof loader>();
+  const [weather, setWeather] =
+    useState<WeatherContextSummary | null>(null);
   const [category, setCategory] = useState<"all" | MapCategory>("all");
   const [serviceDate, setServiceDate] = useState(initialIntent.date);
   const [pax, setPax] = useState(initialIntent.pax);
   const [selected, setSelected] = useState<MapEntity | null>(null);
   const [desktopViewport, setDesktopViewport] = useState<BoundingBox | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void fetch("/api/context/weather?point=duong_dong", {
+      headers: { accept: "application/json" },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        const payload = (await response.json()) as {
+          ok?: boolean;
+          weather?: WeatherContextSummary;
+        };
+        return payload.ok ? payload.weather ?? null : null;
+      })
+      .then((value) => {
+        if (value) setWeather(value);
+      })
+      .catch(() => undefined);
+
+    return () => controller.abort();
+  }, []);
+
   const onSelect = useCallback((entity: MapEntity) => setSelected(entity), []);
   const onDesktopViewportChange = useCallback(
     (bounds: BoundingBox) => setDesktopViewport(bounds),
