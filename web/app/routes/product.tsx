@@ -402,6 +402,9 @@ export default function ProductRoute() {
                       <div>
                         <b>{unit.label}</b>
                         <small>{money(unit.amount)} / vé</small>
+                        {unit.note ? (
+                          <small className="unit-rate-note">{unit.note}</small>
+                        ) : null}
                       </div>
                       <div className="quantity-control">
                         <button
