@@ -2,6 +2,7 @@ import type { PhuQuocLuxEnv } from "../cloudflare-context";
 import {
   parseWeatherContext,
   type WeatherContextSummary,
+  type WeatherPointId,
 } from "../domain/weather-context";
 
 const DEFAULT_WEATHER_RUNTIME_BASE =
@@ -26,7 +27,7 @@ function runtimeBase(env: PhuQuocLuxEnv) {
 
 export async function getWeatherContext(
   env: PhuQuocLuxEnv,
-  pointId: string,
+  pointId: WeatherPointId,
   now = new Date(),
 ): Promise<WeatherContextSummary | null> {
   const cacheKey = `${runtimeBase(env)}:${pointId}`;
