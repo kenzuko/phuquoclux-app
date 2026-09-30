@@ -215,7 +215,6 @@ export default function ProductRoute() {
     });
   }
 
-  const primaryEntity = entities[0];
   const mapSearchParams = new URLSearchParams({ q: product.name });
   const productMapUrl = mapUrl(
     { date: serviceDate, pax: priced.pax },
@@ -282,9 +281,11 @@ export default function ProductRoute() {
             <section className="content-block">
               <p className="section-kicker">VỊ TRÍ / TUYẾN</p>
               <h2>
-                {primaryEntity?.coordinateScope === "area"
-                  ? "Xem khu vực trên bản đồ"
-                  : "Xem trên bản đồ"}
+                {entities.length > 1
+                  ? "Xem các điểm liên quan trên bản đồ"
+                  : entities[0]?.coordinateScope === "area"
+                    ? "Xem khu vực trên bản đồ"
+                    : "Xem trên bản đồ"}
               </h2>
               {entities.length ? (
                 <>
@@ -297,12 +298,17 @@ export default function ProductRoute() {
                       interaction="embedded"
                     />
                   </div>
-                  {primaryEntity ? (
-                    <div className="product-map-scope">
-                      <b>{mapCoordinateScopeLabel(primaryEntity.coordinateScope)}</b>
-                      <span>{mapCoordinateScopeCopy(primaryEntity)}</span>
-                    </div>
-                  ) : null}
+                  <div className="product-map-scope-list">
+                    {entities.map((entity) => (
+                      <div className="product-map-scope" key={entity.id}>
+                        <b>
+                          {entity.name} ·{" "}
+                          {mapCoordinateScopeLabel(entity.coordinateScope)}
+                        </b>
+                        <span>{mapCoordinateScopeCopy(entity)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </>
               ) : (
                 <div className="map-verification-note">
