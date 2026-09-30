@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "phuquoclux-app",
+  "main": "./workers/app.ts",
+  "compatibility_date": "2026-09-29",
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "MAP_STYLE_URL": "https://tiles.openfreemap.org/styles/liberty",
+    "WEATHER_RUNTIME_BASE_URL": "https://weather.openphuquoc.com",
+    "COMMERCE_MODE": "prototype"
+  }
+}
