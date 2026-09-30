@@ -129,3 +129,17 @@ Client-side `required` attributes are convenience only; they are not the source 
 
 
 For the current `airport-private-transfer` direction, both destination/hotel and flight number are required. The product promise is flight-aware airport pickup, so accepting a request without a flight number would create an avoidable manual recovery step for Ops.
+
+
+## Airport transfer operational context
+
+The airport-to-hotel request collects:
+
+- destination / hotel - required;
+- flight number - required and normalized before Ops receives it;
+- checked-luggage count - optional, bounded from 0 to 20;
+- guest note - optional.
+
+Luggage count does not change prototype pricing yet. It is operational context for vehicle review and later capacity rules.
+
+Do not silently infer luggage count from passenger count.
