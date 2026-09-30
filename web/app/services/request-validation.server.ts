@@ -68,3 +68,56 @@ export function readUuid(form: FormData, key: string) {
 
   return value;
 }
+
+
+export function readInteger(
+  form: FormData,
+  key: string,
+  rule: {
+    required?: boolean;
+    min: number;
+    max: number;
+  },
+) {
+  const raw = String(form.get(key) ?? "").trim();
+
+  if (!raw) {
+    if (rule.required) {
+      throw new Response(`Missing field: ${key}`, { status: 400 });
+    }
+    return undefined;
+  }
+
+  const value = Number(raw);
+  if (
+    !Number.isInteger(value) ||
+    value < rule.min ||
+    value > rule.max
+  ) {
+    throw new Response(`Invalid integer: ${key}`, { status: 400 });
+  }
+
+  return value;
+}
+
+export function readFlightNumber(
+  form: FormData,
+  key = "flightNumber",
+  required = false,
+) {
+  const value = readText(form, key, {
+    required,
+    maxLength: 16,
+  })
+    .toUpperCase()
+    .replace(/[\s-]+/g, "");
+
+  if (!value && !required) return "";
+
+  const flightLike = /^[A-Z0-9]{2,3}[0-9]{1,4}[A-Z]?$/;
+  if (!flightLike.test(value)) {
+    throw new Response("Invalid flight number", { status: 400 });
+  }
+
+  return value;
+}
