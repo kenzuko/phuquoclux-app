@@ -2,15 +2,17 @@ import type { WeatherContextSummary } from "../domain/weather-context";
 
 export function WeatherContextChip({
   weather,
+  variant = "overlay",
 }: {
   weather: WeatherContextSummary | null;
+  variant?: "overlay" | "inline";
 }) {
   if (!weather) return null;
 
   if (weather.status === "stale") {
     return (
       <a
-        className="weather-context-chip weather-context-chip--stale"
+        className={`weather-context-chip weather-context-chip--${variant} weather-context-chip--stale`}
         href="https://weather.openphuquoc.com"
         target="_blank"
         rel="noreferrer"
@@ -29,7 +31,7 @@ export function WeatherContextChip({
 
   return (
     <a
-      className="weather-context-chip"
+      className={`weather-context-chip weather-context-chip--${variant}`}
       href="https://weather.openphuquoc.com"
       target="_blank"
       rel="noreferrer"
