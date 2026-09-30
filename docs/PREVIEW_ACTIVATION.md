@@ -35,7 +35,8 @@ After configuration, rerun the preview workflow on the feature branch. If GitHub
 2. iPhone WebKit and desktop Chromium visual journeys pass;
 3. Home/Full Map basemap **actually loads**, not merely the page shell;
 4. prototype prices and unconfirmed booking state are clearly labeled;
-5. transfer capacity and checkout validation are intact;
+5. transfer capacity, read-only checkout and a direct POST fail-closed check are intact;
+5a. My Bookings cannot display a forged confirmation via demo/state query parameters;
 6. the preview Workflow reports a successful deploy step and actual Workers.dev URL.
 
 Do not approve production launch based only on browser screenshots or a green build.
