@@ -264,3 +264,26 @@ export function productsForMapEntity(entityId: string) {
     product.mapEntityIds.includes(entityId),
   );
 }
+
+
+export function mapCoordinateScopeLabel(
+  scope: MapCoordinateScope,
+) {
+  if (scope === "area") return "Pin đại diện khu vực";
+  if (scope === "site") return "Pin đại diện cơ sở";
+  return "Vị trí chính xác";
+}
+
+export function mapCoordinateScopeCopy(
+  entity: Pick<MapEntity, "name" | "coordinateScope">,
+) {
+  if (entity.coordinateScope === "area") {
+    return `Pin này đại diện khu vực ${entity.name}, không phải điểm đón hoặc điểm gặp chính xác.`;
+  }
+
+  if (entity.coordinateScope === "site") {
+    return `Pin này đại diện phạm vi ${entity.name}, không phải điểm gặp cụ thể trong cơ sở.`;
+  }
+
+  return "Pin này có thể được dùng như một vị trí chính xác.";
+}
