@@ -1,8 +1,12 @@
 export type WeatherContextStatus = "live" | "stale";
+export type WeatherPointId =
+  | "duong_dong"
+  | "an_thoi"
+  | "ganh_dau";
 
 export type WeatherContextSummary = {
   status: WeatherContextStatus;
-  pointId: string;
+  pointId: WeatherPointId;
   pointName: string;
   temperatureC: number;
   rainRateMmH: number;
@@ -34,7 +38,7 @@ export function weatherRainLabel(rateMmH: number) {
 
 export function parseWeatherContext(
   payload: unknown,
-  pointId: string,
+  pointId: WeatherPointId,
   now = new Date(),
 ): WeatherContextSummary | null {
   const root = record(payload);
