@@ -231,7 +231,7 @@ export default function ProductRoute() {
         </Link>
       </header>
 
-      <main className="detail-main">
+      <main id="main-content" className="detail-main">
         <Link className="back-link" to={returnTo}>
           ← Quay lại khám phá
         </Link>
