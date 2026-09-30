@@ -10,7 +10,12 @@ import {
 import { Brand } from "../components/Brand";
 import { getProductBySlug, money, type ProductId } from "../domain/catalog";
 import { assertQuoteBookable } from "../domain/commerce";
-import { getOffer, type Offer } from "../domain/offer";
+import {
+  cancellationPolicyLabel,
+  confirmationPolicyLabel,
+  getOffer,
+  type Offer,
+} from "../domain/offer";
 import { formatServiceDate } from "../domain/service-date";
 import {
   appendUnitQuantities,
@@ -400,7 +405,11 @@ export default function CheckoutRoute() {
               ))}
               <div>
                 <span>Tình trạng</span>
-                <b>Cần xác nhận</b>
+                <b>{confirmationPolicyLabel(offer)}</b>
+              </div>
+              <div>
+                <span>Đổi / huỷ</span>
+                <b>{cancellationPolicyLabel(offer)}</b>
               </div>
             </div>
             <div className="order-line total">
