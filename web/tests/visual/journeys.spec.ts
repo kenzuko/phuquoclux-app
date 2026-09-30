@@ -53,6 +53,9 @@ async function assertNoHorizontalOverflow(page: import("@playwright/test").Page)
 async function expectVisibleMapReady(page: import("@playwright/test").Page) {
   const map = page.locator(".island-map:visible").first();
   await expect(map).toBeVisible();
+  // The map intentionally mounts only when it enters the viewport.
+  // A CSS-visible element can still be below the fold, especially on Home.
+  await map.scrollIntoViewIfNeeded();
   await expect(map).toHaveAttribute("data-map-ready", "true", {
     timeout: 25_000,
   });
