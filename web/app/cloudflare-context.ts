@@ -1,5 +1,6 @@
 export type PhuQuocLuxEnv = {
   MAP_STYLE_URL?: string;
+  WEATHER_RUNTIME_BASE_URL?: string;
   COMMERCE_MODE?: "prototype" | "live";
 };
 
