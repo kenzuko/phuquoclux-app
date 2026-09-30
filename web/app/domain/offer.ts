@@ -35,6 +35,7 @@ export type UnitRate = {
   code: string;
   label: string;
   amount: number;
+  note?: string;
 };
 
 export type UnitMixPricing = {
@@ -127,7 +128,13 @@ const offers: Offer[] = [
       headlineUnitCode: "adult",
       units: [
         { code: "adult", label: "Người lớn", amount: 700000 },
-        { code: "child", label: "Trẻ em", amount: 504000 },
+        {
+          code: "child",
+          label: "Trẻ em",
+          amount: 504000,
+          note:
+            "Điều kiện vé trẻ em được xác nhận theo chính sách áp dụng ngày sử dụng.",
+        },
       ],
     },
     policy: {
