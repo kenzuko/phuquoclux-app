@@ -232,6 +232,10 @@ async function run() {
     sedan.requiredOperationalFields?.includes("hotel_or_pickup"),
     "transfer must require destination / hotel before request submission",
   );
+  ok(
+    sedan.requiredOperationalFields?.includes("flight_number"),
+    "airport pickup must require the flight number before request submission",
+  );
 
   let capacityCaught = false;
   try {
