@@ -7,6 +7,9 @@ export type TripIntent = {
 };
 
 export function normalizePax(value: unknown, fallback = 2) {
+  // Number(null) and Number("") are zero, not evidence that the user chose 1.
+  if (value === null || value === undefined ||
+      (typeof value === "string" && value.trim() === "")) return fallback;
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.max(1, Math.min(20, Math.floor(parsed)));
