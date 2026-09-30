@@ -43,20 +43,28 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
 
   const offers = offersForProduct(product.id);
   const url = new URL(request.url);
-  const initialPax = Math.min(
-    normalizePax(url.searchParams.get("pax"), 2),
-    maxPaxForProduct(product.id),
+  const initialPax = normalizePax(
+    url.searchParams.get("pax"),
+    2,
   );
   const requestedOffer =
     url.searchParams.get("offer") ??
     url.searchParams.get("option") ??
     undefined;
   const requestedInitialOffer = getOffer(product.id, requestedOffer);
+  const compatibleInitialOffer = offers.find((offer) =>
+    offerSupportsPax(offer, initialPax),
+  );
+  const fallbackOffer = [...offers].sort(
+    (a, b) =>
+      (b.constraints?.maxPax ?? 20) -
+      (a.constraints?.maxPax ?? 20),
+  )[0];
   const initialOffer =
     requestedInitialOffer &&
     offerSupportsPax(requestedInitialOffer, initialPax)
       ? requestedInitialOffer
-      : offers.find((offer) => offerSupportsPax(offer, initialPax));
+      : compatibleInitialOffer ?? fallbackOffer;
 
   if (!initialOffer) {
     throw new Response("No offer configured", { status: 503 });
@@ -79,7 +87,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
     defaultDate,
     initialServiceDate,
     initialPax,
-    maxPax: maxPaxForProduct(product.id),
+    singleOfferMaxPax: maxPaxForProduct(product.id),
     initialOfferId: initialOffer.id,
     returnTo,
     initialUnitQuantities: unitQuantitiesFromSearch(
@@ -127,7 +135,7 @@ export default function ProductRoute() {
     defaultDate,
     initialServiceDate,
     initialPax,
-    maxPax,
+    singleOfferMaxPax,
     initialOfferId,
     returnTo,
     initialUnitQuantities,
@@ -140,9 +148,14 @@ export default function ProductRoute() {
 
   const offer =
     offers.find((item) => item.id === offerId) ?? offers[0];
-  const priced = priceOffer(offer, pax, unitQuantities);
+  const offerFitsParty = offerSupportsPax(offer, pax);
+  const priced = offerFitsParty
+    ? priceOffer(offer, pax, unitQuantities)
+    : null;
 
   const checkoutUrl = useMemo(() => {
+    if (!priced) return null;
+
     const query = new URLSearchParams({
       pax: String(priced.pax),
       offer: offerId,
@@ -154,7 +167,7 @@ export default function ProductRoute() {
   }, [
     offer,
     offerId,
-    priced.pax,
+    priced,
     product.slug,
     returnTo,
     serviceDate,
@@ -175,7 +188,7 @@ export default function ProductRoute() {
   function changePax(delta: number) {
     const nextPax = Math.max(
       1,
-      Math.min(maxPax, pax + delta),
+      Math.min(20, pax + delta),
     );
 
     if (nextPax === pax) return;
@@ -217,7 +230,7 @@ export default function ProductRoute() {
 
   const mapSearchParams = new URLSearchParams({ q: product.name });
   const productMapUrl = mapUrl(
-    { date: serviceDate, pax: priced.pax },
+    { date: serviceDate, pax: priced?.pax ?? pax },
     mapSearchParams,
   );
 
@@ -454,11 +467,33 @@ export default function ProductRoute() {
             </div>
 
             <div className="booking-total" aria-live="polite">
-              <small>
-                {priced.priceState === "estimated" ? "Tạm tính tham khảo" : "Tạm tính"}
-              </small>
-              <strong>{money(priced.totalAmount)}</strong>
+              {priced ? (
+                <>
+                  <small>
+                    {priced.priceState === "estimated"
+                      ? "Tạm tính tham khảo"
+                      : "Tạm tính"}
+                  </small>
+                  <strong>{money(priced.totalAmount)}</strong>
+                </>
+              ) : (
+                <>
+                  <small>Nhóm hiện tại</small>
+                  <strong>Chưa có 1 xe phù hợp</strong>
+                </>
+              )}
             </div>
+
+            {!priced && product.type === "transfer" ? (
+              <div className="booking-capacity-warning" role="status">
+                <b>{pax} khách cần nhiều hơn một xe.</b>
+                <span>
+                  Lựa chọn hiện tại hỗ trợ tối đa {singleOfferMaxPax} khách
+                  trên một xe. PhuQuocLux chưa tự chia nhiều xe ở bước này,
+                  nên hãy giảm số khách để tiếp tục.
+                </span>
+              </div>
+            ) : null}
 
             <div className="booking-policy-summary">
               <div>
@@ -471,9 +506,15 @@ export default function ProductRoute() {
               </div>
             </div>
 
-            <Link className="booking-cta" to={checkoutUrl}>
-              Tiếp tục đặt
-            </Link>
+            {checkoutUrl ? (
+              <Link className="booking-cta" to={checkoutUrl}>
+                Tiếp tục đặt
+              </Link>
+            ) : (
+              <button className="booking-cta" type="button" disabled>
+                Cần điều chỉnh số khách
+              </button>
+            )}
             <p className="microcopy">
               Giá và tình trạng chỗ sẽ được kiểm tra lại ở bước tiếp theo.
             </p>
