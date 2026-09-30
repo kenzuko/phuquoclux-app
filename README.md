@@ -1,66 +1,9 @@
-# PhuQuocLux App
+# PhuQuocLux - temporary GitHub Pages UI preview
 
-Map-first mass travel marketplace for Phu Quoc, operated by JoTrip.
+This isolated `gh-pages` branch publishes an **older static design prototype** from `design/map-first-v1` so the map-first layout can be reviewed while Cloudflare preview is unavailable. It is **not** the current React Router/MapLibre application in PR #2 (`feat/react-router-v1`).
 
-## Current design prototype
+The demo is public, but carries a prominent warning and `noindex` metadata. Prices, pins, availability and any sample booking statuses are illustrative. Submitting checkout has been disabled; do not type real guest data. Development OpenStreetMap tiles are for small-scope review only and must not serve production traffic.
 
-The first UI pass validates the locked direction:
+To publish: repository Settings > Pages > Source: Deploy from a branch > Branch: `gh-pages` > Folder: `/(root)` > Save. Then verify the deployed URL (expected GitHub Pages path: `https://kenzuko.github.io/phuquoclux-app/`). No custom domain or Cloudflare changes.
 
-- compact PhuQuocLux consumer identity with a quiet `by JoTrip` signature;
-- search + date/pax remain first-class for mass users;
-- a large embedded Phu Quoc map remains the visual backbone;
-- map/category/results are synchronized;
-- full-map exploration exists without forcing every buyer to use the map;
-- quick services prioritize clear purchase intent;
-- Tours, Tickets and Transfers are visually prioritized;
-- post-booking / commerce architecture remains separate from the map layer.
-
-### Prototype tech
-
-This design branch intentionally uses plain HTML/CSS/JS plus Leaflet/OpenStreetMap so the UX can be reviewed without prematurely locking the production frontend stack or map vendor.
-
-OpenStreetMap tiles here are **development-only**. Production map provider, caching, tile policy, clustering and map styling remain architecture decisions.
-
-## Run locally
-
-```bash
-python3 -m http.server 4173
-```
-
-Open `http://localhost:4173`.
-
-## Product locks
-
-See:
-- `docs/PRODUCT_LOCK.md`
-- `docs/BRAND_UI_DIRECTION.md`
-- `design/tokens.css`
-
-
-## Current review flow
-
-Routes in the prototype:
-
-- `/` - Home + embedded Map
-- `/product.html?type=tour`
-- `/product.html?type=ticket`
-- `/product.html?type=transfer`
-- `/checkout.html`
-- `/bookings.html`
-
-The current branch now covers the full UX spine:
-
-```
-Home / Map → Product → Checkout → My Bookings
-```
-
-## Production stack decision
-
-After UX acceptance, production implementation is locked to:
-
-- React Router v8 + TypeScript
-- Vite + Cloudflare Vite plugin
-- Cloudflare Workers
-- MapLibre GL JS with provider-agnostic tiles/styles
-
-See `docs/STACK_DECISION_V1.md`.
+The latest app stays on PR #2. GitHub Pages does not run Cloudflare Workers, server-side Quote/Booking, server weather API or real payment. Do not equate this design preview with production readiness.
