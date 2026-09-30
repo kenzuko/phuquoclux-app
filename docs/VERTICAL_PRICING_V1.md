@@ -126,3 +126,6 @@ Current transfer V1 requires the destination / hotel field because a useful tran
 The browser marks required fields, and the server validates the same requirement.
 
 Client-side `required` attributes are convenience only; they are not the source of truth.
+
+
+For the current `airport-private-transfer` direction, both destination/hotel and flight number are required. The product promise is flight-aware airport pickup, so accepting a request without a flight number would create an avoidable manual recovery step for Ops.
