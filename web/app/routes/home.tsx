@@ -86,7 +86,7 @@ export default function HomeRoute() {
         </div>
       </header>
 
-      <main className="home-main">
+      <main id="main-content" className="home-main">
         <section className="home-context">
           <div>
             <p className="eyebrow">ĐIỂM ĐẾN</p>
