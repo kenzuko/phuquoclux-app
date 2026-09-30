@@ -279,3 +279,22 @@ export function maxPaxForProduct(productId: ProductId) {
   if (!constrained.length) return 20;
   return Math.min(20, Math.max(...constrained));
 }
+
+
+export function cancellationPolicyLabel(offer: Offer) {
+  if (offer.policy.cancellation === "non_refundable") {
+    return "Không hoàn / huỷ theo điều kiện đã chọn";
+  }
+
+  if (offer.policy.cancellation === "flexible") {
+    return "Có thể đổi / huỷ theo điều kiện của lựa chọn";
+  }
+
+  return "JoTrip xác nhận điều kiện đổi / huỷ cùng tình trạng dịch vụ";
+}
+
+export function confirmationPolicyLabel(offer: Offer) {
+  return offer.policy.confirmation === "instant"
+    ? "Xác nhận ngay khi đủ điều kiện"
+    : "Cần JoTrip xác nhận";
+}
