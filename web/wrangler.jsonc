@@ -8,6 +8,7 @@
   },
   "vars": {
     "MAP_STYLE_URL": "https://demotiles.maplibre.org/style.json",
+    "WEATHER_RUNTIME_BASE_URL": "https://weather.openphuquoc.com",
     "COMMERCE_MODE": "prototype"
   }
 }
