@@ -1,0 +1,60 @@
+name: PostgreSQL booking contract
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "web/app/repositories/postgres-booking-core.server.ts"
+      - "web/db/migrations/**"
+      - "web/scripts/postgres-booking-integration.mjs"
+      - "web/package.json"
+      - ".github/workflows/db-contract.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "web/app/repositories/postgres-booking-core.server.ts"
+      - "web/db/migrations/**"
+      - "web/scripts/postgres-booking-integration.mjs"
+      - "web/package.json"
+      - ".github/workflows/db-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: pql_synthetic_test
+          POSTGRES_PASSWORD: synthetic-ci-only-not-for-deployment
+          POSTGRES_DB: phuquoclux_contract_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U pql_synthetic_test -d phuquoclux_contract_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=6
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout test source
+        uses: actions/checkout@v4
+      - name: Use Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install test dependencies
+        run: npm install --no-audit --no-fund
+      - name: Verify migrations and transaction contract against real disposable PostgreSQL
+        env:
+          PG_TEST_URL: postgresql://pql_synthetic_test:synthetic-ci-only-not-for-deployment@127.0.0.1:5432/phuquoclux_contract_test
+        run: npm run test:db
