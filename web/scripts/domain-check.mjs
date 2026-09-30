@@ -61,6 +61,11 @@ import {
   getCommerceMode,
 } from "../app/services/commerce-mode.server.ts";
 import {
+  auditSupplierIntake,
+  expectedSupplierIntakeOffers,
+  validateSupplierIntakeRow,
+} from "../app/domain/supplier-intake.ts";
+import {
   parsePrototypeQuoteReceipt,
   reconcilePrototypeQuote,
   serializePrototypeQuoteReceipt,
@@ -81,6 +86,83 @@ function equal(actual, expected, message) {
 async function run() {
   equal(validateCatalog().length, 0, "catalog must have no integrity issues");
   assertCatalogValid();
+
+  const supplierNow = new Date("2026-10-01T10:00:00.000Z");
+  const supplierRows = expectedSupplierIntakeOffers().map((offer) => ({
+    offer_id: offer.offerId,
+    provider_id: offer.providerId,
+    source_type: "supplier",
+    source_reference: "SYNTHETIC-TEST-REFERENCE",
+    price_verified_at_utc: "2026-10-01T09:00:00Z",
+    valid_from: "2026-10-01",
+    valid_through: "2026-12-31",
+    pricing_mode: offer.pricingMode,
+    price_basis: offer.priceBasis,
+    flat_vnd: offer.pricingMode === "flat" ? "123456" : "",
+    unit_rates_vnd:
+      offer.pricingMode === "unit_mix"
+        ? offer.unitCodes.map((code, index) => `${code}=${123456 + index}`).join(";")
+        : "",
+    max_pax: offer.maxPax ? String(offer.maxPax) : "",
+    cancellation_policy_reference: "SYNTHETIC-CANCEL-POLICY",
+    confirmation_policy_reference: "SYNTHETIC-CONFIRM-POLICY",
+    inventory_mode: offer.inventoryMode,
+  }));
+
+  const supplierAudit = auditSupplierIntake(supplierRows, supplierNow);
+  equal(
+    supplierAudit.readyForOpsReviewCount,
+    supplierAudit.expectedOfferCount,
+    "complete synthetic supplier evidence should be ready for manual Ops review",
+  );
+  equal(
+    supplierAudit.liveCommerceEligibleCount,
+    0,
+    "offline supplier intake must never activate live commerce",
+  );
+  equal(
+    supplierAudit.fileIssues.length,
+    0,
+    "complete supplier intake must cover each active Offer exactly once",
+  );
+
+  const unsafeSupplierRow = {
+    ...supplierRows[0],
+    source_type: "prototype",
+    source_reference: "",
+    valid_through: "2026-09-30",
+  };
+  const unsafeSupplierAssessment = validateSupplierIntakeRow(
+    unsafeSupplierRow,
+    supplierNow,
+  );
+  ok(
+    !unsafeSupplierAssessment.readyForOpsReview,
+    "prototype or expired supplier evidence must fail closed",
+  );
+  ok(
+    unsafeSupplierAssessment.issues.some(
+      (issue) => issue.code === "SOURCE_TYPE_INVALID",
+    ),
+    "prototype source must never count as supplier evidence",
+  );
+  ok(
+    unsafeSupplierAssessment.issues.some(
+      (issue) => issue.code === "PRICE_EVIDENCE_EXPIRED",
+    ),
+    "expired price evidence must be rejected",
+  );
+
+  const duplicateSupplierAudit = auditSupplierIntake(
+    [...supplierRows, supplierRows[0]],
+    supplierNow,
+  );
+  ok(
+    duplicateSupplierAudit.fileIssues.some(
+      (issue) => issue.code === "OFFER_DUPLICATE_IN_FILE",
+    ),
+    "duplicate supplier Offer rows must fail file-level validation",
+  );
 
   equal(getCommerceMode({}), "prototype", "commerce must fail-safe to prototype");
   equal(
