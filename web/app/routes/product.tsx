@@ -7,6 +7,8 @@ import {
 import { Brand } from "../components/Brand";
 import {
   getProductBySlug,
+  mapCoordinateScopeCopy,
+  mapCoordinateScopeLabel,
   mapEntities,
   money,
 } from "../domain/catalog";
@@ -211,6 +213,7 @@ export default function ProductRoute() {
     });
   }
 
+  const primaryEntity = entities[0];
   const mapSearchParams = new URLSearchParams({ q: product.name });
   const productMapUrl = mapUrl(
     { date: serviceDate, pax: priced.pax },
@@ -276,17 +279,29 @@ export default function ProductRoute() {
 
             <section className="content-block">
               <p className="section-kicker">VỊ TRÍ / TUYẾN</p>
-              <h2>Xem trên bản đồ</h2>
+              <h2>
+                {primaryEntity?.coordinateScope === "area"
+                  ? "Xem khu vực trên bản đồ"
+                  : "Xem trên bản đồ"}
+              </h2>
               {entities.length ? (
-                <div className="product-map-wrap">
-                  <IslandMap
-                    entities={entities}
-                    styleUrl={mapStyleUrl}
-                    category="all"
-                    onSelect={() => undefined}
-                    interaction="embedded"
-                  />
-                </div>
+                <>
+                  <div className="product-map-wrap">
+                    <IslandMap
+                      entities={entities}
+                      styleUrl={mapStyleUrl}
+                      category="all"
+                      onSelect={() => undefined}
+                      interaction="embedded"
+                    />
+                  </div>
+                  {primaryEntity ? (
+                    <div className="product-map-scope">
+                      <b>{mapCoordinateScopeLabel(primaryEntity.coordinateScope)}</b>
+                      <span>{mapCoordinateScopeCopy(primaryEntity)}</span>
+                    </div>
+                  ) : null}
+                </>
               ) : (
                 <div className="map-verification-note">
                   <b>Chưa hiển thị vị trí chính xác</b>
