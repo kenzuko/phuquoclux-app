@@ -27,10 +27,15 @@
     input.closest('.payment-option').classList.add('is-selected');
   }));
 
-  document.getElementById('checkoutForm').addEventListener('submit', e => {
+  const checkoutForm = document.getElementById('checkoutForm');
+  const checkoutSubmit = checkoutForm.querySelector('button[type="submit"]');
+  if (checkoutSubmit) {
+    checkoutSubmit.disabled = true;
+    checkoutSubmit.textContent = 'Đặt chỗ tạm tắt ở bản xem thử';
+  }
+  checkoutForm.addEventListener('submit', e => {
     e.preventDefault();
     if(!e.currentTarget.reportValidity()) return;
-    const next = new URLSearchParams({demo:'confirmed',type,pax:String(pax),option:optionKey,total:String(Math.round(total))});
-    location.href = './bookings.html?' + next.toString();
+    alert('Bản xem thử giao diện: chưa có gửi yêu cầu, giữ chỗ hoặc thanh toán.');
   });
 })();
