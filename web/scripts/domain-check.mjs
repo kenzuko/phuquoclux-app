@@ -391,16 +391,29 @@ async function run() {
   equal(
     honThomInArea.products[0]?.productId,
     "hon-thom-cable-car",
-    "text search must keep a matching unlocated product",
+    "Hòn Thơm text search must keep the ticket product",
   );
   equal(
     honThomInArea.products[0]?.spatialMatch,
-    "unlocated",
-    "matching product without verified anchor must stay explicitly unlocated",
+    "linked",
+    "Hòn Thơm product must use verified shared destination anchors",
+  );
+  const sunsetTownAnchor = honThomInArea.entities.find(
+    (entity) => entity.id === "sunset-town",
   );
   ok(
-    !honThomInArea.entities.some((entity) => entity.category === "ticket"),
-    "unlocated product must not create a fake map pin",
+    Boolean(sunsetTownAnchor),
+    "Hòn Thơm discovery must expose the verified Sunset Town area anchor",
+  );
+  equal(
+    sunsetTownAnchor?.coordinateScope,
+    "area",
+    "Sunset Town anchor must remain an area, not an exact cable-car gate",
+  );
+  equal(
+    sunsetTownAnchor?.provenance.system,
+    "openpq",
+    "shared Hòn Thơm coordinates must retain OpenPQ provenance",
   );
 
   const canoFocus = boundsForEntities(discoveryIntent.entities);
