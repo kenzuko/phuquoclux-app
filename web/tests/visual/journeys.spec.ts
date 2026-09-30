@@ -86,6 +86,23 @@ test("Home: map-first layout, discovery and mobile-safe width", async ({ page },
   await expect(page.getByText("Bạn đang cần gì?")).toBeVisible();
   await expect(page.getByText("Tour 3 đảo bằng cano").first()).toBeVisible();
   await expectVisibleMapReady(page);
+  // A full-page screenshot can clear offscreen WebGL canvases in headless
+  // browsers. Keep direct map and viewport evidence before the full capture.
+  const homeMap = page.locator(
+    testInfo.project.name.startsWith("iPhone")
+      ? ".mobile-map-card > .island-map"
+      : ".desktop-map-stage > .island-map",
+  );
+  await mkdir("test-results/qa-screenshots", { recursive: true });
+  await homeMap.screenshot({
+    path: `test-results/qa-screenshots/00-home-map-element-${testInfo.project.name}.png`,
+    animations: "disabled",
+  });
+  await page.screenshot({
+    path: `test-results/qa-screenshots/00-home-viewport-${testInfo.project.name}.png`,
+    animations: "disabled",
+    fullPage: false,
+  });
   await assertNoHorizontalOverflow(page);
   await capture(page, `01-home-${testInfo.project.name}.png`);
 
