@@ -117,7 +117,7 @@ In production:
 3. otherwise create Quote/Booking transactionally;
 4. never create a second booking because a browser retried a POST.
 
-The current prototype passes the key but does not yet persist or enforce it.
+The prototype retains its in-memory domain-test functions, but its public checkout action is now explicitly disabled (HTTP 503) and does not accept guest data. Once durable storage is wired, issue and enforce the idempotency key in the transactional implementation before reopening POST checkout.
 
 ## Guest access
 
