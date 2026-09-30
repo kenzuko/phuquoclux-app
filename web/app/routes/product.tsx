@@ -13,6 +13,8 @@ import {
   money,
 } from "../domain/catalog";
 import {
+  cancellationPolicyLabel,
+  confirmationPolicyLabel,
   fromPriceForProduct,
   getOffer,
   maxPaxForProduct,
@@ -330,8 +332,8 @@ export default function ProductRoute() {
                 <div>
                   <b>Đổi / huỷ</b>
                   <p>
-                    Điều kiện đổi hoặc hủy phụ thuộc vào đúng lựa chọn bạn đặt
-                    và sẽ được hiển thị trước khi thanh toán.
+                    Điều kiện đổi hoặc hủy đi theo đúng lựa chọn bạn đặt và được
+                    xác nhận rõ trước khi phát sinh thanh toán.
                   </p>
                 </div>
                 <div>
@@ -443,6 +445,17 @@ export default function ProductRoute() {
                 {priced.priceState === "estimated" ? "Tạm tính tham khảo" : "Tạm tính"}
               </small>
               <strong>{money(priced.totalAmount)}</strong>
+            </div>
+
+            <div className="booking-policy-summary">
+              <div>
+                <span>Xác nhận</span>
+                <b>{confirmationPolicyLabel(offer)}</b>
+              </div>
+              <div>
+                <span>Đổi / huỷ</span>
+                <b>{cancellationPolicyLabel(offer)}</b>
+              </div>
             </div>
 
             <Link className="booking-cta" to={checkoutUrl}>
