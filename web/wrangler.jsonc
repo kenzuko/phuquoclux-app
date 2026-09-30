@@ -7,7 +7,7 @@
     "enabled": true
   },
   "vars": {
-    "MAP_STYLE_URL": "https://demotiles.maplibre.org/style.json",
+    "MAP_STYLE_URL": "https://tiles.openfreemap.org/styles/liberty",
     "WEATHER_RUNTIME_BASE_URL": "https://weather.openphuquoc.com",
     "COMMERCE_MODE": "prototype"
   }

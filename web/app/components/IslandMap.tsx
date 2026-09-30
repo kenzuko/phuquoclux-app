@@ -110,8 +110,19 @@ export function IslandMap({
 
       const syncZoom = () => setZoom(map.getZoom());
 
+        // Do not treat a mounted canvas as evidence that its basemap loaded.
+        map.on("error", (event) => {
+          console.error("[IslandMap] MapLibre error", event.error);
+        });
+
         loadTimer = setTimeout(() => {
-          if (!map.loaded()) setFailed(true);
+          if (!map.loaded()) {
+            console.error("[IslandMap] Map load timed out", {
+              styleUrl,
+              styleLoaded: map.isStyleLoaded(),
+            });
+            if (!cancelled) setFailed(true);
+          }
         }, 12000);
 
         map.once("load", () => {
@@ -126,7 +137,8 @@ export function IslandMap({
 
         resizeObserver = new ResizeObserver(() => map.resize());
         resizeObserver.observe(hostRef.current);
-      } catch {
+      } catch (error) {
+        console.error("[IslandMap] Map initialization failed", error);
         if (!cancelled) setFailed(true);
       }
     }

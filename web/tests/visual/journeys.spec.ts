@@ -1,6 +1,39 @@
 import { expect, test } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 
+// Preserve the browser evidence that distinguishes a tile/style failure
+// from WebGL, JS hydration, or a broken map initialization.
+const diagnosticLines = new WeakMap<import("@playwright/test").Page, string[]>();
+
+test.beforeEach(async ({ page }) => {
+  const lines: string[] = [];
+  diagnosticLines.set(page, lines);
+  page.on("pageerror", (error) => lines.push(`PAGE ERROR: ${error.stack ?? error.message}`));
+  page.on("console", (message) => {
+    if (message.type() === "error" || message.type() === "warning") {
+      lines.push(`CONSOLE ${message.type()}: ${message.text()}`);
+    }
+  });
+  page.on("requestfailed", (request) => {
+    lines.push(`REQUEST FAILED: ${request.url()} - ${request.failure()?.errorText ?? "unknown"}`);
+  });
+  page.on("response", (response) => {
+    if (response.status() >= 400) {
+      lines.push(`HTTP ${response.status()}: ${response.url()}`);
+    }
+  });
+});
+
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status === testInfo.expectedStatus) return;
+  const output = (diagnosticLines.get(page) ?? []).join("\n") || "No browser or network errors captured.";
+  console.log(`[browser diagnostics] ${testInfo.title}\n${output}`);
+  await testInfo.attach("browser-network-diagnostics", {
+    body: output,
+    contentType: "text/plain",
+  });
+});
+
 async function capture(page: import("@playwright/test").Page, filename: string) {
   await mkdir("test-results/qa-screenshots", { recursive: true });
   await page.screenshot({

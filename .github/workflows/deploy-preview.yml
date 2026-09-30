@@ -78,4 +78,5 @@ jobs:
           npx wrangler deploy \
             --name "phuquoclux-app-preview" \
             --var "COMMERCE_MODE:prototype" \
-            --var "WEATHER_RUNTIME_BASE_URL:https://weather.openphuquoc.com"
+            --var "WEATHER_RUNTIME_BASE_URL:https://weather.openphuquoc.com" \
+            --var "MAP_STYLE_URL:https://tiles.openfreemap.org/styles/liberty"
