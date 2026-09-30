@@ -17,6 +17,14 @@ async function assertNoHorizontalOverflow(page: import("@playwright/test").Page)
   expect(overflow, "Page has horizontal overflow").toBeLessThanOrEqual(2);
 }
 
+test("Worker: React Router request context and health are functional", async ({ request }) => {
+  const response = await request.get("/api/health");
+  expect(response.status()).toBe(200);
+  const payload = await response.json();
+  expect(payload.ok).toBe(true);
+  expect(payload.commerce.mode).toBe("prototype");
+});
+
 test("Home: map-first layout, discovery and mobile-safe width", async ({ page }, testInfo) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Phú Quốc", exact: true })).toBeVisible();

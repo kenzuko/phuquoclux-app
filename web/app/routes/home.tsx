@@ -29,13 +29,14 @@ import {
   type TripIntent,
 } from "../domain/trip-intent";
 import { useWeatherContext } from "../hooks/use-weather-context";
+import { cloudflareRequestContext } from "../cloudflare-context";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   return {
     today: todayInPhuQuoc(),
     initialIntent: tripIntentFromUrl(new URL(request.url)),
     mapStyleUrl:
-      context.cloudflare.env.MAP_STYLE_URL ??
+      context.get(cloudflareRequestContext).env.MAP_STYLE_URL ??
       "https://demotiles.maplibre.org/style.json",
   };
 }

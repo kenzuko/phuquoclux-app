@@ -1,3 +1,4 @@
+import { cloudflareRequestContext } from "../cloudflare-context";
 import { useMemo, useState } from "react";
 import {
   Link,
@@ -101,7 +102,7 @@ export async function loader({ params, context, request }: LoaderFunctionArgs) {
         entity.verification === "verified",
     ),
     mapStyleUrl:
-      context.cloudflare.env.MAP_STYLE_URL ??
+      context.get(cloudflareRequestContext).env.MAP_STYLE_URL ??
       "https://demotiles.maplibre.org/style.json",
   };
 }

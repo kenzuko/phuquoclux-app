@@ -35,6 +35,7 @@ import {
 import { boundsForEntities } from "../domain/map-bounds";
 import { withReturnTo } from "../domain/navigation";
 import { useWeatherContext } from "../hooks/use-weather-context";
+import { cloudflareRequestContext } from "../cloudflare-context";
 
 const allowedCategories: Array<"all" | MapCategory> = [
   "all",
@@ -103,7 +104,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     hasAreaSearch: Boolean(bounds),
     initialBounds: bounds ?? searchFocusBounds ?? null,
     mapStyleUrl:
-      context.cloudflare.env.MAP_STYLE_URL ??
+      context.get(cloudflareRequestContext).env.MAP_STYLE_URL ??
       "https://demotiles.maplibre.org/style.json",
   };
 }

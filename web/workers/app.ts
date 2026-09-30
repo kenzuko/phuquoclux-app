@@ -1,7 +1,8 @@
-import { createRequestHandler } from "react-router";
-import type {
-  PhuQuocLuxEnv,
-  WorkerExecutionContext,
+import { createRequestHandler, RouterContextProvider } from "react-router";
+import {
+  cloudflareRequestContext,
+  type PhuQuocLuxEnv,
+  type WorkerExecutionContext,
 } from "../app/cloudflare-context";
 
 const requestHandler = createRequestHandler(
@@ -61,9 +62,9 @@ export default {
     ctx: WorkerExecutionContext,
   ) {
     const requestId = crypto.randomUUID();
-    const response = await requestHandler(request, {
-      cloudflare: { env, ctx, requestId },
-    });
+    const routerContext = new RouterContextProvider();
+    routerContext.set(cloudflareRequestContext, { env, ctx, requestId });
+    const response = await requestHandler(request, routerContext);
 
     return withResponsePolicy(request, response, requestId);
   },

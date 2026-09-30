@@ -1,3 +1,4 @@
+import { cloudflareRequestContext } from "../cloudflare-context";
 import {
   Form,
   Link,
@@ -127,7 +128,7 @@ export async function loader({
     throw new Response("Not found", { status: 404 });
   }
 
-  assertPrototypeCommerce(getCommerceMode(context.cloudflare.env));
+  assertPrototypeCommerce(getCommerceMode(context.get(cloudflareRequestContext).env));
 
   const selection = readSelection(request, product.id);
   const returnTo = safeReturnTo(
@@ -140,7 +141,7 @@ export async function loader({
     pax: selection.pax,
     unitQuantities: selection.unitQuantities,
     serviceDate: selection.serviceDate,
-    requestId: context.cloudflare.requestId,
+    requestId: context.get(cloudflareRequestContext).requestId,
   });
 
   return {
@@ -169,7 +170,7 @@ export async function action({
     throw new Response("Not found", { status: 404 });
   }
 
-  assertPrototypeCommerce(getCommerceMode(context.cloudflare.env));
+  assertPrototypeCommerce(getCommerceMode(context.get(cloudflareRequestContext).env));
   assertSameOriginMutation(request);
 
   const selection = readSelection(request, product.id);
@@ -185,7 +186,7 @@ export async function action({
     pax: selection.pax,
     unitQuantities: selection.unitQuantities,
     serviceDate: selection.serviceDate,
-    requestId: context.cloudflare.requestId,
+    requestId: context.get(cloudflareRequestContext).requestId,
   });
   const quote = reconcilePrototypeQuote(receipt, freshQuote);
   try {

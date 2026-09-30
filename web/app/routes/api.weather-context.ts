@@ -1,3 +1,4 @@
+import { cloudflareRequestContext } from "../cloudflare-context";
 import type { LoaderFunctionArgs } from "react-router";
 import { getWeatherContext } from "../services/weather-context.server";
 import type { WeatherPointId } from "../domain/weather-context";
@@ -30,7 +31,7 @@ export async function loader({
   }
 
   const weather = await getWeatherContext(
-    context.cloudflare.env,
+    context.get(cloudflareRequestContext).env,
     pointId,
   );
 

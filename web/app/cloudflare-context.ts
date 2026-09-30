@@ -1,3 +1,5 @@
+import { createContext } from "react-router";
+
 export type PhuQuocLuxEnv = {
   MAP_STYLE_URL?: string;
   WEATHER_RUNTIME_BASE_URL?: string;
@@ -9,12 +11,8 @@ export type WorkerExecutionContext = {
   passThroughOnException?: () => void;
 };
 
-declare module "react-router" {
-  interface AppLoadContext {
-    cloudflare: {
-      env: PhuQuocLuxEnv;
-      ctx: WorkerExecutionContext;
-      requestId: string;
-    };
-  }
-}
+export const cloudflareRequestContext = createContext<{
+  env: PhuQuocLuxEnv;
+  ctx: WorkerExecutionContext;
+  requestId: string;
+}>();
