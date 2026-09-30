@@ -230,10 +230,19 @@ export function offersForProduct(productId: ProductId) {
   );
 }
 
+export function findOffer(
+  productId: ProductId,
+  offerId: string,
+) {
+  return offersForProduct(productId).find(
+    (offer) => offer.id === offerId,
+  );
+}
+
 export function getOffer(productId: ProductId, offerId?: string) {
   const productOffers = offersForProduct(productId);
   return (
-    productOffers.find((offer) => offer.id === offerId) ??
+    (offerId ? findOffer(productId, offerId) : undefined) ??
     productOffers[0]
   );
 }
