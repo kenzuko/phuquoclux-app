@@ -13,6 +13,7 @@ import { assertQuoteBookable } from "../domain/commerce";
 import {
   cancellationPolicyLabel,
   confirmationPolicyLabel,
+  findOffer,
   getOffer,
   type Offer,
 } from "../domain/offer";
@@ -60,10 +61,12 @@ function readSelection(
     url.searchParams.get("offer") ??
     url.searchParams.get("option") ??
     undefined;
-  const offer = getOffer(productId, offerId);
+  const offer = offerId
+    ? findOffer(productId, offerId)
+    : getOffer(productId);
 
   if (!offer) {
-    throw new Response("Offer unavailable", { status: 503 });
+    throw new Response("Offer unavailable", { status: 400 });
   }
 
   return {
