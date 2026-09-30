@@ -265,7 +265,7 @@ export default function MapRoute() {
         ) : null}
       </div>
 
-      <main className="full-map-stage">
+      <main id="main-content" className="full-map-stage">
         <IslandMap
           entities={result.entities}
           styleUrl={mapStyleUrl}
