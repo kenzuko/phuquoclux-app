@@ -6,6 +6,7 @@ export type ProductId =
 
 export type MapCategory = ProductType | "place";
 export type MapVerification = "verified" | "reference" | "demo";
+export type MapCoordinateScope = "area" | "site" | "exact";
 
 export type MapEntity = {
   id: string;
@@ -18,6 +19,7 @@ export type MapEntity = {
   kicker: string;
   copy: string;
   verification: MapVerification;
+  coordinateScope: MapCoordinateScope;
   priority: number;
   minZoom: number;
 };
@@ -66,6 +68,7 @@ export const mapEntities: MapEntity[] = [
     kicker: "KHU VỰC",
     copy: "Ăn uống, dịch vụ hằng ngày và các điểm quanh trung tâm.",
     verification: "verified",
+    coordinateScope: "area",
     priority: 95,
     minZoom: 8.8,
   },
@@ -80,6 +83,7 @@ export const mapEntities: MapEntity[] = [
     kicker: "TOUR · NAM ĐẢO",
     copy: "Điểm xuất phát chính cho trải nghiệm đảo và cano phía Nam.",
     verification: "verified",
+    coordinateScope: "area",
     priority: 100,
     minZoom: 8.8,
   },
@@ -94,6 +98,7 @@ export const mapEntities: MapEntity[] = [
     kicker: "BẮC ĐẢO",
     copy: "Khu vực tham quan phía Bắc. Chỉ gắn sản phẩm khi vị trí và dịch vụ đã được xác minh.",
     verification: "reference",
+    coordinateScope: "area",
     priority: 72,
     minZoom: 9.2,
   },
@@ -108,6 +113,7 @@ export const mapEntities: MapEntity[] = [
     kicker: "TRANSFER",
     copy: "Vị trí tham chiếu của sân bay, không phải điểm đón cụ thể cho từng đặt chỗ.",
     verification: "reference",
+    coordinateScope: "site",
     priority: 98,
     minZoom: 8.8,
   },
@@ -231,10 +237,26 @@ export function money(value: number) {
   return new Intl.NumberFormat("vi-VN").format(Math.round(value)) + "đ";
 }
 
-export function mapVerificationLabel(verification: MapVerification) {
-  if (verification === "verified") return "Đã xác minh vị trí";
-  if (verification === "reference") return "Vị trí tham chiếu";
-  return "Dữ liệu demo";
+export function mapVerificationLabel(
+  entity: Pick<MapEntity, "verification" | "coordinateScope">,
+) {
+  if (entity.verification === "demo") return "Dữ liệu demo";
+
+  if (entity.coordinateScope === "area") {
+    return entity.verification === "verified"
+      ? "Khu vực đã xác minh"
+      : "Khu vực tham chiếu";
+  }
+
+  if (entity.coordinateScope === "site") {
+    return entity.verification === "verified"
+      ? "Cơ sở đã xác minh"
+      : "Cơ sở tham chiếu";
+  }
+
+  return entity.verification === "verified"
+    ? "Đã xác minh vị trí"
+    : "Vị trí tham chiếu";
 }
 
 export function productsForMapEntity(entityId: string) {
