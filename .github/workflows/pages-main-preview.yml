@@ -1,0 +1,99 @@
+name: GitHub Pages - main preview
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "web/**"
+      - ".github/workflows/pages-main-preview.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "web/**"
+      - ".github/workflows/pages-main-preview.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: phuquoclux-pages-next
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-static-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout tested source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck shared React code and preview
+        run: npm run typecheck
+      - name: Build actual React UI for Pages, without a Worker
+        run: npm run build:pages
+      - name: Install QA browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Run responsive UI smoke tests
+        run: npm run test:pages
+      - name: Preserve QA screenshots and compiled preview
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phuquoclux-pages-react-v1
+          path: |
+            web/pages-preview-evidence
+            web/pages-preview-report
+            web/dist-pages
+          if-no-files-found: ignore
+          retention-days: 5
+
+  publish-next:
+    name: Publish tested React preview to gh-pages/next
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test-static-preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+      - name: Download precisely the tested build
+        uses: actions/download-artifact@v4
+        with:
+          name: phuquoclux-pages-react-v1
+          path: web/.pages-artifact
+      - name: Update only the next directory on gh-pages
+        env:
+          BUILD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test -f web/.pages-artifact/dist-pages/index.html
+          ls web/.pages-artifact/dist-pages/assets/maplibre-gl-worker-*.js >/dev/null
+          git fetch origin gh-pages:refs/remotes/origin/gh-pages
+          PUBLISH_DIR="$RUNNER_TEMP/phuquoclux-gh-pages"
+          git worktree add --detach "$PUBLISH_DIR" origin/gh-pages
+          rm -rf "$PUBLISH_DIR/next"
+          mkdir -p "$PUBLISH_DIR/next"
+          cp -a web/.pages-artifact/dist-pages/. "$PUBLISH_DIR/next/"
+          cd "$PUBLISH_DIR"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add next/
+          if git diff --cached --quiet; then
+            echo "Already deployed, gh-pages unchanged."
+          else
+            git commit -m "preview(pages): publish React V1 build ${BUILD_SHA}"
+            git push origin HEAD:gh-pages
+          fi
