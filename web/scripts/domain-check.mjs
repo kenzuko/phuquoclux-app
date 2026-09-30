@@ -51,6 +51,10 @@ import {
   weatherRainLabel,
 } from "../app/domain/weather-context.ts";
 import { createPrototypeBookingRequest } from "../app/services/booking.server.ts";
+import {
+  readFlightNumber,
+  readInteger,
+} from "../app/services/request-validation.server.ts";
 import { createPrototypeQuote } from "../app/services/quote.server.ts";
 import {
   getCommerceMode,
@@ -301,6 +305,28 @@ async function run() {
   ok(
     sedan.requiredOperationalFields?.includes("flight_number"),
     "airport pickup must require the flight number before request submission",
+  );
+
+  ok(
+    sedan.operationalFields.includes("luggage_count"),
+    "airport transfer must collect luggage count for vehicle planning",
+  );
+
+  const transferForm = new FormData();
+  transferForm.set("flightNumber", "vn 1825");
+  transferForm.set("luggageCount", "3");
+  equal(
+    readFlightNumber(transferForm, "flightNumber", true),
+    "VN1825",
+    "flight number input must be normalized before Ops receives it",
+  );
+  equal(
+    readInteger(transferForm, "luggageCount", {
+      min: 0,
+      max: 20,
+    }),
+    3,
+    "luggage count must remain a bounded integer",
   );
 
   equal(
