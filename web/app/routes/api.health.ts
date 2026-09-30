@@ -7,6 +7,9 @@ export async function loader({ context }: LoaderFunctionArgs) {
   const mapStyleProductionReady =
     Boolean(mapStyleUrl) &&
     !mapStyleUrl.includes("demotiles.maplibre.org");
+  const weatherRuntimeConfigured = Boolean(
+    context.cloudflare.env.WEATHER_RUNTIME_BASE_URL,
+  );
 
   return Response.json({
     ok: true,
@@ -15,6 +18,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
     readiness: {
       productionDeployEnabled: false,
       mapStyleProductionReady,
+      weatherRuntimeConfigured,
     },
     commerce: {
       mode: commerceMode,
