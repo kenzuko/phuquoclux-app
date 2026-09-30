@@ -1,0 +1,53 @@
+name: pages-react-v1-qa
+
+on:
+  push:
+    branches:
+      - preview/pages-react-v1
+    paths:
+      - "web/**"
+      - ".github/workflows/pages-react-v1.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: phuquoclux-pages-next
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-static-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout isolated preview branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck shared React code and preview
+        run: npm run typecheck
+      - name: Build actual React UI for Pages, without a Worker
+        run: npm run build:pages
+      - name: Install QA browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Run responsive UI smoke tests
+        run: npm run test:pages
+      - name: Preserve QA screenshots and compiled preview
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phuquoclux-pages-react-v1
+          path: |
+            web/pages-preview-evidence
+            web/pages-preview-report
+            web/dist-pages
+          if-no-files-found: ignore
+          retention-days: 5
