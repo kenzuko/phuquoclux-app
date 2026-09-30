@@ -46,6 +46,10 @@ import {
   withReturnTo,
 } from "../app/domain/navigation.ts";
 import { isBookingAccessActive } from "../app/domain/booking-access.ts";
+import {
+  parseWeatherContext,
+  weatherRainLabel,
+} from "../app/domain/weather-context.ts";
 import { createPrototypeBookingRequest } from "../app/services/booking.server.ts";
 import { createPrototypeQuote } from "../app/services/quote.server.ts";
 import {
@@ -86,6 +90,44 @@ async function run() {
     "2026-09-29",
     "service date must use the Phu Quoc calendar day",
   );
+
+  equal(
+    weatherRainLabel(0),
+    "Không mưa đáng kể",
+    "weather context must keep dry conditions human-readable",
+  );
+  equal(
+    weatherRainLabel(3),
+    "Mưa vừa",
+    "weather context must translate moderate rain rate",
+  );
+  const weatherContext = parseWeatherContext(
+    {
+      local_now: {
+        generated_at: "2026-09-29T11:55:00.000Z",
+        points: {
+          duong_dong: {
+            name: "Dương Đông",
+            analysis_time: "2026-09-29T11:55:00.000Z",
+            temperature_c: 29.6,
+            rain: { rain_rate_mm_h: 0.05 },
+          },
+        },
+      },
+    },
+    "duong_dong",
+    new Date("2026-09-29T12:00:00.000Z"),
+  );
+  equal(
+    weatherContext?.status,
+    "live",
+    "fresh normalized Weather runtime must surface as live context",
+  );
+  equal(
+    weatherContext?.rainLabel,
+    "Không mưa đáng kể",
+    "weather chip must use normalized human rain label",
+  );
   equal(
     normalizeServiceDate("2026-09-28", fixedNow),
     "2026-09-29",
@@ -96,6 +138,28 @@ async function run() {
     "02/10/2026",
     "traveler-facing date must not depend on browser timezone",
   );
+  const staleWeatherContext = parseWeatherContext(
+    {
+      local_now: {
+        generated_at: "2026-09-29T10:00:00.000Z",
+        points: {
+          duong_dong: {
+            name: "Dương Đông",
+            temperature_c: 28,
+            rain: { rain_rate_mm_h: 0 },
+          },
+        },
+      },
+    },
+    "duong_dong",
+    new Date("2026-09-29T12:00:00.000Z"),
+  );
+  equal(
+    staleWeatherContext?.status,
+    "stale",
+    "stale Weather runtime must never be labeled live",
+  );
+
   equal(normalizePax("99"), 20, "trip pax must be capped at 20");
   const intent = tripIntentFromUrl(
     new URL("https://phuquoclux.com/map?date=2026-10-02&pax=4"),
