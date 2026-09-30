@@ -290,7 +290,7 @@ export default function MapRoute() {
             </button>
             <small>{selected.kicker}</small>
             <span className={`verification-badge verification-badge--${selected.verification}`}>
-              {mapVerificationLabel(selected.verification)}
+              {mapVerificationLabel(selected)}
             </span>
             <strong>{selected.name}</strong>
             <p>{selected.copy}</p>
@@ -397,7 +397,7 @@ export default function MapRoute() {
                         <em
                           className={`map-result-verification map-result-verification--${entity.verification}`}
                         >
-                          {mapVerificationLabel(entity.verification)}
+                          {mapVerificationLabel(entity)}
                         </em>
                       </span>
                       <i>⌖</i>
