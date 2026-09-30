@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#f7f9f6" />
   <title>Đặt chỗ của tôi — PhuQuocLux</title>
   <link rel="stylesheet" href="./styles.css" />
+  <meta name="robots" content="noindex,nofollow" />
 </head>
 <body class="bookings-page">
   <header class="topbar detail-topbar">
@@ -72,5 +73,6 @@
     const q = new URLSearchParams(location.search);
     if(q.get('demo') === 'confirmed') document.getElementById('bookingBanner').hidden = false;
   </script>
+  <script src="./pages-preview.js"></script>
 </body>
 </html>
