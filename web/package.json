@@ -10,11 +10,13 @@
     "typecheck": "react-router typegen && tsc --noEmit",
     "deploy": "npm run build && wrangler deploy",
     "check": "npm run typecheck && npm run test:domain && npm run build && wrangler deploy --dry-run",
-    "test:domain": "tsx scripts/domain-check.mjs",
+    "test:domain": "tsx scripts/domain-check.mjs && tsx scripts/supplier-intake-selftest.mjs",
     "test:visual": "playwright test",
     "build:pages": "vite build --config vite.pages.config.ts",
     "dev:pages": "vite --config vite.pages.config.ts --host 127.0.0.1 --port 4174",
-    "test:pages": "playwright test --config playwright.pages.config.ts"
+    "test:pages": "playwright test --config playwright.pages.config.ts",
+    "supplier:template": "tsx scripts/supplier-intake-check.mjs --template",
+    "supplier:check": "tsx scripts/supplier-intake-check.mjs"
   },
   "dependencies": {
     "maplibre-gl": "6.11.2",

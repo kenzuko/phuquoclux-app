@@ -1,0 +1,8 @@
+# Repository is public. Never commit filled supplier quotes, evidence, guest data or credentials.
+web/.private/
+web/data/supplier-private/
+web/data/supplier-private-*.csv
+*.supplier-confidential.csv
+.env
+.env.*
+!.env.example

@@ -1,0 +1,7 @@
+offer_id,provider_id,source_type,source_reference,price_verified_at_utc,valid_from,valid_through,pricing_mode,price_basis,flat_vnd,unit_rates_vnd,max_pax,cancellation_policy_reference,confirmation_policy_reference,inventory_mode
+tour-three-islands-cano:shared,jotrip-manual-request,,,,,,flat,per_person,,,,,,request
+tour-three-islands-cano:private,jotrip-manual-request,,,,,,flat,per_booking,,,,,,request
+hon-thom-cable-car:standard,jotrip-manual-request,,,,,,unit_mix,unit_mix,,,,,,request
+airport-private-transfer:sedan,jotrip-manual-request,,,,,,flat,per_booking,,,4,,,request
+airport-private-transfer:suv,jotrip-manual-request,,,,,,flat,per_booking,,,7,,,request
+airport-private-transfer:van,jotrip-manual-request,,,,,,flat,per_booking,,,16,,,request
