@@ -1,3 +1,4 @@
+import type { WeatherPointId } from "./weather-context";
 export type ProductType = "tour" | "ticket" | "transfer";
 export type ProductId =
   | "tour-three-islands-cano"
@@ -31,6 +32,7 @@ export type MapEntity = {
   verification: MapVerification;
   coordinateScope: MapCoordinateScope;
   provenance: MapProvenance;
+  weatherPointId?: WeatherPointId;
   priority: number;
   minZoom: number;
 };
@@ -85,6 +87,7 @@ export const mapEntities: MapEntity[] = [
       sourceId: "duong_dong",
       verifiedAt: "2026-09-30",
     },
+    weatherPointId: "duong_dong",
     priority: 95,
     minZoom: 8.8,
   },
@@ -105,6 +108,7 @@ export const mapEntities: MapEntity[] = [
       sourceId: "an_thoi",
       verifiedAt: "2026-09-30",
     },
+    weatherPointId: "an_thoi",
     priority: 100,
     minZoom: 8.8,
   },
@@ -124,6 +128,7 @@ export const mapEntities: MapEntity[] = [
       system: "jotrip-weather",
       sourceId: "ganh_dau",
     },
+    weatherPointId: "ganh_dau",
     priority: 72,
     minZoom: 9.2,
   },
