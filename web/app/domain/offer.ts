@@ -156,7 +156,7 @@ const offers: Offer[] = [
     },
     constraints: { maxPax: 4 },
     operationalFields: ["hotel_or_pickup", "flight_number", "guest_note"],
-    requiredOperationalFields: ["hotel_or_pickup"],
+    requiredOperationalFields: ["hotel_or_pickup", "flight_number"],
   },
   {
     id: "airport-private-transfer:suv",
@@ -179,7 +179,7 @@ const offers: Offer[] = [
     },
     constraints: { maxPax: 7 },
     operationalFields: ["hotel_or_pickup", "flight_number", "guest_note"],
-    requiredOperationalFields: ["hotel_or_pickup"],
+    requiredOperationalFields: ["hotel_or_pickup", "flight_number"],
   },
   {
     id: "airport-private-transfer:van",
@@ -202,7 +202,7 @@ const offers: Offer[] = [
     },
     constraints: { maxPax: 16 },
     operationalFields: ["hotel_or_pickup", "flight_number", "guest_note"],
-    requiredOperationalFields: ["hotel_or_pickup"],
+    requiredOperationalFields: ["hotel_or_pickup", "flight_number"],
   },
 ];
 
