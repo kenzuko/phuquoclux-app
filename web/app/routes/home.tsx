@@ -4,6 +4,7 @@ import { BottomNav } from "../components/BottomNav";
 import { Brand } from "../components/Brand";
 import { IslandMap } from "../components/IslandMap";
 import { ProductVisual } from "../components/ProductVisual";
+import { WeatherContextChip } from "../components/WeatherContextChip";
 import {
   mapEntities,
   mapVerificationLabel,
@@ -27,11 +28,18 @@ import {
   tripIntentFromUrl,
   type TripIntent,
 } from "../domain/trip-intent";
+import { getWeatherContext } from "../services/weather-context.server";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
+  const weather = await getWeatherContext(
+    context.cloudflare.env,
+    "duong_dong",
+  );
+
   return {
     today: todayInPhuQuoc(),
     initialIntent: tripIntentFromUrl(new URL(request.url)),
+    weather,
     mapStyleUrl:
       context.cloudflare.env.MAP_STYLE_URL ??
       "https://demotiles.maplibre.org/style.json",
@@ -47,7 +55,8 @@ const filters: Array<{ id: "all" | MapCategory; label: string }> = [
 ];
 
 export default function HomeRoute() {
-  const { mapStyleUrl, today, initialIntent } = useLoaderData<typeof loader>();
+  const { mapStyleUrl, today, initialIntent, weather } =
+    useLoaderData<typeof loader>();
   const [category, setCategory] = useState<"all" | MapCategory>("all");
   const [serviceDate, setServiceDate] = useState(initialIntent.date);
   const [pax, setPax] = useState(initialIntent.pax);
@@ -164,6 +173,7 @@ export default function HomeRoute() {
                 selectedEntityId={selected?.id}
                 interaction="embedded"
               />
+              <WeatherContextChip weather={weather} />
               <Link className="mobile-map-expand" to={mapAreaUrl}>
                 Mở bản đồ ↗
               </Link>
@@ -316,6 +326,7 @@ export default function HomeRoute() {
                 onViewportChange={onDesktopViewportChange}
                 interaction="full"
               />
+              <WeatherContextChip weather={weather} />
               {selected ? (
                 <MapEntitySheet
                   entity={selected}
