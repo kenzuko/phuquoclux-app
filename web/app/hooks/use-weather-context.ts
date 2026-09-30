@@ -12,7 +12,8 @@ export function useWeatherContext(
 
   useEffect(() => {
     setWeather(null);
-    if (!pointId) return;
+    // Static Pages preview cannot call a Cloudflare server route. Do not fake weather.
+    if (import.meta.env.VITE_PAGES_PREVIEW === "1" || !pointId) return;
 
     const controller = new AbortController();
 
