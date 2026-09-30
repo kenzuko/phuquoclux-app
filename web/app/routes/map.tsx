@@ -226,6 +226,7 @@ export default function MapRoute() {
             key={id}
             type="button"
             className={category === id ? "is-active" : ""}
+            aria-pressed={category === id}
             onClick={() => changeCategory(id as "all" | MapCategory)}
           >
             {label}
