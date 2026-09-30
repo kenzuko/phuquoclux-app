@@ -62,7 +62,12 @@ jobs:
             ready=false
           fi
 
-          echo "PREVIEW_READY=$ready" >> "$GITHUB_ENV"
+          if [ "$ready" != "true" ]; then
+            echo "::error::Preview is blocked by missing repository configuration. Set PHUQUOCLUX_PREVIEW_ENABLED and Cloudflare Actions secrets in the repository, then rerun this workflow."
+            exit 1
+          fi
+
+          echo "PREVIEW_READY=true" >> "$GITHUB_ENV"
 
       - name: Deploy isolated Workers.dev preview
         if: env.PREVIEW_READY == 'true'

@@ -37,7 +37,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     initialIntent: tripIntentFromUrl(new URL(request.url)),
     mapStyleUrl:
       context.get(cloudflareRequestContext).env.MAP_STYLE_URL ??
-      "https://demotiles.maplibre.org/style.json",
+      "https://tiles.openfreemap.org/styles/liberty",
   };
 }
 

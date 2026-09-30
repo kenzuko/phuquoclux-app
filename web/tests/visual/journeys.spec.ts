@@ -17,6 +17,16 @@ async function assertNoHorizontalOverflow(page: import("@playwright/test").Page)
   expect(overflow, "Page has horizontal overflow").toBeLessThanOrEqual(2);
 }
 
+async function expectVisibleMapReady(page: import("@playwright/test").Page) {
+  const map = page.locator(".island-map:visible").first();
+  await expect(map).toBeVisible();
+  await expect(map).toHaveAttribute("data-map-ready", "true", {
+    timeout: 25_000,
+  });
+  await expect(map.locator("canvas")).toBeVisible();
+  await page.waitForTimeout(400);
+}
+
 test("Worker: React Router request context and health are functional", async ({ request }) => {
   const response = await request.get("/api/health");
   expect(response.status()).toBe(200);
@@ -31,6 +41,7 @@ test("Home: map-first layout, discovery and mobile-safe width", async ({ page },
   await expect(page.getByRole("button", { name: "Tìm kiếm" })).toBeVisible();
   await expect(page.getByText("Bạn đang cần gì?")).toBeVisible();
   await expect(page.getByText("Tour 3 đảo bằng cano").first()).toBeVisible();
+  await expectVisibleMapReady(page);
   await assertNoHorizontalOverflow(page);
   await capture(page, `01-home-${testInfo.project.name}.png`);
 
@@ -50,6 +61,7 @@ test("Map: category, textual search and party intent survive navigation", async 
   const tour = page.locator(".map-result-card").filter({ hasText: "Tour 3 đảo bằng cano" });
   await expect(tour).toBeVisible();
   await expect(tour).toHaveAttribute("href", /pax=4/);
+  await expectVisibleMapReady(page);
   await assertNoHorizontalOverflow(page);
   await capture(page, `03-map-cano-${testInfo.project.name}.png`);
 

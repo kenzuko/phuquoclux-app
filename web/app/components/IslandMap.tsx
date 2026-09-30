@@ -252,6 +252,7 @@ export function IslandMap({
     <div
       ref={hostRef}
       className={`island-map island-map--${interaction} ${className}`}
+      data-map-ready={ready ? "true" : undefined}
       data-map-loading={shouldMount && !ready && !failed ? "true" : undefined}
       data-map-error={failed ? "true" : undefined}
       aria-label={failed ? "Bản đồ tạm thời chưa tải được" : undefined}

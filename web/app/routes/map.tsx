@@ -105,7 +105,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     initialBounds: bounds ?? searchFocusBounds ?? null,
     mapStyleUrl:
       context.get(cloudflareRequestContext).env.MAP_STYLE_URL ??
-      "https://demotiles.maplibre.org/style.json",
+      "https://tiles.openfreemap.org/styles/liberty",
   };
 }
 
