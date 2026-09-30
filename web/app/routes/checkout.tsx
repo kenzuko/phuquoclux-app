@@ -1,16 +1,7 @@
 import { cloudflareRequestContext } from "../cloudflare-context";
-import {
-  Form,
-  Link,
-  redirect,
-  type ActionFunctionArgs,
-  type LoaderFunctionArgs,
-  useLoaderData,
-  useNavigation,
-} from "react-router";
+import { Link, type LoaderFunctionArgs, useLoaderData } from "react-router";
 import { Brand } from "../components/Brand";
 import { getProductBySlug, money, type ProductId } from "../domain/catalog";
-import { assertQuoteBookable } from "../domain/commerce";
 import {
   cancellationPolicyLabel,
   confirmationPolicyLabel,
@@ -19,65 +10,29 @@ import {
   type Offer,
 } from "../domain/offer";
 import { formatServiceDate } from "../domain/service-date";
-import {
-  appendUnitQuantities,
-  unitQuantitiesFromSearch,
-} from "../domain/pricing";
+import { appendUnitQuantities, unitQuantitiesFromSearch } from "../domain/pricing";
 import { createPrototypeQuote } from "../services/quote.server";
-import { createPrototypeBookingRequest } from "../services/booking.server";
-import {
-  assertPrototypeCommerce,
-  getCommerceMode,
-} from "../services/commerce-mode.server";
-import {
-  assertSameOriginMutation,
-  readEmail,
-  readFlightNumber,
-  readInteger,
-  readPhone,
-  readText,
-  readUuid,
-} from "../services/request-validation.server";
+import { assertPrototypeCommerce, getCommerceMode } from "../services/commerce-mode.server";
 import { safeReturnTo } from "../domain/navigation";
-import {
-  parsePrototypeQuoteReceipt,
-  reconcilePrototypeQuote,
-  serializePrototypeQuoteReceipt,
-} from "../services/prototype-quote-receipt.server";
 
 function parsePax(url: URL) {
-  return Math.max(
-    1,
-    Math.min(20, Number(url.searchParams.get("pax")) || 2),
-  );
+  return Math.max(1, Math.min(20, Number(url.searchParams.get("pax")) || 2));
 }
 
-function readSelection(
-  request: Request,
-  productId: ProductId,
-) {
+function readSelection(request: Request, productId: ProductId) {
   const url = new URL(request.url);
   const pax = parsePax(url);
-  const offerId =
-    url.searchParams.get("offer") ??
-    url.searchParams.get("option") ??
-    undefined;
-  const offer = offerId
-    ? findOffer(productId, offerId)
-    : getOffer(productId);
+  const offerId = url.searchParams.get("offer") ??
+    url.searchParams.get("option") ?? undefined;
+  const offer = offerId ? findOffer(productId, offerId) : getOffer(productId);
 
   if (!offer) {
     throw new Response("Offer unavailable", { status: 400 });
   }
-
   return {
     pax,
     offer,
-    unitQuantities: unitQuantitiesFromSearch(
-      offer,
-      url.searchParams,
-      pax,
-    ),
+    unitQuantities: unitQuantitiesFromSearch(offer, url.searchParams, pax),
     serviceDate: url.searchParams.get("date") ?? undefined,
   };
 }
@@ -99,17 +54,12 @@ function buildSelectionQuery(
   return params.toString();
 }
 
-async function createRouteQuote(
-  input: Parameters<typeof createPrototypeQuote>[0],
-) {
+async function createRouteQuote(input: Parameters<typeof createPrototypeQuote>[0]) {
   try {
     return await createPrototypeQuote(input);
   } catch (error) {
     const code = error instanceof Error ? error.message : "";
-    if (
-      code === "OFFER_CAPACITY_EXCEEDED" ||
-      code === "TOO_MANY_PARTICIPANTS"
-    ) {
+    if (code === "OFFER_CAPACITY_EXCEEDED" || code === "TOO_MANY_PARTICIPANTS") {
       throw new Response("Selected option cannot carry this party size", {
         status: 409,
       });
@@ -118,16 +68,15 @@ async function createRouteQuote(
   }
 }
 
-export async function loader({
-  params,
-  request,
-  context,
-}: LoaderFunctionArgs) {
+/**
+ * GET is a price/party/date preview only. No booking record exists yet.
+ * Even a valid quote is never an invitation to submit personal details.
+ */
+export async function loader({ params, request, context }: LoaderFunctionArgs) {
   const product = getProductBySlug(params.slug);
   if (!product) {
     throw new Response("Not found", { status: 404 });
   }
-
   assertPrototypeCommerce(getCommerceMode(context.get(cloudflareRequestContext).env));
 
   const selection = readSelection(request, product.id);
@@ -155,285 +104,115 @@ export async function loader({
       selection.unitQuantities,
       returnTo,
     ),
-    quoteReceipt: serializePrototypeQuoteReceipt(quote),
-    requestId: crypto.randomUUID(),
   };
 }
 
-export async function action({
-  params,
-  request,
-  context,
-}: ActionFunctionArgs) {
-  const product = getProductBySlug(params.slug);
-  if (!product) {
-    throw new Response("Not found", { status: 404 });
-  }
-
-  assertPrototypeCommerce(getCommerceMode(context.get(cloudflareRequestContext).env));
-  assertSameOriginMutation(request);
-
-  const selection = readSelection(request, product.id);
-  const form = await request.formData();
-  const requestId = readUuid(form, "requestId");
-  const receipt = parsePrototypeQuoteReceipt(
-    readText(form, "quoteReceipt", { required: true, maxLength: 2000 }),
+/**
+ * Fail closed before reading a request body. There is no durable database,
+ * guest-access token or delivery channel yet. A POST may never create an
+ * ephemeral "booking" that tells guests JoTrip received their request.
+ */
+export async function action(): Promise<never> {
+  throw new Response(
+    "Booking requests are not available until durable storage and guest access are configured.",
+    { status: 503, headers: { "Cache-Control": "no-store" } },
   );
-
-  const freshQuote = await createRouteQuote({
-    productId: product.id,
-    offerId: selection.offer.id,
-    pax: selection.pax,
-    unitQuantities: selection.unitQuantities,
-    serviceDate: selection.serviceDate,
-    requestId: context.get(cloudflareRequestContext).requestId,
-  });
-  const quote = reconcilePrototypeQuote(receipt, freshQuote);
-  try {
-    assertQuoteBookable(quote);
-  } catch (error) {
-    const code = error instanceof Error ? error.message : "NOT_BOOKABLE";
-    if (
-      code === "QUOTE_EXPIRED" ||
-      code === "QUOTE_NOT_ACTIVE" ||
-      code === "NOT_BOOKABLE"
-    ) {
-      throw new Response("Booking conditions changed", { status: 409 });
-    }
-    throw error;
-  }
-
-  const operationalFields = new Set(selection.offer.operationalFields);
-  const requiredOperationalFields = new Set(
-    selection.offer.requiredOperationalFields ?? [],
-  );
-  const name = readText(form, "name", { required: true, maxLength: 120 });
-  const phone = readPhone(form);
-  const email = readEmail(form);
-  const hotelOrPickup = readText(form, "usage", {
-    required: requiredOperationalFields.has("hotel_or_pickup"),
-    maxLength: 300,
-  });
-  const flightNumber = readFlightNumber(
-    form,
-    "flightNumber",
-    requiredOperationalFields.has("flight_number"),
-  );
-  const luggageCount = readInteger(form, "luggageCount", {
-    required: requiredOperationalFields.has("luggage_count"),
-    min: 0,
-    max: 20,
-  });
-  const guestNote = readText(form, "note", {
-    required: requiredOperationalFields.has("guest_note"),
-    maxLength: 1200,
-  });
-
-  const booking = createPrototypeBookingRequest({
-    requestId,
-    quote,
-    contact: { name, phone, email },
-    operationalData: {
-      hotelOrPickup: operationalFields.has("hotel_or_pickup")
-        ? hotelOrPickup || undefined
-        : undefined,
-      flightNumber: operationalFields.has("flight_number")
-        ? flightNumber || undefined
-        : undefined,
-      luggageCount: operationalFields.has("luggage_count")
-        ? luggageCount
-        : undefined,
-      guestNote: operationalFields.has("guest_note")
-        ? guestNote || undefined
-        : undefined,
-    },
-  });
-
-  const next = new URLSearchParams({
-    demo: "request",
-    product: product.id,
-    date: booking.serviceDate,
-    state: booking.state,
-  });
-
-  return redirect(`/bookings?${next.toString()}`);
 }
 
 export function meta() {
   return [
-    { title: "Đặt dịch vụ | PhuQuocLux" },
+    { title: "Xem trước đặt dịch vụ | PhuQuocLux" },
     { name: "robots", content: "noindex,nofollow" },
   ];
 }
 
 export default function CheckoutRoute() {
-  const navigation = useNavigation();
-  const submitting = navigation.state === "submitting";
-  const {
-    product,
-    offer,
-    quote,
-    selectionQuery,
-    quoteReceipt,
-    requestId,
-  } = useLoaderData<typeof loader>();
+  const { product, offer, quote, selectionQuery } = useLoaderData<typeof loader>();
   const expiresAt = new Date(quote.expiresAt).toLocaleTimeString("vi-VN", {
     hour: "2-digit",
     minute: "2-digit",
   });
+  const selectedProductUrl = `/product/${product.slug}?${selectionQuery}`;
 
   return (
     <div>
       <header className="topbar topbar--border">
         <Brand />
-        <span className="secure-label">Chưa thu tiền</span>
+        <span className="secure-label">Chưa nhận đặt chỗ</span>
       </header>
 
       <main id="main-content" className="checkout-main">
-        <Link
-          className="back-link"
-          to={`/product/${product.slug}?${selectionQuery}`}
-        >
+        <Link className="back-link" to={selectedProductUrl}>
           ← Quay lại dịch vụ
         </Link>
 
         <div className="checkout-grid">
-          <Form
-            className="checkout-form"
-            method="post"
-            action={`/checkout/${product.slug}?${selectionQuery}`}
-          >
-            <input type="hidden" name="requestId" value={requestId} />
-            <input type="hidden" name="quoteReceipt" value={quoteReceipt} />
-
+          <div className="checkout-form">
             <section className="checkout-section">
-              <p className="section-kicker">NGƯỜI ĐẶT</p>
-              <h1>Thông tin liên hệ</h1>
-              <p>Không cần tạo tài khoản. JoTrip dùng thông tin này để liên hệ về đặt chỗ.</p>
-              <div className="form-grid">
-                <label>
-                  <span>Họ và tên</span>
-                  <input name="name" required autoComplete="name" />
-                </label>
-                <label>
-                  <span>Số điện thoại</span>
-                  <input name="phone" required autoComplete="tel" />
-                </label>
-                <label className="full">
-                  <span>Email</span>
-                  <input name="email" required type="email" autoComplete="email" />
-                </label>
+              <p className="section-kicker">XEM TRƯỚC ĐẶT CHỖ</p>
+              <h1>Kiểm tra lựa chọn</h1>
+              <p>
+                Bạn có thể xem phương án, ngày đi, số khách và giá tham khảo,
+                nhưng hiện tại PhuQuocLux chưa tiếp nhận yêu cầu đặt chỗ.
+              </p>
+              <div className="prototype-warning" role="status">
+                Chúng tôi chưa mở nhận thông tin khách vì hệ thống lưu booking
+                và gửi xác nhận vẫn đang hoàn thiện. Không có yêu cầu nào
+                được gửi đi hoặc ghi nhận ở bước này.
               </div>
             </section>
 
             <section className="checkout-section">
-              <p className="section-kicker">THÔNG TIN SỬ DỤNG</p>
-              <h2>Thông tin để phục vụ chuyến đi</h2>
-              <div className="form-grid">
-                {offer.operationalFields.includes("hotel_or_pickup") ? (
-                  <label className="full">
-                    <span>
-                      Khách sạn / điểm đến
-                      {offer.requiredOperationalFields?.includes(
-                        "hotel_or_pickup",
-                      )
-                        ? " *"
-                        : ""}
-                    </span>
-                    <input
-                      name="usage"
-                      required={offer.requiredOperationalFields?.includes(
-                        "hotel_or_pickup",
-                      )}
-                      autoComplete="off"
-                    />
-                  </label>
-                ) : null}
-                {offer.operationalFields.includes("flight_number") ? (
-                  <label className="full">
-                    <span>Số chuyến bay</span>
-                    <input
-                      name="flightNumber"
-                      required={offer.requiredOperationalFields?.includes(
-                        "flight_number",
-                      )}
-                      placeholder="Ví dụ: VN1825"
-                      autoCapitalize="characters"
-                      autoComplete="off"
-                    />
-                  </label>
-                ) : null}
-                {offer.operationalFields.includes("luggage_count") ? (
-                  <label>
-                    <span>Số kiện hành lý ký gửi</span>
-                    <input
-                      name="luggageCount"
-                      type="number"
-                      min="0"
-                      max="20"
-                      inputMode="numeric"
-                      defaultValue="0"
-                      required={offer.requiredOperationalFields?.includes(
-                        "luggage_count",
-                      )}
-                    />
-                  </label>
-                ) : null}
-                {offer.operationalFields.includes("guest_note") ? (
-                  <label className="full">
-                    <span>Ghi chú</span>
-                    <textarea
-                      name="note"
-                      rows={4}
-                      required={offer.requiredOperationalFields?.includes(
-                        "guest_note",
-                      )}
-                    />
-                  </label>
-                ) : null}
-              </div>
+              <p className="section-kicker">KHI HỆ THỐNG MỞ ĐẶT CHỖ</p>
+              <h2>Thông tin liên hệ</h2>
+              <p>
+                Họ tên, số điện thoại và email chỉ được yêu cầu khi booking
+                có thể được lưu an toàn và người đặt nhận được mã truy cập.
+              </p>
+              <h2>Thông tin cho chuyến đi</h2>
+              <p>
+                {offer.operationalFields.includes("hotel_or_pickup")
+                  ? "Điểm đón hoặc khách sạn. "
+                  : ""}
+                {offer.operationalFields.includes("flight_number")
+                  ? "Số hiệu chuyến bay. "
+                  : ""}
+                {offer.operationalFields.includes("luggage_count")
+                  ? "Số kiện hành lý. "
+                  : ""}
+                {offer.operationalFields.includes("guest_note")
+                  ? "Ghi chú cho JoTrip."
+                  : ""}
+              </p>
             </section>
 
             <section className="checkout-section">
               <p className="section-kicker">TRẠNG THÁI</p>
-              <h2>Cần xác nhận tình trạng</h2>
-              <div className="prototype-warning">
-                Bản thử nghiệm hiện chưa nối dữ liệu chỗ trống và giá bán chính thức từ nhà cung cấp.
-                Vì vậy hệ thống chỉ nhận yêu cầu, không tự báo “còn chỗ” và không coi giá ước tính là giá thanh toán.
-              </div>
+              <h2>Chưa tiếp nhận yêu cầu</h2>
+              <p>
+                Giá hiện tại chỉ để tham khảo và chưa có xác nhận chỗ thực tế.
+                Hãy kiểm tra lại khi hệ thống đặt chỗ được mở.
+              </p>
             </section>
 
-            <button
-              className="checkout-submit"
-              type="submit"
-              disabled={submitting}
-              aria-busy={submitting}
-            >
-              {submitting ? "Đang gửi yêu cầu…" : "Gửi yêu cầu đặt"}
-            </button>
-          </Form>
+            <Link className="checkout-submit" to={selectedProductUrl}>
+              Quay lại điều chỉnh lựa chọn
+            </Link>
+          </div>
 
           <aside className="order-summary">
-            <p className="section-kicker">TÓM TẮT ĐẶT CHỖ</p>
+            <p className="section-kicker">TÓM TẮT LỰA CHỌN</p>
             <h2>{product.name}</h2>
             <div className="order-meta">
-              <div>
-                <span>Lựa chọn</span>
-                <b>{offer.label}</b>
-              </div>
+              <div><span>Lựa chọn</span><b>{offer.label}</b></div>
               <div>
                 <span>Ngày sử dụng</span>
                 <b>{formatServiceDate(quote.serviceDate)}</b>
               </div>
-              <div>
-                <span>Tổng số khách</span>
-                <b>{quote.pax}</b>
-              </div>
+              <div><span>Tổng số khách</span><b>{quote.pax}</b></div>
               {quote.lines.map((line) => (
                 <div key={line.code}>
-                  <span>
-                    {line.label} × {line.quantity}
-                  </span>
+                  <span>{line.label} × {line.quantity}</span>
                   <b>{money(line.total.amount)}</b>
                 </div>
               ))}
@@ -447,15 +226,15 @@ export default function CheckoutRoute() {
               </div>
             </div>
             <div className="order-line total">
-              <span>{quote.priceState === "final" ? "Tổng" : "Giá ước tính"}</span>
+              <span>{quote.priceState === "final" ? "Giá đang xem" : "Giá tham khảo"}</span>
               <strong>{money(quote.total.amount)}</strong>
             </div>
             <div className="quote-meta">
-              <span>Mã tạm #{quote.id.slice(0, 8)}</span>
+              <span>Chưa có mã đặt chỗ</span>
               <span>
                 {quote.priceState === "final"
-                  ? `Giữ giá đến ${expiresAt}`
-                  : `Ước tính đến ${expiresAt}`}
+                  ? `Giá cần được xác minh lại sau ${expiresAt}`
+                  : `Ước tính lúc ${expiresAt}`}
               </span>
             </div>
             {product.pricingNote ? (
@@ -464,10 +243,10 @@ export default function CheckoutRoute() {
               </div>
             ) : null}
             <div className="support-note">
-              <b>JoTrip đứng sau vận hành</b>
+              <b>PhuQuocLux do JoTrip vận hành</b>
               <p>
-                JoTrip sẽ kiểm tra lại tình trạng và điều kiện của đúng dịch vụ
-                trước khi xác nhận đặt chỗ.
+                Trang này chưa gửi yêu cầu đến JoTrip. Chỉ khi có xác nhận
+                thật, đặt chỗ mới xuất hiện trong tài khoản khách.
               </p>
             </div>
           </aside>
