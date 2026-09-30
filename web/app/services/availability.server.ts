@@ -13,7 +13,7 @@ const providers: Record<string, ProviderAdapter> = {
 export async function checkAvailabilityForOffer(
   offer: Offer,
   input: AvailabilityRequest,
-  requestId = crypto.randomUUID(),
+  requestId: string = crypto.randomUUID(),
 ): Promise<AvailabilityResult> {
   const provider = providers[offer.providerId];
 

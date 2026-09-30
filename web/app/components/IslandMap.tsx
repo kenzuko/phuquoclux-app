@@ -73,7 +73,7 @@ export function IslandMap({
         style: styleUrl,
         center: [103.965, 10.205],
         zoom: 9.6,
-        attributionControl: true,
+        attributionControl: { compact: true },
         dragPan: full,
         scrollZoom: full,
         boxZoom: full,
@@ -102,7 +102,6 @@ export function IslandMap({
           new maplibregl.GeolocateControl({
             positionOptions: { enableHighAccuracy: false },
             trackUserLocation: false,
-            showUserHeading: false,
           }),
           "bottom-right",
         );

@@ -28,7 +28,9 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Typecheck
-        run: npm run typecheck 2>&1 | tee typecheck.log
+        run: |
+          set -o pipefail
+          npm run typecheck 2>&1 | tee typecheck.log
 
       - name: Upload diagnostics
         if: always()
@@ -42,7 +44,9 @@ jobs:
           retention-days: 2
 
       - name: Domain checks
-        run: npm run test:domain 2>&1 | tee domain-check.log
+        run: |
+          set -o pipefail
+          npm run test:domain 2>&1 | tee domain-check.log
 
       - name: Build
         run: npm run build

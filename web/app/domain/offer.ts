@@ -255,22 +255,19 @@ export function getOffer(productId: ProductId, offerId?: string) {
 }
 
 export function fromPriceForOffer(offer: Offer) {
-  if (offer.pricing.mode === "flat") {
-    return offer.pricing.amount;
-  }
-  if (!offer.pricing.units.length) return null;
+  const pricing = offer.pricing;
+  if (pricing.mode === "flat") return pricing.amount;
+  if (!pricing.units.length) return null;
 
-  const headline = offer.pricing.headlineUnitCode
-    ? offer.pricing.units.find(
-        (unit) => unit.code === offer.pricing.headlineUnitCode,
-      )
+  const headlineUnitCode = pricing.headlineUnitCode;
+  const headline = headlineUnitCode
+    ? pricing.units.find((unit) => unit.code === headlineUnitCode)
     : undefined;
-
   if (headline) return headline.amount;
 
-  return offer.pricing.units.reduce(
+  return pricing.units.reduce(
     (lowest, unit) => Math.min(lowest, unit.amount),
-    offer.pricing.units[0].amount,
+    pricing.units[0].amount,
   );
 }
 
@@ -285,7 +282,7 @@ export function fromPriceForProduct(productId: ProductId) {
 }
 
 
-export function priceCertaintyForProduct(productId: ProductId) {
+export function priceCertaintyForProduct(productId: ProductId): QuotePriceState | null {
   const active = offersForProduct(productId);
   if (!active.length) return null;
 

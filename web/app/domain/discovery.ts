@@ -231,7 +231,7 @@ export function discover(query: DiscoveryQuery): DiscoveryResult {
       priceState: priceCertaintyForProduct(product.id),
       unit: product.unit,
       mapEntityIds: product.mapEntityIds,
-      spatialMatch: product.mapEntityIds.length ? "linked" : "unlocated",
+      spatialMatch: product.mapEntityIds.length ? ("linked" as const) : ("unlocated" as const),
     }));
 
   return {
