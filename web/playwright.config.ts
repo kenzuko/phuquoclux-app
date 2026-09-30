@@ -17,7 +17,7 @@ export default defineConfig({
     actionTimeout: 15_000,
   },
   projects: [
-    { name: "iPhone-13", use: { ...devices["iPhone 13"] } },
+    { name: "iPhone-13-webkit", use: { ...devices["iPhone 13"], browserName: "webkit" } },
     {
       name: "desktop-chromium",
       use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } },
