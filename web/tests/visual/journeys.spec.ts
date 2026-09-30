@@ -51,10 +51,18 @@ async function assertNoHorizontalOverflow(page: import("@playwright/test").Page)
 }
 
 async function expectVisibleMapReady(page: import("@playwright/test").Page) {
-  const map = page.locator(".island-map:visible").first();
+  // Home renders two map hosts, one hidden by responsive CSS. Select the
+  // expected host by layout instead of a re-evaluated :visible:nth locator.
+  const isHome = new URL(page.url()).pathname === "/";
+  const mobile = (page.viewportSize()?.width ?? 1440) <= 980;
+  const selector = isHome
+    ? mobile
+      ? ".mobile-map-card > .island-map"
+      : ".desktop-map-stage > .island-map"
+    : ".full-map-stage > .island-map";
+  const map = page.locator(selector);
+  await expect(map).toHaveCount(1);
   await expect(map).toBeVisible();
-  // The map intentionally mounts only when it enters the viewport.
-  // A CSS-visible element can still be below the fold, especially on Home.
   await map.scrollIntoViewIfNeeded();
   await expect(map).toHaveAttribute("data-map-ready", "true", {
     timeout: 25_000,
