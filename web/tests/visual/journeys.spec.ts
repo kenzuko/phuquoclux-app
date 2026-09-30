@@ -35,7 +35,11 @@ test("Home: map-first layout, discovery and mobile-safe width", async ({ page },
   await capture(page, `01-home-${testInfo.project.name}.png`);
 
   await page.getByRole("button", { name: "Địa điểm" }).click();
-  await expect(page.getByRole("link", { name: /Dương Đông/ })).toBeVisible();
+  await expect(
+    page.locator(".home-place-card").filter({
+      has: page.getByText("Dương Đông", { exact: true }),
+    }),
+  ).toBeVisible();
   await assertNoHorizontalOverflow(page);
   await capture(page, `02-home-places-${testInfo.project.name}.png`);
 });
