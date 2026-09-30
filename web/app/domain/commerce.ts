@@ -87,6 +87,7 @@ export type BookingContact = {
 export type BookingOperationalData = {
   hotelOrPickup?: string;
   flightNumber?: string;
+  luggageCount?: number;
   guestNote?: string;
 };
 
