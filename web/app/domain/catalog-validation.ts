@@ -1,0 +1,270 @@
+import {
+  mapEntities,
+  productList,
+} from "./catalog";
+import {
+  fromPriceForProduct,
+  offersForProduct,
+} from "./offer";
+
+export type CatalogIssue = {
+  code: string;
+  message: string;
+};
+
+export function validateCatalog(): CatalogIssue[] {
+  const issues: CatalogIssue[] = [];
+  const slugs = new Set<string>();
+  const productIds = new Set<string>();
+  const entityIds = new Set(mapEntities.map((entity) => entity.id));
+
+  for (const entity of mapEntities) {
+    if (
+      entity.lat < -90 ||
+      entity.lat > 90 ||
+      entity.lng < -180 ||
+      entity.lng > 180
+    ) {
+      issues.push({
+        code: "MAP_COORDINATE_INVALID",
+        message: `${entity.id} has invalid coordinates`,
+      });
+    }
+
+    if (entity.priority < 0 || entity.priority > 100) {
+      issues.push({
+        code: "MAP_PRIORITY_INVALID",
+        message: `${entity.id} priority must be between 0 and 100`,
+      });
+    }
+
+    if (
+      entity.coordinateScope === "exact" &&
+      entity.verification === "reference"
+    ) {
+      issues.push({
+        code: "MAP_EXACT_REFERENCE_CONTRADICTION",
+        message:
+          `${entity.id} cannot claim exact coordinate scope while only reference-verified`,
+      });
+    }
+
+    if (!entity.provenance.sourceId.trim()) {
+      issues.push({
+        code: "MAP_PROVENANCE_MISSING",
+        message: `${entity.id} must retain a traceable source id`,
+      });
+    }
+
+    if (
+      entity.verification === "verified" &&
+      !entity.provenance.verifiedAt
+    ) {
+      issues.push({
+        code: "MAP_VERIFIED_WITHOUT_DATE",
+        message:
+          `${entity.id} is verified but has no provenance verification date`,
+      });
+    }
+
+    if (
+      entity.provenance.verifiedAt &&
+      !/^\d{4}-\d{2}-\d{2}$/.test(entity.provenance.verifiedAt)
+    ) {
+      issues.push({
+        code: "MAP_VERIFIED_DATE_INVALID",
+        message:
+          `${entity.id} provenance verifiedAt must use YYYY-MM-DD`,
+      });
+    }
+  }
+
+  for (const product of productList) {
+    if (productIds.has(product.id)) {
+      issues.push({
+        code: "PRODUCT_ID_DUPLICATE",
+        message: `duplicate Product id: ${product.id}`,
+      });
+    }
+    productIds.add(product.id);
+
+    if (slugs.has(product.slug)) {
+      issues.push({
+        code: "PRODUCT_SLUG_DUPLICATE",
+        message: `duplicate Product slug: ${product.slug}`,
+      });
+    }
+    slugs.add(product.slug);
+
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(product.slug)) {
+      issues.push({
+        code: "PRODUCT_SLUG_INVALID",
+        message: `invalid Product slug: ${product.slug}`,
+      });
+    }
+
+    if (!product.media.alt.trim()) {
+      issues.push({
+        code: "PRODUCT_MEDIA_ALT_MISSING",
+        message: `${product.id} media alt is required`,
+      });
+    }
+
+    if (!product.fulfillmentSummary.trim()) {
+      issues.push({
+        code: "PRODUCT_FULFILLMENT_MISSING",
+        message: `${product.id} fulfillment summary is required`,
+      });
+    }
+
+    if (product.facts.length < 2) {
+      issues.push({
+        code: "PRODUCT_FACTS_TOO_SHALLOW",
+        message: `${product.id} requires at least two traveler-facing facts`,
+      });
+    }
+    for (const fact of product.facts) {
+      if (!fact.label.trim() || !fact.value.trim()) {
+        issues.push({
+          code: "PRODUCT_FACT_INVALID",
+          message: `${product.id} contains an empty Product fact`,
+        });
+      }
+    }
+
+    if (product.media.kind === "photo") {
+      if (!product.media.src.startsWith("/")) {
+        issues.push({
+          code: "PRODUCT_MEDIA_SOURCE_INVALID",
+          message: `${product.id} photo must use a controlled app asset path`,
+        });
+      }
+    }
+
+    for (const entityId of product.mapEntityIds) {
+      if (!entityIds.has(entityId)) {
+        issues.push({
+          code: "PRODUCT_MAP_ENTITY_MISSING",
+          message: `${product.id} references missing MapEntity ${entityId}`,
+        });
+      }
+    }
+
+    const offers = offersForProduct(product.id);
+    if (!offers.length) {
+      issues.push({
+        code: "PRODUCT_WITHOUT_OFFER",
+        message: `${product.id} has no active Offer`,
+      });
+      continue;
+    }
+
+    if (fromPriceForProduct(product.id) === null) {
+      issues.push({
+        code: "PRODUCT_WITHOUT_HEADLINE_PRICE",
+        message: `${product.id} cannot derive a headline price`,
+      });
+    }
+
+    const offerIds = new Set<string>();
+    for (const offer of offers) {
+      if (offerIds.has(offer.id)) {
+        issues.push({
+          code: "OFFER_ID_DUPLICATE",
+          message: `duplicate Offer id under ${product.id}: ${offer.id}`,
+        });
+      }
+      offerIds.add(offer.id);
+
+      if (!offer.providerId.trim()) {
+        issues.push({
+          code: "OFFER_PROVIDER_MISSING",
+          message: `${offer.id} has no provider`,
+        });
+      }
+
+      for (const requiredField of offer.requiredOperationalFields ?? []) {
+        if (!offer.operationalFields.includes(requiredField)) {
+          issues.push({
+            code: "OFFER_REQUIRED_FIELD_NOT_DECLARED",
+            message:
+              `${offer.id} requires ${requiredField} but does not expose it`,
+          });
+        }
+      }
+
+      if (
+        offer.constraints?.maxPax !== undefined &&
+        (
+          !Number.isInteger(offer.constraints.maxPax) ||
+          offer.constraints.maxPax < 1 ||
+          offer.constraints.maxPax > 20
+        )
+      ) {
+        issues.push({
+          code: "OFFER_MAX_PAX_INVALID",
+          message: `${offer.id} maxPax must be an integer from 1 to 20`,
+        });
+      }
+
+      if (offer.pricing.mode === "flat") {
+        if (offer.pricing.amount <= 0) {
+          issues.push({
+            code: "OFFER_PRICE_INVALID",
+            message: `${offer.id} flat price must be positive`,
+          });
+        }
+      } else {
+        if (!offer.pricing.units.length) {
+          issues.push({
+            code: "OFFER_UNITS_MISSING",
+            message: `${offer.id} has no unit rates`,
+          });
+        }
+
+        const unitCodes = new Set<string>();
+        for (const unit of offer.pricing.units) {
+          if (unitCodes.has(unit.code)) {
+            issues.push({
+              code: "OFFER_UNIT_DUPLICATE",
+              message: `${offer.id} repeats unit code ${unit.code}`,
+            });
+          }
+          unitCodes.add(unit.code);
+
+          if (unit.amount <= 0) {
+            issues.push({
+              code: "OFFER_UNIT_PRICE_INVALID",
+              message: `${offer.id} unit ${unit.code} must be positive`,
+            });
+          }
+        }
+
+        if (
+          offer.pricing.headlineUnitCode &&
+          !unitCodes.has(offer.pricing.headlineUnitCode)
+        ) {
+          issues.push({
+            code: "OFFER_HEADLINE_UNIT_MISSING",
+            message:
+              `${offer.id} headline unit ${offer.pricing.headlineUnitCode} does not exist`,
+          });
+        }
+      }
+    }
+  }
+
+  return issues;
+}
+
+export function assertCatalogValid() {
+  const issues = validateCatalog();
+  if (!issues.length) return;
+
+  throw new Error(
+    [
+      "CATALOG_INVALID",
+      ...issues.map((issue) => `${issue.code}: ${issue.message}`),
+    ].join("\n"),
+  );
+}

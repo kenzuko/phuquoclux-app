@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f7f9f6" />
+  <title>PhuQuocLux — Chi tiết dịch vụ</title>
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="preconnect" href="https://tile.openstreetmap.org" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="detail-page">
+  <header class="topbar detail-topbar">
+    <a class="brand" href="./index.html" aria-label="PhuQuocLux home">
+      <img class="brand-mark" src="./assets/phuquoclux-mark.webp" alt="" />
+      <span class="brand-copy"><strong>PhuQuoc<span>Lux</span></strong><small>by JoTrip</small></span>
+    </a>
+    <div class="top-actions">
+      <a class="header-link" href="./bookings.html">Đặt chỗ của tôi</a>
+      <button class="icon-button" type="button">VI</button>
+    </div>
+  </header>
+
+  <main class="detail-main">
+    <a class="back-link" href="./index.html">← Quay lại khám phá</a>
+
+    <section class="product-hero">
+      <div class="product-hero-copy">
+        <p class="eyebrow" id="detailKicker">NAM ĐẢO · TOUR</p>
+        <h1 id="detailTitle">Tour 3 đảo bằng cano</h1>
+        <p class="detail-lead" id="detailLead">Một ngày đi đảo gọn, rõ lịch trình và biết trước điểm đón.</p>
+        <div class="detail-chips" id="detailChips"></div>
+      </div>
+      <div class="product-hero-visual" id="heroVisual">
+        <div class="hero-route-line"></div>
+        <span class="hero-visual-label" id="heroVisualLabel">AN THỚI → CÁC ĐẢO</span>
+      </div>
+    </section>
+
+    <section class="detail-grid">
+      <article class="detail-content">
+        <section class="content-block">
+          <p class="section-kicker">TÓM TẮT</p>
+          <h2 id="summaryTitle">Đi gì, được gì?</h2>
+          <p id="summaryText"></p>
+          <div class="fact-grid" id="factGrid"></div>
+        </section>
+
+        <section class="content-block">
+          <p class="section-kicker">CHI TIẾT</p>
+          <h2 id="includedTitle">Những gì đã gồm</h2>
+          <ul class="check-list" id="includedList"></ul>
+        </section>
+
+        <section class="content-block">
+          <p class="section-kicker">VỊ TRÍ / TUYẾN</p>
+          <div class="map-detail-head">
+            <div><h2 id="mapTitle">An Thới và tuyến đảo</h2><p id="mapSubtitle">Bản đồ giúp bạn hiểu nơi bắt đầu và khu vực trải nghiệm.</p></div>
+          </div>
+          <div id="productMap" class="map product-map"></div>
+        </section>
+
+        <section class="content-block policy-block">
+          <p class="section-kicker">TRƯỚC KHI ĐẶT</p>
+          <h2>Thông tin cần biết</h2>
+          <div id="policyList" class="policy-list"></div>
+        </section>
+      </article>
+
+      <aside class="booking-card" aria-label="Chọn và đặt dịch vụ">
+        <div class="booking-card-head">
+          <p>Từ</p>
+          <strong id="basePrice">850.000đ</strong>
+          <small id="priceUnit">/ khách</small>
+        </div>
+
+        <label class="booking-field">
+          <span>Ngày sử dụng</span>
+          <input id="bookingDate" type="date" />
+        </label>
+
+        <div class="booking-field">
+          <span id="optionLabel">Lựa chọn</span>
+          <div class="option-list" id="optionList"></div>
+        </div>
+
+        <div class="booking-field">
+          <span>Số khách</span>
+          <div class="quantity-control">
+            <button type="button" id="minusPax">−</button>
+            <b id="paxValue">2</b>
+            <button type="button" id="plusPax">+</button>
+          </div>
+        </div>
+
+        <div class="booking-total">
+          <span><small>Tạm tính</small><b id="totalPrice">1.700.000đ</b></span>
+          <small id="availabilityHint">Kiểm tra tình trạng khi tiếp tục</small>
+        </div>
+
+        <a class="booking-cta" id="bookingCta" href="./checkout.html?type=tour&pax=2">Tiếp tục đặt</a>
+        <p class="booking-note">Bạn chưa bị trừ tiền ở bước này.</p>
+      </aside>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="./product.js"></script>
+</body>
+</html>

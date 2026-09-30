@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f7f9f6" />
+  <title>Thanh toán — PhuQuocLux</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="checkout-page">
+  <header class="topbar detail-topbar">
+    <a class="brand" href="./index.html">
+      <img class="brand-mark" src="./assets/phuquoclux-mark.webp" alt="" />
+      <span class="brand-copy"><strong>PhuQuoc<span>Lux</span></strong><small>by JoTrip</small></span>
+    </a>
+    <span class="secure-label">Checkout prototype</span>
+  </header>
+
+  <main class="checkout-main">
+    <a id="checkoutBack" class="back-link" href="./product.html?type=tour">← Quay lại dịch vụ</a>
+    <div class="checkout-steps"><span class="is-current">1 Thông tin</span><i></i><span>2 Thanh toán</span><i></i><span>3 Xác nhận</span></div>
+
+    <div class="checkout-grid">
+      <form class="checkout-form" id="checkoutForm">
+        <section class="checkout-section">
+          <p class="section-kicker">NGƯỜI ĐẶT</p>
+          <h1>Thông tin liên hệ</h1>
+          <p>Không bắt buộc tạo tài khoản trước khi đặt.</p>
+          <div class="form-grid">
+            <label><span>Họ và tên</span><input name="name" required autocomplete="name" placeholder="Nguyễn Văn A" /></label>
+            <label><span>Số điện thoại</span><input name="phone" required inputmode="tel" autocomplete="tel" placeholder="+84..." /></label>
+            <label class="full"><span>Email</span><input name="email" required type="email" autocomplete="email" placeholder="you@example.com" /></label>
+          </div>
+        </section>
+
+        <section class="checkout-section">
+          <p class="section-kicker">THÔNG TIN SỬ DỤNG</p>
+          <h2 id="usageHeading">Điểm đón / ghi chú</h2>
+          <div class="form-grid">
+            <label class="full"><span id="usageLabel">Khách sạn / nơi lưu trú</span><input name="usage" placeholder="Ví dụ: Regent Phu Quoc" /></label>
+            <label class="full"><span>Ghi chú cho JoTrip</span><textarea name="note" rows="4" placeholder="Hành lý, trẻ em hoặc yêu cầu cần lưu ý..."></textarea></label>
+          </div>
+        </section>
+
+        <section class="checkout-section">
+          <p class="section-kicker">THANH TOÁN</p>
+          <h2>Chọn phương thức</h2>
+          <div class="payment-options">
+            <label class="payment-option is-selected"><input type="radio" name="payment" value="online" checked /><span><b>Thanh toán online</b><small>Phương thức thực tế sẽ được nối ở giai đoạn tích hợp.</small></span></label>
+            <label class="payment-option"><input type="radio" name="payment" value="later" /><span><b>Xác nhận trước, thanh toán theo hướng dẫn</b><small>Chỉ áp dụng nếu offer cho phép.</small></span></label>
+          </div>
+          <div class="prototype-warning">Đây là prototype UX. Nút xác nhận không thực hiện giao dịch tiền thật.</div>
+        </section>
+
+        <button class="checkout-submit" type="submit">Xác nhận prototype</button>
+      </form>
+
+      <aside class="order-summary">
+        <p class="section-kicker">ĐƠN CỦA BẠN</p>
+        <h2 id="orderTitle">Tour 3 đảo bằng cano</h2>
+        <div class="order-meta" id="orderMeta"></div>
+        <div class="order-line"><span>Tạm tính</span><b id="orderSubtotal">1.700.000đ</b></div>
+        <div class="order-line total"><span>Tổng</span><strong id="orderTotal">1.700.000đ</strong></div>
+        <div class="support-note"><b>JoTrip đứng sau vận hành</b><p>Sau khi xác nhận, booking, voucher và thông tin hỗ trợ nằm trong cùng một nơi.</p></div>
+      </aside>
+    </div>
+  </main>
+
+  <script src="./checkout.js"></script>
+</body>
+</html>

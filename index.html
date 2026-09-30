@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f7f9f6" />
+  <title>PhuQuocLux — Map-first travel marketplace</title>
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="preconnect" href="https://tile.openstreetmap.org" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="PhuQuocLux home">
+        <img class="brand-mark" src="./assets/phuquoclux-mark.webp" alt="" />
+        <span class="brand-copy"><strong>PhuQuoc<span>Lux</span></strong><small>by JoTrip</small></span>
+      </a>
+      <div class="top-actions">
+        <button class="icon-button" type="button" aria-label="Đổi ngôn ngữ">VI</button>
+        <button class="icon-button user-button" type="button" aria-label="Tài khoản">☺</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="home-context">
+        <div>
+          <p class="eyebrow">ĐIỂM ĐẾN</p>
+          <h1>Phú Quốc</h1>
+        </div>
+        <p>Khám phá trên bản đồ · Tìm và đặt dịch vụ nhanh</p>
+      </section>
+
+      <section class="search-panel" aria-label="Tìm dịch vụ">
+        <label class="search-box">
+          <span class="search-icon">⌕</span>
+          <input id="searchInput" type="search" placeholder="Tour, vé, xe, khách sạn..." autocomplete="off" />
+          <kbd>⌘ K</kbd>
+        </label>
+        <div class="trip-controls">
+          <button class="context-button" type="button"><span>◷</span><span><small>Ngày đi</small><b>Hôm nay</b></span></button>
+          <button class="context-button" type="button"><span>♙</span><span><small>Số khách</small><b>2 khách</b></span></button>
+          <button class="primary-button" id="searchButton" type="button">Tìm kiếm</button>
+        </div>
+      </section>
+
+      <section class="discovery-layout">
+        <div class="results-pane">
+          <div class="filter-bar" id="filterBar" aria-label="Bộ lọc bản đồ">
+            <button class="filter-chip is-active" data-category="all">Tất cả</button>
+            <button class="filter-chip" data-category="tour">Tour</button>
+            <button class="filter-chip" data-category="ticket">Vé</button>
+            <button class="filter-chip" data-category="transfer">Xe</button>
+            <button class="filter-chip" data-category="hotel">Phòng</button>
+            <button class="filter-chip" data-category="place">Ăn uống</button>
+          </div>
+
+          <div class="mobile-map-wrap" id="map">
+            <div id="homeMap" class="map map-home" aria-label="Bản đồ Phú Quốc"></div>
+            <button class="map-search-area" id="searchAreaButton" type="button">⌕ Tìm trong khu vực này</button>
+            <button class="map-expand" id="expandMap" type="button" aria-label="Mở bản đồ toàn màn hình">↗</button>
+            <div class="weather-chip"><span>☀</span><b>29°C</b><small>Phú Quốc</small></div>
+            <div class="map-entity-sheet" data-map-sheet hidden>
+              <button class="entity-sheet-close" type="button" aria-label="Đóng">×</button>
+              <small data-entity-kicker>TRÊN BẢN ĐỒ</small>
+              <strong data-entity-title>Phú Quốc</strong>
+              <p data-entity-copy>Chạm một pin để xem khu vực và dịch vụ liên quan.</p>
+              <a data-entity-action href="./index.html">Xem lựa chọn</a>
+            </div>
+          </div>
+
+          <div class="section-heading quick-heading"><div><small>Dịch vụ nhanh</small><h2>Bạn đang cần gì?</h2></div></div>
+          <div class="service-grid">
+            <a class="service-card" href="./product.html?type=transfer"><span class="service-icon">🚗</span><b>Đón sân bay</b><small>Xe riêng, giá rõ ràng</small></a>
+            <a class="service-card" href="./product.html?type=ticket"><span class="service-icon">🎟</span><b>Vé Hòn Thơm</b><small>Chọn ngày, nhận voucher</small></a>
+            <a class="service-card" href="./product.html?type=tour"><span class="service-icon">🛥</span><b>Tour hôm nay</b><small>Xem tour và lựa chọn</small></a>
+            <a class="service-card" href="#"><span class="service-icon">⛴</span><b>Tàu & phà</b><small>Lịch chạy theo ngày</small></a>
+          </div>
+
+          <div class="section-heading recommendations-heading">
+            <div><small>Gợi ý ở Phú Quốc</small><h2>Dễ đặt, dễ đi</h2></div>
+            <button class="text-button" type="button">Xem tất cả →</button>
+          </div>
+
+          <div class="product-list" id="productList">
+            <article class="product-card" data-category="tour">
+              <div class="product-visual visual-islands"><span class="badge">Bán chạy</span><span class="visual-symbol">◌</span></div>
+              <div class="product-body"><p class="product-meta">NAM ĐẢO · 7 GIỜ</p><h3>Tour 3 đảo bằng cano</h3><p>Đón khách sạn · Ăn trưa · Lặn ngắm san hô</p><div class="product-bottom"><span><small>Từ</small><strong>850.000đ</strong></span><a href="./product.html?type=tour">Xem tour</a></div></div>
+            </article>
+            <article class="product-card" data-category="ticket">
+              <div class="product-visual visual-cable"><span class="badge soft">Vé điện tử</span><span class="visual-symbol">⌁</span></div>
+              <div class="product-body"><p class="product-meta">HÒN THƠM · VÉ</p><h3>Cáp treo Hòn Thơm</h3><p>Chọn ngày · Voucher trên điện thoại · Đi thẳng đến cổng</p><div class="product-bottom"><span><small>Từ</small><strong>700.000đ</strong></span><a href="./product.html?type=ticket">Xem vé</a></div></div>
+            </article>
+            <article class="product-card" data-category="transfer">
+              <div class="product-visual visual-transfer"><span class="badge soft">Xe riêng</span><span class="visual-symbol">→</span></div>
+              <div class="product-body"><p class="product-meta">PQC · TRANSFER</p><h3>Sân bay → khách sạn</h3><p>Đón theo chuyến bay · Không ghép khách · Hỗ trợ hành lý</p><div class="product-bottom"><span><small>Từ</small><strong>250.000đ</strong></span><a href="./product.html?type=transfer">Đặt xe</a></div></div>
+            </article>
+          </div>
+
+          <aside class="trust-strip">
+            <div><b>Thông tin địa phương</b><span>Dữ liệu Phú Quốc được JoTrip vận hành và kiểm tra.</span></div>
+            <div><b>Đặt xong vẫn có người hỗ trợ</b><span>Voucher, điểm đón và thay đổi booking nằm cùng một chỗ.</span></div>
+          </aside>
+        </div>
+
+        <aside class="desktop-map-pane">
+          <div class="desktop-map-head"><div><small>KHÁM PHÁ TRÊN BẢN ĐỒ</small><strong>Phú Quốc</strong></div><button id="desktopSearchArea" type="button">Tìm khu vực này</button></div>
+          <div id="desktopMap" class="map map-desktop" aria-label="Bản đồ Phú Quốc desktop"></div>
+          <div class="map-entity-sheet desktop-entity-sheet" data-map-sheet hidden>
+            <button class="entity-sheet-close" type="button" aria-label="Đóng">×</button>
+            <small data-entity-kicker>TRÊN BẢN ĐỒ</small>
+            <strong data-entity-title>Phú Quốc</strong>
+            <p data-entity-copy>Chạm một pin để xem khu vực và dịch vụ liên quan.</p>
+            <a data-entity-action href="./index.html">Xem lựa chọn</a>
+          </div>
+          <div class="desktop-map-footer"><span><i></i> Kéo bản đồ để khám phá</span><button type="button" id="desktopExpand">Mở bản đồ lớn ↗</button></div>
+        </aside>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Điều hướng chính">
+      <a class="is-active" href="#"><span>⌂</span><b>Khám phá</b></a>
+      <a href="#map" id="bottomMapLink"><span>⌖</span><b>Bản đồ</b></a>
+      <a href="./bookings.html"><span>▣</span><b>Đặt chỗ</b></a>
+      <a href="#"><span>♡</span><b>Đã lưu</b></a>
+      <a href="#"><span>☺</span><b>Tôi</b></a>
+    </nav>
+  </div>
+
+  <div class="map-modal" id="mapModal" aria-hidden="true">
+    <div class="map-modal-head"><div class="brand mini"><img class="brand-mark" src="./assets/phuquoclux-mark.webp" alt=""/><strong>PhuQuoc<span>Lux</span></strong></div><button id="closeMap" type="button">Đóng ×</button></div>
+    <div class="modal-search"><span>⌕</span><input type="search" placeholder="Tìm trên bản đồ Phú Quốc" /></div>
+    <div id="fullMap" class="map map-full"></div>
+    <div class="map-bottom-sheet"><span class="grabber"></span><small>TRONG KHU VỰC NÀY</small><strong>12 nơi và dịch vụ</strong><p>Chạm pin để xem thông tin và sản phẩm có thể đặt.</p></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="./app.js"></script>
+</body>
+</html>
