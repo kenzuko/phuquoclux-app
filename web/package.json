@@ -16,7 +16,8 @@
     "dev:pages": "vite --config vite.pages.config.ts --host 127.0.0.1 --port 4174",
     "test:pages": "playwright test --config playwright.pages.config.ts",
     "supplier:template": "tsx scripts/supplier-intake-check.mjs --template",
-    "supplier:check": "tsx scripts/supplier-intake-check.mjs"
+    "supplier:check": "tsx scripts/supplier-intake-check.mjs",
+    "test:db": "tsx scripts/postgres-booking-integration.mjs"
   },
   "dependencies": {
     "maplibre-gl": "6.11.2",
@@ -35,6 +36,7 @@
     "wrangler": "^4.143.0",
     "tsx": "^4.20.6",
     "@playwright/test": "^1.56.0",
-    "@types/node": "^24.0.0"
+    "@types/node": "^24.0.0",
+    "pg": "8.23.0"
   }
 }
