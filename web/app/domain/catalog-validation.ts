@@ -37,6 +37,17 @@ export function validateCatalog(): CatalogIssue[] {
         message: `${entity.id} priority must be between 0 and 100`,
       });
     }
+
+    if (
+      entity.coordinateScope === "exact" &&
+      entity.verification === "reference"
+    ) {
+      issues.push({
+        code: "MAP_EXACT_REFERENCE_CONTRADICTION",
+        message:
+          `${entity.id} cannot claim exact coordinate scope while only reference-verified`,
+      });
+    }
   }
 
   for (const product of productList) {
