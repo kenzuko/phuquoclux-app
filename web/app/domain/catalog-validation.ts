@@ -48,6 +48,35 @@ export function validateCatalog(): CatalogIssue[] {
           `${entity.id} cannot claim exact coordinate scope while only reference-verified`,
       });
     }
+
+    if (!entity.provenance.sourceId.trim()) {
+      issues.push({
+        code: "MAP_PROVENANCE_MISSING",
+        message: `${entity.id} must retain a traceable source id`,
+      });
+    }
+
+    if (
+      entity.verification === "verified" &&
+      !entity.provenance.verifiedAt
+    ) {
+      issues.push({
+        code: "MAP_VERIFIED_WITHOUT_DATE",
+        message:
+          `${entity.id} is verified but has no provenance verification date`,
+      });
+    }
+
+    if (
+      entity.provenance.verifiedAt &&
+      !/^\d{4}-\d{2}-\d{2}$/.test(entity.provenance.verifiedAt)
+    ) {
+      issues.push({
+        code: "MAP_VERIFIED_DATE_INVALID",
+        message:
+          `${entity.id} provenance verifiedAt must use YYYY-MM-DD`,
+      });
+    }
   }
 
   for (const product of productList) {
