@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+// Vite must emit and serve the worker as an app asset; the bare package
+// worker path otherwise resolves to /node_modules/.vite/deps/... and 404s.
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import type { MapCategory, MapEntity } from "../domain/catalog";
 import type { BoundingBox } from "../domain/discovery";
 
@@ -66,6 +69,7 @@ export function IslandMap({
       try {
         const maplibregl = await import("maplibre-gl");
         if (cancelled || !hostRef.current) return;
+        maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
       const full = interaction === "full";
       const map = new maplibregl.Map({
