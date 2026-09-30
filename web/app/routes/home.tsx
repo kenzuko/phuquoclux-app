@@ -51,11 +51,13 @@ const filters: Array<{ id: "all" | MapCategory; label: string }> = [
 export default function HomeRoute() {
   const { mapStyleUrl, today, initialIntent } =
     useLoaderData<typeof loader>();
-  const weather = useWeatherContext("duong_dong");
   const [category, setCategory] = useState<"all" | MapCategory>("all");
   const [serviceDate, setServiceDate] = useState(initialIntent.date);
   const [pax, setPax] = useState(initialIntent.pax);
   const [selected, setSelected] = useState<MapEntity | null>(null);
+  const weather = useWeatherContext(
+    selected ? selected.weatherPointId : "duong_dong",
+  );
   const [desktopViewport, setDesktopViewport] = useState<BoundingBox | null>(null);
 
   const onSelect = useCallback((entity: MapEntity) => setSelected(entity), []);
