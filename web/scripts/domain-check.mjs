@@ -7,6 +7,8 @@ import {
 } from "../app/domain/commerce.ts";
 import {
   getProductBySlug,
+  mapCoordinateScopeCopy,
+  mapVerificationLabel,
   productsForMapEntity,
 } from "../app/domain/catalog.ts";
 import {
@@ -171,6 +173,17 @@ async function run() {
     productsForMapEntity("an-thoi")[0]?.id,
     "tour-three-islands-cano",
     "MapEntity must resolve related Products without owning a direct commerce href",
+  );
+
+  const anThoiEntity = discoveryIntentEntity("an-thoi");
+  equal(
+    mapVerificationLabel(anThoiEntity),
+    "Khu vực đã xác minh",
+    "verified area must not be labeled as an exact location",
+  );
+  ok(
+    mapCoordinateScopeCopy(anThoiEntity).includes("không phải điểm đón"),
+    "area scope copy must explicitly reject exact-pickup interpretation",
   );
 
   const tourOffers = offersForProduct("tour-three-islands-cano");
@@ -464,3 +477,11 @@ async function run() {
 }
 
 await run();
+
+
+function discoveryIntentEntity(id) {
+  const result = discover({ category: "all" });
+  const entity = result.entities.find((item) => item.id === id);
+  if (!entity) throw new Error(`missing MapEntity: ${id}`);
+  return entity;
+}
