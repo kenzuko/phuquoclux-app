@@ -23,7 +23,8 @@ The PhuQuocLux server reads only the canonical public Weather runtime:
 https://weather.openphuquoc.com/data/weather-runtime/current.json
 ```
 
-The browser receives only a normalized, small summary from the page loader.
+The browser calls only the same-origin PhuQuocLux endpoint `/api/context/weather`.
+That endpoint performs the server-side canonical Weather fetch and returns only a normalized, small summary.
 
 This preserves the Weather runtime source lock and avoids duplicating Weather data logic in the consumer app.
 
@@ -60,10 +61,12 @@ Weather context is non-critical.
 
 Rules:
 
-- server-side fetch only;
-- 900 ms timeout;
+- canonical Weather fetch happens server-side only;
+- Home shell does not wait for Weather;
+- the browser requests only the same-origin context endpoint after initial render;
+- 900 ms upstream timeout;
 - best-effort in-isolate cache for 60 seconds;
-- Weather failure must never block commerce or Map discovery beyond the timeout;
+- Weather failure never blocks commerce or Map discovery;
 - no client polling in V1.
 
 ## Product boundary
