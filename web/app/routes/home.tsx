@@ -144,6 +144,7 @@ export default function HomeRoute() {
                   key={filter.id}
                   className={category === filter.id ? "is-active" : ""}
                   type="button"
+                  aria-pressed={category === filter.id}
                   onClick={() => {
                     setCategory(filter.id);
                     setSelected(null);
@@ -352,7 +353,14 @@ function MapEntitySheet({
 }) {
   return (
     <div className="entity-sheet">
-      <button className="entity-close" type="button" onClick={onClose}>×</button>
+      <button
+        className="entity-close"
+        type="button"
+        onClick={onClose}
+        aria-label="Đóng thông tin địa điểm"
+      >
+        ×
+      </button>
       <small>{entity.kicker}</small>
       <span className={`verification-badge verification-badge--${entity.verification}`}>
         {mapVerificationLabel(entity)}
