@@ -314,6 +314,8 @@ export const products: Record<ProductId, Product> = {
     name: "Vé cáp treo Hòn Thơm",
     kicker: "HÒN THƠM · VÉ ĐIỆN TỬ",
     lead: "Chọn ngày · Voucher trên điện thoại · Đi thẳng đến cổng",
+    pricingNote:
+      "Giá và điều kiện từng loại vé đang là tham khảo. JoTrip sẽ xác nhận đúng chính sách áp dụng cho ngày sử dụng trước khi chốt.",
     fulfillmentSummary: "Voucher điện tử",
     facts: [
       { label: "Khu vực", value: "Hòn Thơm · An Thới" },
