@@ -33,6 +33,7 @@ permissions:
 
 jobs:
   migrate:
+    if: github.ref == 'refs/heads/main' && vars.PHUQUOCLUX_DB_BOOTSTRAP_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
