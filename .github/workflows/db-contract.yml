@@ -14,6 +14,8 @@ on:
       - "web/app/services/manage-booking-delivery.server.ts"
       - "web/db/migrations/**"
       - "web/scripts/postgres-booking-integration.mjs"
+      - "web/scripts/postgres-migrations.mjs"
+      - "web/scripts/postgres-migrate.mjs"
       - "web/package.json"
       - ".github/workflows/db-contract.yml"
   push:
@@ -29,6 +31,8 @@ on:
       - "web/app/services/manage-booking-delivery.server.ts"
       - "web/db/migrations/**"
       - "web/scripts/postgres-booking-integration.mjs"
+      - "web/scripts/postgres-migrations.mjs"
+      - "web/scripts/postgres-migrate.mjs"
       - "web/package.json"
       - ".github/workflows/db-contract.yml"
   workflow_dispatch:
