@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import {
   applyMigrations,
+  assertExpectedMigrationTarget,
   inspectMigrationPlan,
 } from "./postgres-migrations.mjs";
 
@@ -8,6 +9,12 @@ const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   throw new Error("Set DATABASE_URL. The value is never printed by this script.");
 }
+
+assertExpectedMigrationTarget(
+  connectionString,
+  process.env.PQL_MIGRATION_EXPECTED_HOST,
+  process.env.PQL_MIGRATION_EXPECTED_DATABASE,
+);
 
 const args = new Set(process.argv.slice(2));
 if (args.has("--plan") && args.has("--apply")) {
