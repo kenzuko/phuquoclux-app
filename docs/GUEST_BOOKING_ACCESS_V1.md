@@ -65,7 +65,7 @@ Booking created
 
 Production may use a short-lived URL such as:
 
-`/manage/<opaque-token>`
+`/manage#<opaque-token>`
 
 After validation, the app should exchange that capability for a secure HttpOnly session/cookie and redirect to a clean URL so the raw token does not stay in browser history longer than necessary.
 
