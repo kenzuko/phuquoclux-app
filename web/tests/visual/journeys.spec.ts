@@ -171,12 +171,20 @@ test("Checkout: direct POST fails closed before accepting personal information",
   expect(body).not.toContain("NOT_A_REAL_GUEST_SENTINEL");
 });
 
-test("Bookings: URL query parameters cannot manufacture a confirmation", async ({ page }) => {
-  await page.goto("/bookings?demo=request&state=confirmed&product=tour-three-islands-cano");
+test("Bookings: URL query parameters cannot select or manufacture a booking", async ({ page, context }) => {
+  await context.clearCookies();
+  await page.goto(
+    "/bookings?demo=request&state=confirmed&product=tour-three-islands-cano&bookingId=00000000-0000-4000-8000-000000000999&email=fake%40example.invalid",
+  );
   await expect(page.getByRole("heading", { name: "Chưa có đặt chỗ" })).toBeVisible();
   await expect(page.getByText("Đã nhận yêu cầu")).toHaveCount(0);
   await expect(page.getByText("Đã xác nhận", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("URL từ bản demo cũ không phải xác nhận đặt chỗ.", { exact: false })).toBeVisible();
+  await expect(
+    page.getByText("Tham số URL không thể tạo hoặc xác nhận một booking.", {
+      exact: false,
+    }),
+  ).toBeVisible();
+  expect(await context.cookies()).toEqual([]);
 });
 
 test("Manage booking: fragment landing never sends the bearer token in the URL", async ({ page, context }) => {
