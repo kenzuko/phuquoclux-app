@@ -35,6 +35,7 @@ import {
 } from "../app/repositories/hyperdrive-postgres.server.ts";
 import {
   applyMigrations,
+  assertExpectedMigrationTarget,
   inspectMigrationPlan,
 } from "./postgres-migrations.mjs";
 import {
@@ -49,6 +50,46 @@ const url = process.env.PG_TEST_URL;
 if (!url || new URL(url).pathname !== "/phuquoclux_contract_test") {
   throw new Error("Set PG_TEST_URL to an isolated /phuquoclux_contract_test database.");
 }
+const parsedTestUrl = new URL(url);
+assert.deepEqual(
+  assertExpectedMigrationTarget(
+    url,
+    parsedTestUrl.hostname,
+    "phuquoclux_contract_test",
+  ),
+  {
+    host: parsedTestUrl.hostname,
+    database: "phuquoclux_contract_test",
+  },
+);
+assert.throws(
+  () =>
+    assertExpectedMigrationTarget(
+      url,
+      "wrong-db-host.example.invalid",
+      "phuquoclux_contract_test",
+    ),
+  /MIGRATION_HOST_MISMATCH/,
+);
+assert.throws(
+  () =>
+    assertExpectedMigrationTarget(
+      url,
+      parsedTestUrl.hostname,
+      "wrong_database",
+    ),
+  /MIGRATION_EXPECTED_DATABASE_MISMATCH/,
+);
+assert.throws(
+  () =>
+    assertExpectedMigrationTarget(
+      url,
+      "*.example.invalid",
+      "phuquoclux_contract_test",
+    ),
+  /MIGRATION_HOST_MISMATCH/,
+);
+
 const key = await crypto.subtle.importKey(
   "raw",
   new TextEncoder().encode("SYNTHETIC-TEST-KEY-NOT-FOR-DEPLOYMENT-0001"),
@@ -909,7 +950,7 @@ try {
   );
   assert.deepEqual(counts.rows[0], { keys: 2, bookings: 2, outbox: 2 });
   console.log(
-    "PostgreSQL booking contract PASS: checksum-locked plan/apply migrations, pg runtime adapter transaction/rollback, durable booking, HMAC idempotency, fragment-safe exchange, same-booking session binding, session-authorized no-PII read model and parent-grant invalidation.",
+    "PostgreSQL booking contract PASS: checksum-locked plan/apply migrations, exact migration target identity, pg runtime adapter transaction/rollback, durable booking, HMAC idempotency, fragment-safe exchange, same-booking session binding, session-authorized no-PII read model and parent-grant invalidation.",
   );
 } finally {
   await one.end();
