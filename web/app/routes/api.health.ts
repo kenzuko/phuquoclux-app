@@ -1,15 +1,22 @@
 import { cloudflareRequestContext } from "../cloudflare-context";
 import type { LoaderFunctionArgs } from "react-router";
 import { getCommerceMode } from "../services/commerce-mode.server";
+import { manageBookingExchangeConfigured } from "../services/manage-booking-exchange.server";
 
 export async function loader({ context }: LoaderFunctionArgs) {
-  const commerceMode = getCommerceMode(context.get(cloudflareRequestContext).env);
-  const mapStyleUrl = context.get(cloudflareRequestContext).env.MAP_STYLE_URL ?? "";
+  const runtime = context.get(cloudflareRequestContext);
+  const commerceMode = getCommerceMode(runtime.env);
+  const manageBookingExchangeConfigReady =
+    manageBookingExchangeConfigured(runtime.env);
+  const manageBookingDatabaseInjected = Boolean(
+    runtime.manageBookingDatabase,
+  );
+  const mapStyleUrl = runtime.env.MAP_STYLE_URL ?? "";
   const mapStyleProductionReady =
     Boolean(mapStyleUrl) &&
     !mapStyleUrl.includes("demotiles.maplibre.org");
   const weatherRuntimeConfigured = Boolean(
-    context.get(cloudflareRequestContext).env.WEATHER_RUNTIME_BASE_URL,
+    runtime.env.WEATHER_RUNTIME_BASE_URL,
   );
 
   return Response.json({
@@ -20,6 +27,8 @@ export async function loader({ context }: LoaderFunctionArgs) {
       productionDeployEnabled: false,
       mapStyleProductionReady,
       weatherRuntimeConfigured,
+      manageBookingExchangeConfigReady,
+      manageBookingDatabaseInjected,
     },
     commerce: {
       mode: commerceMode,
@@ -27,6 +36,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
       paymentConnected: false,
       liveInventoryConnected: false,
       guestBookingAccessConnected: false,
+      manageBookingDeliveryConnected: false,
       opsOutboxConnected: false,
     },
     time: new Date().toISOString(),
