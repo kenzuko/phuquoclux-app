@@ -42,13 +42,16 @@ This is a safety gate.
 
 Before live commerce can be enabled, all of these must exist:
 
-1. PostgreSQL repositories implemented and migrated;
-2. idempotency enforced;
-3. authoritative Offer pricing;
-4. provider availability/confirmation path;
-5. payment integration where required;
-6. durable Booking and BookingEvent writes;
-7. reconciliation and failure handling.
+1. production PostgreSQL infrastructure and a reviewed Worker-compatible connection path;
+2. migrations applied and durable booking/idempotency contracts wired to runtime;
+3. guest manage-booking capability delivery plus secure HttpOnly session exchange;
+4. authoritative Offer pricing;
+5. provider availability/confirmation path;
+6. payment integration where required;
+7. durable Booking and BookingEvent writes in the production runtime;
+8. outbox delivery, reconciliation and failure handling.
+
+Offline PostgreSQL CI contracts do not satisfy these production gates by themselves.
 
 Changing a Worker variable must never be enough to accidentally turn prototype prices into real transactions.
 

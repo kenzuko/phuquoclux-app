@@ -12,6 +12,12 @@ import {
   persistManualBookingRequest,
   bookingRequestFingerprint,
 } from "../app/repositories/postgres-booking-core.server.ts";
+import {
+  hashManageBookingToken,
+  issueManageBookingAccess,
+  redeemManageBookingAccess,
+  revokeManageBookingAccess,
+} from "../app/repositories/postgres-booking-access.server.ts";
 
 const url = process.env.PG_TEST_URL;
 if (!url || new URL(url).pathname !== "/phuquoclux_contract_test") {
@@ -94,6 +100,7 @@ try {
   for (const filename of [
     "0001_commerce_core.sql",
     "0002_booking_request_fingerprint.sql",
+    "0003_booking_access_hash.sql",
   ]) {
     const sql = readFileSync(
       new URL(`../db/migrations/${filename}`, import.meta.url),
@@ -147,6 +154,139 @@ try {
   assert.ok(!JSON.stringify(outbox.rows[0].payload).includes(input.booking.contact.email));
   assert.ok(!JSON.stringify(outbox.rows[0].payload).includes(input.booking.contact.phone));
   assert.ok(!JSON.stringify(outbox.rows[0].payload).includes(input.booking.contact.name));
+
+  // Manage-booking capability: raw token is random and returned only once.
+  // PostgreSQL stores only its SHA-256 digest and no guest PII is required to
+  // authenticate the capability later.
+  const issued = await issueManageBookingAccess(
+    manager(one),
+    input.booking.id,
+    "2026-10-08T00:00:00.000Z",
+    now,
+  );
+  assert.match(issued.rawToken, /^[a-f0-9]{64}$/);
+  const expectedTokenHash = await hashManageBookingToken(issued.rawToken);
+  assert.match(expectedTokenHash, /^[a-f0-9]{64}$/);
+  assert.notEqual(issued.rawToken, expectedTokenHash);
+
+  const accessRow = await one.query(
+    `select id, booking_id, purpose, token_hash, created_at, expires_at,
+            revoked_at, last_used_at
+       from booking_access_tokens where booking_id=$1`,
+    [input.booking.id],
+  );
+  assert.equal(accessRow.rows.length, 1);
+  assert.equal(accessRow.rows[0].booking_id, input.booking.id);
+  assert.equal(accessRow.rows[0].purpose, "manage_booking");
+  assert.equal(accessRow.rows[0].token_hash, expectedTokenHash);
+  assert.ok(!JSON.stringify(accessRow.rows[0]).includes(issued.rawToken));
+
+  const redeemed = await redeemManageBookingAccess(
+    manager(one),
+    issued.rawToken,
+    new Date("2026-10-01T00:01:00.000Z"),
+  );
+  assert.equal(redeemed.bookingId, input.booking.id);
+  assert.equal(redeemed.purpose, "manage_booking");
+  const touched = await one.query(
+    "select last_used_at from booking_access_tokens where id=$1",
+    [redeemed.grantId],
+  );
+  assert.equal(
+    new Date(touched.rows[0].last_used_at).toISOString(),
+    "2026-10-01T00:01:00.000Z",
+  );
+
+  // Malformed, mutated, unknown, expired and revoked capabilities all fail
+  // closed with the same null result instead of leaking booking existence.
+  assert.equal(
+    await redeemManageBookingAccess(manager(one), issued.rawToken.toUpperCase(), now),
+    null,
+  );
+  assert.equal(
+    await redeemManageBookingAccess(manager(one), "0".repeat(64), now),
+    null,
+  );
+
+  const expiresQuickly = await issueManageBookingAccess(
+    manager(one),
+    input.booking.id,
+    "2026-10-01T00:02:00.000Z",
+    now,
+  );
+  assert.equal(
+    await redeemManageBookingAccess(
+      manager(one),
+      expiresQuickly.rawToken,
+      new Date("2026-10-01T00:02:00.000Z"),
+    ),
+    null,
+  );
+
+  const revocable = await issueManageBookingAccess(
+    manager(one),
+    input.booking.id,
+    "2026-10-08T00:00:00.000Z",
+    now,
+  );
+  const beforeRevoke = await redeemManageBookingAccess(
+    manager(one),
+    revocable.rawToken,
+    now,
+  );
+  assert.ok(beforeRevoke);
+  assert.equal(
+    await revokeManageBookingAccess(
+      manager(one),
+      beforeRevoke.grantId,
+      input.booking.id,
+      new Date("2026-10-01T00:03:00.000Z"),
+    ),
+    true,
+  );
+  assert.equal(
+    await redeemManageBookingAccess(
+      manager(one),
+      revocable.rawToken,
+      new Date("2026-10-01T00:04:00.000Z"),
+    ),
+    null,
+  );
+
+  const accessCountBeforeUnknown = await one.query(
+    "select count(*)::int as count from booking_access_tokens",
+  );
+  await assert.rejects(
+    issueManageBookingAccess(
+      manager(one),
+      crypto.randomUUID(),
+      "2026-10-08T00:00:00.000Z",
+      now,
+    ),
+    /BOOKING_NOT_FOUND/,
+  );
+  const accessCountAfterUnknown = await one.query(
+    "select count(*)::int as count from booking_access_tokens",
+  );
+  assert.equal(
+    accessCountAfterUnknown.rows[0].count,
+    accessCountBeforeUnknown.rows[0].count,
+  );
+
+  // Migration refuses accidentally storing a raw/non-hash token.
+  await assert.rejects(
+    one.query(
+      `insert into booking_access_tokens
+        (id, booking_id, purpose, token_hash, created_at, expires_at)
+       values ($1, $2, 'manage_booking', 'NOT-A-HASH', $3, $4)`,
+      [
+        crypto.randomUUID(),
+        input.booking.id,
+        TIME,
+        "2026-10-08T00:00:00.000Z",
+      ],
+    ),
+  );
 
   // Expired replays return the *existing* id, without creating another Quote,
   // booking, or Ops event. No guest data or access token is returned.
@@ -226,7 +366,7 @@ try {
   );
   assert.deepEqual(counts.rows[0], { keys: 2, bookings: 2, outbox: 2 });
   console.log(
-    "PostgreSQL booking contract PASS: migration, atomic writes, HMAC, safe replay, rollback, 2-client race, no PII outbox.",
+    "PostgreSQL booking contract PASS: booking transaction, HMAC idempotency, rollback/race safety, no-PII outbox, hashed guest access, expiry and revocation.",
   );
 } finally {
   await one.end();

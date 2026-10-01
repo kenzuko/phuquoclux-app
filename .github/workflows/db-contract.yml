@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "web/app/repositories/postgres-booking-core.server.ts"
+      - "web/app/repositories/postgres-booking-access.server.ts"
       - "web/db/migrations/**"
       - "web/scripts/postgres-booking-integration.mjs"
       - "web/package.json"
@@ -15,6 +16,7 @@ on:
       - main
     paths:
       - "web/app/repositories/postgres-booking-core.server.ts"
+      - "web/app/repositories/postgres-booking-access.server.ts"
       - "web/db/migrations/**"
       - "web/scripts/postgres-booking-integration.mjs"
       - "web/package.json"

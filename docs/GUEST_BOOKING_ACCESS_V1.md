@@ -66,10 +66,17 @@ Production may use a short-lived URL such as:
 
 After validation, the app should exchange that capability for a secure HttpOnly session/cookie and redirect to a clean URL so the raw token does not stay in browser history longer than necessary.
 
-## Current prototype
+## Current implementation state
 
-No guest access token is issued yet because PostgreSQL persistence and delivery channels are not connected.
+The repository now contains an offline PostgreSQL guest-access contract:
 
-The prototype My Bookings page therefore remains explicit about not being durable.
+- raw manage-booking tokens are 256-bit random capabilities;
+- the database stores only a SHA-256 hash;
+- expiry and revocation fail closed;
+- successful redemption resolves only the internal booking identity and updates `last_used_at`;
+- migration `0003_booking_access_hash.sql` rejects non-hash token storage;
+- disposable PostgreSQL CI verifies issue, redeem, expiry, revocation and unknown-booking rollback.
 
-The architecture is ready for a real implementation without changing Product, Quote, Booking or Map flows.
+This contract is **not wired to a public route**. No raw token is currently delivered by email/SMS, exchanged for an HttpOnly session, or exposed in analytics.
+
+The public checkout therefore remains read-only and My Bookings remains empty until the delivery/session boundary and production database connection are implemented and reviewed.
