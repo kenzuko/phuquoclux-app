@@ -51,7 +51,16 @@ Before live commerce can be enabled, all of these must exist:
 7. durable Booking and BookingEvent writes in the production runtime;
 8. outbox delivery, reconciliation and failure handling.
 
-Offline PostgreSQL CI contracts do not satisfy these production gates by themselves. The existence of access/session tables and cookie helpers must never be interpreted as permission to expose a public manage-booking route.
+Offline PostgreSQL CI contracts do not satisfy these production gates by themselves. The existence of access/session tables, cookie helpers or even the `/manage/:token` resource route must never be interpreted as live guest access.
+
+The exchange route has an independent fail-closed gate:
+
+- `MANAGE_BOOKING_EXCHANGE_ENABLED=true`;
+- a valid HTTPS `MANAGE_BOOKING_CANONICAL_ORIGIN`;
+- explicit `MANAGE_BOOKING_SESSION_TTL_MINUTES` between 5 and 1440;
+- an injected reviewed booking database transaction runtime.
+
+Current Worker config sets the first value to `false` and injects no booking database, so changing or merging application code alone cannot activate the exchange.
 
 Changing a Worker variable must never be enough to accidentally turn prototype prices into real transactions.
 
