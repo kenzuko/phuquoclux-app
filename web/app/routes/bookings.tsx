@@ -22,6 +22,9 @@ import {
 import {
   readManagedBookingBySession,
 } from "../repositories/postgres-booking-read.server";
+import {
+  manageBookingExchangeConfigured,
+} from "../services/manage-booking-exchange.server";
 
 export function meta() {
   return [
@@ -46,7 +49,10 @@ export async function loader({
     };
   }
 
-  if (!runtime.manageBookingDatabase) {
+  if (
+    !manageBookingExchangeConfigured(runtime.env) ||
+    !runtime.manageBookingDatabase
+  ) {
     return {
       access: "runtime_unavailable" as const,
       booking: null,
