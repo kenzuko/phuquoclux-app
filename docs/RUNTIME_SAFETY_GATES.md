@@ -66,6 +66,8 @@ Changing a Worker variable must never be enough to accidentally turn prototype p
 
 The existence of the PostgreSQL outbox lease/retry contract does not mean delivery is live. A concrete publisher, scheduler and Ops reconciliation path must be separately implemented and reviewed.
 
+Likewise, the durable booking transition writer does not activate provider/Ops/customer mutations. Payment-coupled states remain blocked until a separate payment contract owns state and payment-status changes atomically.
+
 
 ## Production deploy gate
 
