@@ -5,7 +5,6 @@
  * Does not connect any deployed Worker or touch supplier/guest production data.
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import pg from "pg";
 import { createPrototypeBookingRequest } from "../app/services/booking.server.ts";
 import {
@@ -34,6 +33,10 @@ import {
 import {
   createPostgresTransactionManager,
 } from "../app/repositories/hyperdrive-postgres.server.ts";
+import {
+  applyMigrations,
+  inspectMigrationPlan,
+} from "./postgres-migrations.mjs";
 import {
   exchangeManageBookingRequest,
   manageBookingExchangeConfigured,
@@ -116,23 +119,47 @@ function fixture(overrides = {}) {
   return { quote, booking: { ...booking, ...overrides.booking }, fingerprintKey: key };
 }
 
-const one = await connect();
-try {
-  // This suite MUST use only a dedicated disposable database. The workflow
-  // provisions it freshly with an ephemeral Postgres service container.
-  for (const filename of [
+// This suite MUST use only a dedicated disposable database. The workflow
+// provisions it freshly with an ephemeral Postgres service container.
+//
+// Exercise the same plan/apply engine intended for real provisioning. Planning
+// must be read-only, apply requires exact database-name confirmation, and a
+// second apply must be idempotent.
+const initialPlan = await inspectMigrationPlan(url);
+assert.equal(initialPlan.database, "phuquoclux_contract_test");
+assert.ok(initialPlan.migrations.every((item) => item.status === "pending"));
+
+await assert.rejects(
+  applyMigrations(url, "APPLY:wrong_database"),
+  /MIGRATION_CONFIRMATION_REQUIRED:APPLY:phuquoclux_contract_test/,
+);
+
+const firstMigrationRun = await applyMigrations(
+  url,
+  "APPLY:phuquoclux_contract_test",
+);
+assert.deepEqual(
+  firstMigrationRun.applied,
+  [
     "0001_commerce_core.sql",
     "0002_booking_request_fingerprint.sql",
     "0003_booking_access_hash.sql",
     "0004_booking_access_sessions.sql",
     "0005_booking_session_binding.sql",
-  ]) {
-    const sql = readFileSync(
-      new URL(`../db/migrations/${filename}`, import.meta.url),
-      "utf8",
-    );
-    await one.query(sql);
-  }
+  ],
+);
+assert.ok(
+  firstMigrationRun.migrations.every((item) => item.status === "applied"),
+);
+
+const secondMigrationRun = await applyMigrations(
+  url,
+  "APPLY:phuquoclux_contract_test",
+);
+assert.deepEqual(secondMigrationRun.applied, []);
+
+const one = await connect();
+try {
   await one.query(
     `insert into products (id, slug, product_type, name)
      values ('tour-three-islands-cano', 'test-only-tour', 'tour', 'SYNTHETIC-TEST-PRODUCT')`,
@@ -843,7 +870,7 @@ try {
   );
   assert.deepEqual(counts.rows[0], { keys: 2, bookings: 2, outbox: 2 });
   console.log(
-    "PostgreSQL booking contract PASS: pg runtime adapter transaction/rollback, durable booking, HMAC idempotency, fragment-safe exchange, same-booking session binding, session-authorized no-PII read model and parent-grant invalidation.",
+    "PostgreSQL booking contract PASS: checksum-locked plan/apply migrations, pg runtime adapter transaction/rollback, durable booking, HMAC idempotency, fragment-safe exchange, same-booking session binding, session-authorized no-PII read model and parent-grant invalidation.",
   );
 } finally {
   await one.end();
