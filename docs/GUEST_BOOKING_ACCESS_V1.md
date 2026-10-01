@@ -40,12 +40,15 @@ The raw token is never persisted.
 ```
 Booking created
 → issue opaque access token
-→ store token hash
+→ store access-token hash
 → deliver raw token
 → traveler opens manage-booking link
-→ hash supplied token
-→ match active grant
-→ authorize booking access
+→ validate active access grant
+→ mint a distinct random session token
+→ store only the session-token hash
+→ set Secure + HttpOnly + SameSite=Lax host cookie
+→ redirect to a clean URL
+→ resolve subsequent requests from the session cookie
 ```
 
 ## Security rules
