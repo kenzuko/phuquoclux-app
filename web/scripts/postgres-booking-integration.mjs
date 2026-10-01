@@ -29,6 +29,9 @@ import {
   serializeManageBookingSessionCookie,
 } from "../app/repositories/postgres-booking-session.server.ts";
 import {
+  readManagedBookingBySession,
+} from "../app/repositories/postgres-booking-read.server.ts";
+import {
   exchangeManageBookingRequest,
   manageBookingExchangeConfigured,
 } from "../app/services/manage-booking-exchange.server.ts";
@@ -119,6 +122,7 @@ try {
     "0002_booking_request_fingerprint.sql",
     "0003_booking_access_hash.sql",
     "0004_booking_access_sessions.sql",
+    "0005_booking_session_binding.sql",
   ]) {
     const sql = readFileSync(
       new URL(`../db/migrations/${filename}`, import.meta.url),
@@ -592,6 +596,40 @@ try {
   assert.ok(routeResolved);
   assert.equal(routeResolved.bookingId, input.booking.id);
 
+  // My Bookings read is authorized only by the session cookie. There is no
+  // booking-id/email/phone selector, and the returned projection contains no
+  // guest contact fields or internal booking identifiers.
+  const managedBooking = await readManagedBookingBySession(
+    manager(one),
+    rawRouteSession,
+    new Date("2026-10-01T00:16:30.000Z"),
+  );
+  assert.ok(managedBooking);
+  assert.equal(managedBooking.productId, input.booking.productId);
+  assert.equal(managedBooking.offerId, input.booking.offerId);
+  assert.equal(managedBooking.state, "pending_confirmation");
+  assert.equal(managedBooking.paymentStatus, "unpaid");
+  assert.equal(managedBooking.priceState, "estimated");
+  assert.equal(managedBooking.serviceDate, input.booking.serviceDate);
+  assert.equal(managedBooking.pax, input.booking.pax);
+  assert.equal(managedBooking.total.amount, input.booking.total.amount);
+  assert.equal(managedBooking.total.currency, "VND");
+  const managedJson = JSON.stringify(managedBooking);
+  assert.ok(!managedJson.includes(input.booking.id));
+  assert.ok(!managedJson.includes(input.booking.requestId));
+  assert.ok(!managedJson.includes(input.booking.contact.name));
+  assert.ok(!managedJson.includes(input.booking.contact.email));
+  assert.ok(!managedJson.includes(input.booking.contact.phone));
+  assert.ok(!managedJson.includes("SYNTHETIC-TEST-ONLY"));
+  assert.equal(
+    await readManagedBookingBySession(
+      manager(one),
+      "d".repeat(64),
+      new Date("2026-10-01T00:16:30.000Z"),
+    ),
+    null,
+  );
+
   // Invalid capabilities stay indistinguishable from an unknown exchange.
   const invalidExchange = await exchangeManageBookingRequest({
     request: new Request(exchangeEndpoint, { method: "POST" }),
@@ -731,6 +769,39 @@ try {
     await second.end();
   }
 
+  // Database-owned tenant binding: a grant for the parallel booking cannot be
+  // attached to the original booking, even via a direct SQL bug.
+  const otherBookingId = parallel[0].bookingId;
+  assert.notEqual(otherBookingId, input.booking.id);
+  const otherGrant = await issueManageBookingAccess(
+    manager(one),
+    otherBookingId,
+    "2026-10-08T00:00:00.000Z",
+    now,
+  );
+  const otherGrantResolved = await redeemManageBookingAccess(
+    manager(one),
+    otherGrant.rawToken,
+    now,
+  );
+  assert.ok(otherGrantResolved);
+  await assert.rejects(
+    one.query(
+      `insert into booking_access_sessions
+        (id, booking_id, access_grant_id, session_hash, created_at, expires_at)
+       values ($1, $2, $3, $4, $5, $6)`,
+      [
+        crypto.randomUUID(),
+        input.booking.id,
+        otherGrantResolved.grantId,
+        "e".repeat(64),
+        TIME,
+        "2026-10-02T00:00:00.000Z",
+      ],
+    ),
+    /booking_access_sessions_grant_booking_fkey/,
+  );
+
   const counts = await one.query(
     `select (select count(*)::int from idempotency_keys) as keys,
             (select count(*)::int from bookings) as bookings,
@@ -738,7 +809,7 @@ try {
   );
   assert.deepEqual(counts.rows[0], { keys: 2, bookings: 2, outbox: 2 });
   console.log(
-    "PostgreSQL booking contract PASS: durable booking, HMAC idempotency, no-PII outbox, fragment-only delivery capability, POST-body session exchange, origin/gate fail-closed behavior and parent-grant invalidation.",
+    "PostgreSQL booking contract PASS: durable booking, HMAC idempotency, fragment-safe exchange, same-booking session binding, session-authorized no-PII read model and parent-grant invalidation.",
   );
 } finally {
   await one.end();
