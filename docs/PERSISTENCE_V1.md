@@ -128,7 +128,7 @@ Guest checkout requires a durable way for the traveler to return to a booking.
 
 The repository now includes driver-neutral PostgreSQL contracts for issuing, hashing, redeeming and revoking manage-booking capabilities and for exchanging an active capability into a separately hashed server-side session. Parent-grant revocation/expiry invalidates child sessions. Disposable PostgreSQL CI covers both layers.
 
-The codebase now includes a disabled-by-default `/manage/:token` exchange resource and cookie response contract, but the Worker still injects no booking database runtime and explicitly configures the exchange gate off. No email/SMS provider or authenticated booking read model is connected. Therefore no production Set-Cookie exchange or guest booking access is enabled.
+The codebase now includes a disabled-by-default fragment landing (`/manage#<capability>`) and POST-body exchange endpoint (`/manage/exchange`). The raw access capability is therefore not part of a server-visible URL. The Worker still injects no booking database runtime and explicitly configures the exchange gate off. No email/SMS provider or authenticated booking read model is connected, so no production Set-Cookie exchange or guest booking access is enabled.
 
 See `docs/GUEST_BOOKING_ACCESS_V1.md`.
 
