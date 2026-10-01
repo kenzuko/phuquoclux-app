@@ -102,4 +102,4 @@ The repository now also contains a **disabled-by-default exchange flow** and a d
 - origin mismatch, malformed/unknown capability or missing runtime fails closed;
 - the delivery contract has no email/SMS implementation and raw capabilities/manage links must never be logged or persisted.
 
-There is still no production database connection, delivery provider or authenticated My Bookings read model. The public checkout remains read-only and My Bookings remains empty.
+There is still no production database connection or delivery provider. An authenticated My Bookings read model now exists in code, but the current Worker injects no booking database runtime, so it cannot expose booking data in deployed runtime. The public checkout remains read-only.
