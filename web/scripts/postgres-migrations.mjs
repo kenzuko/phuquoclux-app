@@ -16,6 +16,41 @@ function sha256(content) {
   return createHash("sha256").update(content).digest("hex");
 }
 
+export function assertExpectedMigrationTarget(
+  connectionString,
+  expectedHost,
+  expectedDatabase,
+) {
+  const target = parsePostgresTarget(connectionString);
+
+  if (expectedHost !== undefined) {
+    if (
+      typeof expectedHost !== "string" ||
+      !expectedHost ||
+      expectedHost.includes("*") ||
+      target.host.toLowerCase() !== expectedHost.toLowerCase()
+    ) {
+      throw new Error(
+        `MIGRATION_HOST_MISMATCH:expected=${String(expectedHost)}:actual=${target.host}`,
+      );
+    }
+  }
+
+  if (expectedDatabase !== undefined) {
+    if (
+      typeof expectedDatabase !== "string" ||
+      !expectedDatabase ||
+      target.database !== expectedDatabase
+    ) {
+      throw new Error(
+        `MIGRATION_EXPECTED_DATABASE_MISMATCH:expected=${String(expectedDatabase)}:actual=${target.database}`,
+      );
+    }
+  }
+
+  return target;
+}
+
 export function parsePostgresTarget(connectionString) {
   let url;
   try {
