@@ -126,7 +126,9 @@ Guest checkout requires a durable way for the traveler to return to a booking.
 
 `booking_access_tokens` stores only a hash of an opaque access capability. Raw manage-booking tokens are never persisted and must not be used as analytics identifiers.
 
-The repository now includes a driver-neutral PostgreSQL contract for issuing, hashing, redeeming and revoking manage-booking capabilities, with disposable PostgreSQL CI coverage. This is still backend-only: no Worker database binding, email/SMS delivery, HttpOnly session exchange or public manage-booking route is enabled.
+The repository now includes driver-neutral PostgreSQL contracts for issuing, hashing, redeeming and revoking manage-booking capabilities and for exchanging an active capability into a separately hashed server-side session. Parent-grant revocation/expiry invalidates child sessions. Disposable PostgreSQL CI covers both layers.
+
+This remains backend-only: no Worker database binding, email/SMS delivery, route that accepts a raw capability, actual Set-Cookie response, clean-URL redirect or authenticated manage-booking page is enabled.
 
 See `docs/GUEST_BOOKING_ACCESS_V1.md`.
 
