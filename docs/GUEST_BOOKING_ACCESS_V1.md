@@ -67,7 +67,7 @@ Production may use a short-lived URL such as:
 
 `/manage#<opaque-token>`
 
-After validation, the app should exchange that capability for a secure HttpOnly session/cookie and redirect to a clean URL so the raw token does not stay in browser history longer than necessary.
+The raw capability is placed in the URL fragment, not the path or query. Fragments are not sent in the HTTP request, which keeps the bearer value out of CDN/access-log URLs and referrers. After hydration, the landing page reads the fragment, immediately removes it from the current history entry, POSTs the capability in the same-origin request body, receives a secure HttpOnly session cookie, then replaces the page with the clean `/bookings` URL.
 
 ## Current implementation state
 
