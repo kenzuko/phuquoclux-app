@@ -65,9 +65,9 @@ Booking created
 
 Production may use a short-lived URL such as:
 
-`/manage/<opaque-token>`
+`/manage#<opaque-token>`
 
-After validation, the app should exchange that capability for a secure HttpOnly session/cookie and redirect to a clean URL so the raw token does not stay in browser history longer than necessary.
+The raw capability is placed in the URL fragment, not the path or query. Fragments are not sent in the HTTP request, which keeps the bearer value out of CDN/access-log URLs and referrers. After hydration, the landing page reads the fragment, immediately removes it from the current history entry, POSTs the capability in the same-origin request body, receives a secure HttpOnly session cookie, then replaces the page with the clean `/bookings` URL.
 
 ## Current implementation state
 
@@ -86,6 +86,18 @@ The repository now contains offline PostgreSQL guest-access and session contract
 
 The access grant is **not consumed automatically** during session exchange. Whether a delivered email/SMS link is one-time remains a later delivery-policy decision.
 
-This contract is still **not wired to a public route**. No token is delivered by email/SMS, no cookie is currently set by a Worker response, and no clean-URL redirect or authenticated My Bookings route exists yet.
+The repository now also contains a **disabled-by-default exchange flow** and a delivery-provider boundary. It is not active guest access:
 
-The public checkout therefore remains read-only and My Bookings remains empty until the production database connection, delivery boundary and reviewed exchange route are implemented.
+- the delivery builder creates `/manage#<capability>`, never a token-bearing server path or query;
+- the `/manage` landing page removes the fragment from browser history before making any network request containing the capability;
+- the capability is accepted only by same-origin POST body at `/manage/exchange`;
+- `MANAGE_BOOKING_EXCHANGE_ENABLED` is explicitly `false` in the Worker configuration;
+- enabling the flag alone is insufficient: canonical HTTPS origin, explicit session TTL and an injected database transaction runtime are all required;
+- the current Worker entrypoint injects no booking database runtime;
+- while disabled, exchange returns a generic 404, does not touch session storage and never sets a cookie;
+- manage routes force `no-store`, `no-referrer` and `noindex`;
+- on a fully configured future runtime, a valid POST capability exchanges to a distinct HttpOnly session, returns 204 with Set-Cookie, and client code replaces the page with clean `/bookings`;
+- origin mismatch, malformed/unknown capability or missing runtime fails closed;
+- the delivery contract has no email/SMS implementation and raw capabilities/manage links must never be logged or persisted.
+
+There is still no production database connection, delivery provider or authenticated My Bookings read model. The public checkout remains read-only and My Bookings remains empty.

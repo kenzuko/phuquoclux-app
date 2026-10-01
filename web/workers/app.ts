@@ -21,7 +21,12 @@ function withResponsePolicy(
   headers.set("X-Request-Id", requestId);
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("X-Frame-Options", "DENY");
-  headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  const manageLink =
+    url.pathname === "/manage" || url.pathname.startsWith("/manage/");
+  headers.set(
+    "Referrer-Policy",
+    manageLink ? "no-referrer" : "strict-origin-when-cross-origin",
+  );
   headers.set(
     "Permissions-Policy",
     "camera=(), microphone=(), geolocation=(self)",
@@ -36,7 +41,8 @@ function withResponsePolicy(
 
   const sensitivePage =
     url.pathname.startsWith("/checkout/") ||
-    url.pathname === "/bookings";
+    url.pathname === "/bookings" ||
+    manageLink;
 
   if (sensitivePage) {
     headers.set("Cache-Control", "private, no-store, max-age=0");

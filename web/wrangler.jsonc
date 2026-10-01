@@ -9,6 +9,7 @@
   "vars": {
     "MAP_STYLE_URL": "https://tiles.openfreemap.org/styles/liberty",
     "WEATHER_RUNTIME_BASE_URL": "https://weather.openphuquoc.com",
-    "COMMERCE_MODE": "prototype"
+    "COMMERCE_MODE": "prototype",
+    "MANAGE_BOOKING_EXCHANGE_ENABLED": "false"
   }
 }

@@ -77,6 +77,10 @@ test("Worker: React Router request context and health are functional", async ({ 
   const payload = await response.json();
   expect(payload.ok).toBe(true);
   expect(payload.commerce.mode).toBe("prototype");
+  expect(payload.readiness.manageBookingExchangeConfigReady).toBe(false);
+  expect(payload.readiness.manageBookingDatabaseInjected).toBe(false);
+  expect(payload.commerce.guestBookingAccessConnected).toBe(false);
+  expect(payload.commerce.manageBookingDeliveryConnected).toBe(false);
 });
 
 test("Home: map-first layout, discovery and mobile-safe width", async ({ page }, testInfo) => {
@@ -173,4 +177,39 @@ test("Bookings: URL query parameters cannot manufacture a confirmation", async (
   await expect(page.getByText("Đã nhận yêu cầu")).toHaveCount(0);
   await expect(page.getByText("Đã xác nhận", { exact: true })).toHaveCount(0);
   await expect(page.getByText("URL từ bản demo cũ không phải xác nhận đặt chỗ.", { exact: false })).toBeVisible();
+});
+
+test("Manage booking: fragment landing never sends the bearer token in the URL", async ({ page, context }) => {
+  const token = "a".repeat(64);
+  await page.goto(`/manage#${token}`);
+
+  // Hydration reads the client-only fragment, immediately scrubs the history
+  // entry, then POSTs it. Current runtime is disabled, so no session is minted.
+  await expect.poll(() => new URL(page.url()).hash).toBe("");
+  await expect(page.getByRole("heading", { name: "Liên kết chưa thể sử dụng" })).toBeVisible();
+  expect(page.url()).not.toContain(token);
+
+  const cookies = await context.cookies();
+  expect(cookies.some((cookie) => cookie.name === "__Host-pql_manage")).toBe(false);
+});
+
+test("Manage booking: disabled exchange endpoint is no-store and cannot set a cookie", async ({ request }) => {
+  const token = "b".repeat(64);
+
+  const landing = await request.get("/manage");
+  expect(landing.status()).toBe(200);
+  expect(landing.headers()["cache-control"]).toContain("no-store");
+  expect(landing.headers()["referrer-policy"]).toBe("no-referrer");
+  expect(landing.headers()["set-cookie"]).toBeUndefined();
+  expect(await landing.text()).not.toContain(token);
+
+  const response = await request.post("/manage/exchange", {
+    form: { token },
+    maxRedirects: 0,
+  });
+  expect(response.status()).toBe(404);
+  expect(response.headers()["cache-control"]).toContain("no-store");
+  expect(response.headers()["referrer-policy"]).toBe("no-referrer");
+  expect(response.headers()["set-cookie"]).toBeUndefined();
+  expect(await response.text()).not.toContain(token);
 });
