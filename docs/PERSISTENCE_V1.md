@@ -178,11 +178,17 @@ Booking state changes use optimistic concurrency.
 
 Every Booking has a monotonically increasing `version`.
 
-A transition must update only when both are still true:
+The repository now includes a durable transition writer that updates only when both are still true:
 
 - current state equals `expectedFrom`;
 - current version equals `expectedVersion`.
 
-The resulting `booking_event.version` is unique per booking.
+A successful transition increments the version and writes both `booking_events` and a PII-free `booking.state_changed` outbox event in the same transaction.
+
+A stale caller receives a conflict and writes no audit/outbox record.
+
+Payment-coupled states (`paid`, `refund_pending`, `refunded`) are intentionally rejected by this writer until the payment contract can update booking state and `payment_status` together.
+
+See `docs/BOOKING_TRANSITIONS_V1.md`.
 
 This prevents a supplier callback, an Ops confirmation and a customer cancellation from silently overwriting one another.
