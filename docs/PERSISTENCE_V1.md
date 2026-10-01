@@ -159,7 +159,7 @@ The repository now contains a lazy Cloudflare Hyperdrive -> `pg` transaction ada
 
 No Hyperdrive id, database URL or credential is committed to source control, and the current `wrangler.jsonc` intentionally contains no Hyperdrive binding. Therefore merging the adapter cannot connect production PostgreSQL by itself.
 
-See `docs/HYPERDRIVE_RUNTIME_V1.md`.
+See `docs/HYPERDRIVE_RUNTIME_V1.md` and `docs/POSTGRES_PROVISIONING_V1.md`.
 
 
 ## Concurrency
