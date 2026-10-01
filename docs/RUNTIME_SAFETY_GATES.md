@@ -44,14 +44,14 @@ Before live commerce can be enabled, all of these must exist:
 
 1. production PostgreSQL infrastructure and a reviewed Worker-compatible connection path;
 2. migrations applied and durable booking/idempotency contracts wired to runtime;
-3. guest manage-booking capability delivery plus secure HttpOnly session exchange;
+3. guest manage-booking delivery plus a reviewed public exchange route that sets the tested HttpOnly session cookie and immediately redirects to a clean URL;
 4. authoritative Offer pricing;
 5. provider availability/confirmation path;
 6. payment integration where required;
 7. durable Booking and BookingEvent writes in the production runtime;
 8. outbox delivery, reconciliation and failure handling.
 
-Offline PostgreSQL CI contracts do not satisfy these production gates by themselves.
+Offline PostgreSQL CI contracts do not satisfy these production gates by themselves. The existence of access/session tables and cookie helpers must never be interpreted as permission to expose a public manage-booking route.
 
 Changing a Worker variable must never be enough to accidentally turn prototype prices into real transactions.
 
