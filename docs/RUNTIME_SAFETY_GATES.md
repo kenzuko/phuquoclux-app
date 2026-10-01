@@ -49,7 +49,7 @@ Before live commerce can be enabled, all of these must exist:
 5. provider availability/confirmation path;
 6. payment integration where required;
 7. durable Booking and BookingEvent writes in the production runtime;
-8. outbox delivery, reconciliation and failure handling.
+8. outbox delivery, terminal-failure reconciliation and failure handling, using the lease/retry contract in `docs/OUTBOX_DELIVERY_V1.md`.
 
 Offline PostgreSQL CI contracts do not satisfy these production gates by themselves. The existence of access/session tables, cookie helpers, the authenticated My Bookings read model, the `/manage` landing page or `/manage/exchange` POST resource must never be interpreted as live guest access.
 
@@ -63,6 +63,8 @@ The exchange route has an independent fail-closed gate:
 Current Worker config sets the first value to `false`. The Worker can now inject the tested PostgreSQL transaction manager only when a real `HYPERDRIVE` binding exists, but the repository intentionally contains no binding id or database credential. Hyperdrive presence alone still cannot activate the exchange.
 
 Changing a Worker variable must never be enough to accidentally turn prototype prices into real transactions.
+
+The existence of the PostgreSQL outbox lease/retry contract does not mean delivery is live. A concrete publisher, scheduler and Ops reconciliation path must be separately implemented and reviewed.
 
 
 ## Production deploy gate
