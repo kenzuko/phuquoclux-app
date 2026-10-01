@@ -19,6 +19,7 @@ quotes
 quote_lines
 bookings
 booking_access_tokens
+booking_access_sessions
 booking_events
 payments
 outbox_events
