@@ -72,12 +72,10 @@ jobs:
             exit 1
           fi
 
-          case "$PQL_MIGRATION_EXPECTED_HOST" in
-            *'*'*)
-              echo "::error::Wildcard database hosts are forbidden."
-              exit 1
-              ;;
-          esac
+          if printf '%s' "$PQL_MIGRATION_EXPECTED_HOST" | grep -q '\\*'; then
+            echo "::error::Wildcard database hosts are forbidden."
+            exit 1
+          fi
 
           if [ "$MODE" = "apply" ] && [ "$APPLY_CONFIRMATION" != "APPLY:$PQL_MIGRATION_EXPECTED_DATABASE" ]; then
             echo "::error::Apply confirmation must exactly equal APPLY:$PQL_MIGRATION_EXPECTED_DATABASE"
