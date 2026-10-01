@@ -18,6 +18,16 @@ import {
   redeemManageBookingAccess,
   revokeManageBookingAccess,
 } from "../app/repositories/postgres-booking-access.server.ts";
+import {
+  MANAGE_BOOKING_SESSION_COOKIE,
+  clearManageBookingSessionCookie,
+  exchangeManageBookingAccessForSession,
+  hashManageBookingSessionToken,
+  readManageBookingSessionCookie,
+  resolveManageBookingSession,
+  revokeManageBookingSession,
+  serializeManageBookingSessionCookie,
+} from "../app/repositories/postgres-booking-session.server.ts";
 
 const url = process.env.PG_TEST_URL;
 if (!url || new URL(url).pathname !== "/phuquoclux_contract_test") {
@@ -101,6 +111,7 @@ try {
     "0001_commerce_core.sql",
     "0002_booking_request_fingerprint.sql",
     "0003_booking_access_hash.sql",
+    "0004_booking_access_sessions.sql",
   ]) {
     const sql = readFileSync(
       new URL(`../db/migrations/${filename}`, import.meta.url),
@@ -253,6 +264,215 @@ try {
     null,
   );
 
+  // Exchange a delivery capability for a distinct server-side session. The
+  // requested session tries to outlive its grant, so the contract must cap it.
+  const sessionGrant = await issueManageBookingAccess(
+    manager(one),
+    input.booking.id,
+    "2026-10-08T00:00:00.000Z",
+    now,
+  );
+  const session = await exchangeManageBookingAccessForSession(
+    manager(one),
+    sessionGrant.rawToken,
+    "2026-10-10T00:00:00.000Z",
+    new Date("2026-10-01T00:05:00.000Z"),
+  );
+  assert.ok(session);
+  assert.match(session.rawSessionToken, /^[a-f0-9]{64}$/);
+  assert.equal(session.bookingId, input.booking.id);
+  assert.equal(session.expiresAt, "2026-10-08T00:00:00.000Z");
+
+  const expectedSessionHash = await hashManageBookingSessionToken(
+    session.rawSessionToken,
+  );
+  assert.match(expectedSessionHash, /^[a-f0-9]{64}$/);
+  assert.notEqual(expectedSessionHash, session.rawSessionToken);
+
+  const storedSession = await one.query(
+    `select id, booking_id, access_grant_id, session_hash, created_at,
+            expires_at, revoked_at, last_used_at
+       from booking_access_sessions where id=$1`,
+    [session.sessionId],
+  );
+  assert.equal(storedSession.rows.length, 1);
+  assert.equal(storedSession.rows[0].booking_id, input.booking.id);
+  assert.equal(storedSession.rows[0].session_hash, expectedSessionHash);
+  assert.ok(
+    !JSON.stringify(storedSession.rows[0]).includes(session.rawSessionToken),
+  );
+
+  const cookie = serializeManageBookingSessionCookie(
+    session.rawSessionToken,
+    session.expiresAt,
+  );
+  assert.match(
+    cookie,
+    new RegExp(`^${MANAGE_BOOKING_SESSION_COOKIE}=[a-f0-9]{64}; `),
+  );
+  assert.match(cookie, /; Path=\/;/);
+  assert.match(cookie, /; HttpOnly;/);
+  assert.match(cookie, /; Secure;/);
+  assert.match(cookie, /; SameSite=Lax;/);
+  assert.ok(!cookie.includes("Domain="));
+  assert.equal(
+    readManageBookingSessionCookie(`theme=light; ${cookie.split(";")[0]}`),
+    session.rawSessionToken,
+  );
+  assert.equal(
+    readManageBookingSessionCookie(
+      `${cookie.split(";")[0]}; ${cookie.split(";")[0]}`,
+    ),
+    null,
+    "duplicate session cookies must fail closed",
+  );
+  assert.equal(
+    readManageBookingSessionCookie(
+      `${MANAGE_BOOKING_SESSION_COOKIE}=NOT-A-TOKEN`,
+    ),
+    null,
+  );
+  const cleared = clearManageBookingSessionCookie();
+  assert.match(cleared, /Max-Age=0/);
+  assert.match(cleared, /HttpOnly/);
+  assert.match(cleared, /Secure/);
+
+  const resolvedSession = await resolveManageBookingSession(
+    manager(one),
+    session.rawSessionToken,
+    new Date("2026-10-01T00:06:00.000Z"),
+  );
+  assert.ok(resolvedSession);
+  assert.equal(resolvedSession.bookingId, input.booking.id);
+  assert.equal(resolvedSession.sessionId, session.sessionId);
+  const sessionTouch = await one.query(
+    "select last_used_at from booking_access_sessions where id=$1",
+    [session.sessionId],
+  );
+  assert.equal(
+    new Date(sessionTouch.rows[0].last_used_at).toISOString(),
+    "2026-10-01T00:06:00.000Z",
+  );
+
+  assert.equal(
+    await resolveManageBookingSession(
+      manager(one),
+      session.rawSessionToken.toUpperCase(),
+      new Date("2026-10-01T00:06:00.000Z"),
+    ),
+    null,
+  );
+  assert.equal(
+    await resolveManageBookingSession(
+      manager(one),
+      "f".repeat(64),
+      new Date("2026-10-01T00:06:00.000Z"),
+    ),
+    null,
+  );
+
+  // Revoking a session invalidates only that session.
+  assert.equal(
+    await revokeManageBookingSession(
+      manager(one),
+      session.sessionId,
+      input.booking.id,
+      new Date("2026-10-01T00:07:00.000Z"),
+    ),
+    true,
+  );
+  assert.equal(
+    await resolveManageBookingSession(
+      manager(one),
+      session.rawSessionToken,
+      new Date("2026-10-01T00:08:00.000Z"),
+    ),
+    null,
+  );
+
+  // Revoking the parent grant invalidates all child sessions immediately.
+  const parentGrant = await issueManageBookingAccess(
+    manager(one),
+    input.booking.id,
+    "2026-10-08T00:00:00.000Z",
+    now,
+  );
+  const parentSession = await exchangeManageBookingAccessForSession(
+    manager(one),
+    parentGrant.rawToken,
+    "2026-10-02T00:00:00.000Z",
+    new Date("2026-10-01T00:09:00.000Z"),
+  );
+  assert.ok(parentSession);
+  const parentAccess = await redeemManageBookingAccess(
+    manager(one),
+    parentGrant.rawToken,
+    new Date("2026-10-01T00:09:30.000Z"),
+  );
+  assert.ok(parentAccess);
+  assert.equal(
+    await revokeManageBookingAccess(
+      manager(one),
+      parentAccess.grantId,
+      input.booking.id,
+      new Date("2026-10-01T00:10:00.000Z"),
+    ),
+    true,
+  );
+  assert.equal(
+    await resolveManageBookingSession(
+      manager(one),
+      parentSession.rawSessionToken,
+      new Date("2026-10-01T00:11:00.000Z"),
+    ),
+    null,
+  );
+
+  // Expiry is fail-closed at the exact boundary.
+  const expiringGrant = await issueManageBookingAccess(
+    manager(one),
+    input.booking.id,
+    "2026-10-01T00:13:00.000Z",
+    now,
+  );
+  const expiringSession = await exchangeManageBookingAccessForSession(
+    manager(one),
+    expiringGrant.rawToken,
+    "2026-10-01T00:12:00.000Z",
+    new Date("2026-10-01T00:11:30.000Z"),
+  );
+  assert.ok(expiringSession);
+  assert.equal(
+    await resolveManageBookingSession(
+      manager(one),
+      expiringSession.rawSessionToken,
+      new Date("2026-10-01T00:12:00.000Z"),
+    ),
+    null,
+  );
+
+  // Migration must reject storing a raw or malformed session value.
+  const anyGrant = await one.query(
+    `select id from booking_access_tokens
+      where booking_id=$1 and revoked_at is null
+      order by created_at asc limit 1`,
+    [input.booking.id],
+  );
+  await assert.rejects(
+    one.query(
+      `insert into booking_access_sessions
+        (id, booking_id, access_grant_id, session_hash, created_at, expires_at)
+       values ($1, $2, $3, 'RAW-COOKIE-VALUE', $4, $5)`,
+      [
+        crypto.randomUUID(),
+        input.booking.id,
+        anyGrant.rows[0].id,
+        TIME,
+        "2026-10-02T00:00:00.000Z",
+      ],
+    ),
+  );
+
   const accessCountBeforeUnknown = await one.query(
     "select count(*)::int as count from booking_access_tokens",
   );
@@ -366,7 +586,7 @@ try {
   );
   assert.deepEqual(counts.rows[0], { keys: 2, bookings: 2, outbox: 2 });
   console.log(
-    "PostgreSQL booking contract PASS: booking transaction, HMAC idempotency, rollback/race safety, no-PII outbox, hashed guest access, expiry and revocation.",
+    "PostgreSQL booking contract PASS: durable booking, HMAC idempotency, no-PII outbox, hashed guest access, hashed HttpOnly-session primitive, expiry/revocation and parent-grant invalidation.",
   );
 } finally {
   await one.end();
