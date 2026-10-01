@@ -49,7 +49,7 @@ Before live commerce can be enabled, all of these must exist:
 5. provider availability/confirmation path;
 6. payment integration where required;
 7. durable Booking and BookingEvent writes in the production runtime;
-8. outbox delivery, reconciliation and failure handling.
+8. outbox delivery, terminal-failure reconciliation and failure handling, using the lease/retry contract in `docs/OUTBOX_DELIVERY_V1.md`.
 
 Offline PostgreSQL CI contracts do not satisfy these production gates by themselves. The existence of access/session tables, cookie helpers, the authenticated My Bookings read model, the `/manage` landing page or `/manage/exchange` POST resource must never be interpreted as live guest access.
 
