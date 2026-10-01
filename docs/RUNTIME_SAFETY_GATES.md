@@ -51,7 +51,7 @@ Before live commerce can be enabled, all of these must exist:
 7. durable Booking and BookingEvent writes in the production runtime;
 8. outbox delivery, reconciliation and failure handling.
 
-Offline PostgreSQL CI contracts do not satisfy these production gates by themselves. The existence of access/session tables, cookie helpers or even the `/manage/:token` resource route must never be interpreted as live guest access.
+Offline PostgreSQL CI contracts do not satisfy these production gates by themselves. The existence of access/session tables, cookie helpers, the `/manage` landing page or `/manage/exchange` POST resource must never be interpreted as live guest access.
 
 The exchange route has an independent fail-closed gate:
 
