@@ -42,7 +42,7 @@ This is a safety gate.
 
 Before live commerce can be enabled, all of these must exist:
 
-1. production PostgreSQL infrastructure and a reviewed Worker-compatible connection path;
+1. production PostgreSQL infrastructure plus a real Cloudflare Hyperdrive binding verified in isolated preview;
 2. migrations applied and durable booking/idempotency contracts wired to runtime;
 3. guest manage-booking delivery plus a reviewed fragment landing/POST exchange flow that sets the tested HttpOnly session cookie, scrubs the capability and navigates to clean `/bookings`;
 4. authoritative Offer pricing;
@@ -60,7 +60,7 @@ The exchange route has an independent fail-closed gate:
 - explicit `MANAGE_BOOKING_SESSION_TTL_MINUTES` between 5 and 1440;
 - an injected reviewed booking database transaction runtime.
 
-Current Worker config sets the first value to `false` and injects no booking database, so changing or merging application code alone cannot activate the exchange.
+Current Worker config sets the first value to `false`. The Worker can now inject the tested PostgreSQL transaction manager only when a real `HYPERDRIVE` binding exists, but the repository intentionally contains no binding id or database credential. Hyperdrive presence alone still cannot activate the exchange.
 
 Changing a Worker variable must never be enough to accidentally turn prototype prices into real transactions.
 

@@ -4,6 +4,9 @@ import {
   type PhuQuocLuxEnv,
   type WorkerExecutionContext,
 } from "../app/cloudflare-context";
+import {
+  createHyperdrivePostgresTransactionManager,
+} from "../app/repositories/hyperdrive-postgres.server";
 
 const requestHandler = createRequestHandler(
   () => import("virtual:react-router/server-build"),
@@ -69,7 +72,25 @@ export default {
   ) {
     const requestId = crypto.randomUUID();
     const routerContext = new RouterContextProvider();
-    routerContext.set(cloudflareRequestContext, { env, ctx, requestId });
+
+    let manageBookingDatabase;
+    if (env.HYPERDRIVE) {
+      try {
+        manageBookingDatabase =
+          createHyperdrivePostgresTransactionManager(env.HYPERDRIVE);
+      } catch {
+        // Invalid/missing runtime binding fails closed. Never log a connection
+        // string or turn this into a fallback credential path.
+        manageBookingDatabase = undefined;
+      }
+    }
+
+    routerContext.set(cloudflareRequestContext, {
+      env,
+      ctx,
+      requestId,
+      manageBookingDatabase,
+    });
     const response = await requestHandler(request, routerContext);
 
     return withResponsePolicy(request, response, requestId);
