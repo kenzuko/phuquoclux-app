@@ -21,7 +21,8 @@ function withResponsePolicy(
   headers.set("X-Request-Id", requestId);
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("X-Frame-Options", "DENY");
-  const manageLink = url.pathname.startsWith("/manage/");
+  const manageLink =
+    url.pathname === "/manage" || url.pathname.startsWith("/manage/");
   headers.set(
     "Referrer-Policy",
     manageLink ? "no-referrer" : "strict-origin-when-cross-origin",
