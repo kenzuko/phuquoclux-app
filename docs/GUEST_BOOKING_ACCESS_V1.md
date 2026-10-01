@@ -86,15 +86,18 @@ The repository now contains offline PostgreSQL guest-access and session contract
 
 The access grant is **not consumed automatically** during session exchange. Whether a delivered email/SMS link is one-time remains a later delivery-policy decision.
 
-The repository now also contains a **disabled-by-default resource route** at `/manage/:token` and a delivery-provider boundary. The route is not active guest access:
+The repository now also contains a **disabled-by-default exchange flow** and a delivery-provider boundary. It is not active guest access:
 
+- the delivery builder creates `/manage#<capability>`, never a token-bearing server path or query;
+- the `/manage` landing page removes the fragment from browser history before making any network request containing the capability;
+- the capability is accepted only by same-origin POST body at `/manage/exchange`;
 - `MANAGE_BOOKING_EXCHANGE_ENABLED` is explicitly `false` in the Worker configuration;
 - enabling the flag alone is insufficient: canonical HTTPS origin, explicit session TTL and an injected database transaction runtime are all required;
 - the current Worker entrypoint injects no booking database runtime;
-- while disabled, the route returns a generic 404, does not touch session storage and never sets a cookie;
-- manage-link responses force `no-store`, `no-referrer` and `noindex`;
-- on a fully configured future runtime, a valid capability exchanges to a distinct HttpOnly session and returns a 303 redirect to the clean `/bookings` URL;
+- while disabled, exchange returns a generic 404, does not touch session storage and never sets a cookie;
+- manage routes force `no-store`, `no-referrer` and `noindex`;
+- on a fully configured future runtime, a valid POST capability exchanges to a distinct HttpOnly session, returns 204 with Set-Cookie, and client code replaces the page with clean `/bookings`;
 - origin mismatch, malformed/unknown capability or missing runtime fails closed;
-- the delivery contract has no email/SMS implementation and raw manage links must never be logged or persisted.
+- the delivery contract has no email/SMS implementation and raw capabilities/manage links must never be logged or persisted.
 
 There is still no production database connection, delivery provider or authenticated My Bookings read model. The public checkout remains read-only and My Bookings remains empty.
