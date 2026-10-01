@@ -32,6 +32,9 @@ import {
   readManagedBookingBySession,
 } from "../app/repositories/postgres-booking-read.server.ts";
 import {
+  createPostgresTransactionManager,
+} from "../app/repositories/hyperdrive-postgres.server.ts";
+import {
   exchangeManageBookingRequest,
   manageBookingExchangeConfigured,
 } from "../app/services/manage-booking-exchange.server.ts";
@@ -144,6 +147,36 @@ try {
         'jotrip-manual-request', 'active', 'request', 'flat', 123456,
         'VND', 'per_person', 'prototype', 'estimated')`,
   );
+
+  // Exercise the exact pg-backed transaction manager intended for Hyperdrive.
+  // This uses the disposable CI PostgreSQL URL, not a Cloudflare binding.
+  const runtimeManager = createPostgresTransactionManager(url);
+  const runtimeProbe = await runtimeManager.transaction(async (tx) => {
+    const result = await tx.query(
+      "select count(*)::int as count from products",
+      [],
+    );
+    return result.rows[0].count;
+  });
+  assert.equal(runtimeProbe, 1);
+
+  // A thrown callback must roll back work done through the runtime adapter.
+  await assert.rejects(
+    runtimeManager.transaction(async (tx) => {
+      await tx.query(
+        `insert into products (id, slug, product_type, name)
+         values ('ROLLBACK-RUNTIME-ADAPTER', 'rollback-runtime-adapter',
+                 'tour', 'ROLLBACK-RUNTIME-ADAPTER')`,
+        [],
+      );
+      throw new Error("SYNTHETIC_RUNTIME_ADAPTER_ROLLBACK");
+    }),
+    /SYNTHETIC_RUNTIME_ADAPTER_ROLLBACK/,
+  );
+  const runtimeRollback = await one.query(
+    "select count(*)::int as count from products where id='ROLLBACK-RUNTIME-ADAPTER'",
+  );
+  assert.equal(runtimeRollback.rows[0].count, 0);
   const input = fixture();
   const first = await persistManualBookingRequest(manager(one), input, now);
   assert.equal(first.outcome, "created");
@@ -810,7 +843,7 @@ try {
   );
   assert.deepEqual(counts.rows[0], { keys: 2, bookings: 2, outbox: 2 });
   console.log(
-    "PostgreSQL booking contract PASS: durable booking, HMAC idempotency, fragment-safe exchange, same-booking session binding, session-authorized no-PII read model and parent-grant invalidation.",
+    "PostgreSQL booking contract PASS: pg runtime adapter transaction/rollback, durable booking, HMAC idempotency, fragment-safe exchange, same-booking session binding, session-authorized no-PII read model and parent-grant invalidation.",
   );
 } finally {
   await one.end();
