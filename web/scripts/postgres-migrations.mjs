@@ -82,6 +82,23 @@ async function ledgerExists(client) {
   return Boolean(result.rows[0]?.ledger);
 }
 
+async function assertNoUntrackedPublicTables(client) {
+  const result = await client.query(
+    `select tablename
+       from pg_catalog.pg_tables
+      where schemaname = 'public'
+        and tablename <> 'pql_schema_migrations'
+      order by tablename asc`,
+  );
+  if (result.rows.length > 0) {
+    throw new Error(
+      `MIGRATION_UNTRACKED_SCHEMA_REFUSED:${result.rows
+        .map((row) => row.tablename)
+        .join(",")}`,
+    );
+  }
+}
+
 async function readLedger(client) {
   if (!(await ledgerExists(client))) return [];
 
@@ -130,7 +147,11 @@ export async function inspectMigrationPlan(connectionString) {
   try {
     await assertConnectedDatabase(client, target.database);
     const files = loadMigrationFiles();
-    const ledger = await readLedger(client);
+    const hasLedger = await ledgerExists(client);
+    if (!hasLedger) {
+      await assertNoUntrackedPublicTables(client);
+    }
+    const ledger = hasLedger ? await readLedger(client) : [];
     return {
       database: target.database,
       host: target.host,
@@ -185,6 +206,10 @@ export async function applyMigrations(connectionString, confirmation) {
     );
     lockHeld = true;
 
+    const hasLedger = await ledgerExists(client);
+    if (!hasLedger) {
+      await assertNoUntrackedPublicTables(client);
+    }
     await ensureLedger(client);
 
     const files = loadMigrationFiles();
