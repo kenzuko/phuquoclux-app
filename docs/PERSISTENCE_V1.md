@@ -151,6 +151,16 @@ Do not place PII in:
 
 Supplier/provider payloads may be stored as audit JSON, but normalized booking state remains the source used by the app.
 
+## Outbox delivery
+
+Committed booking events are delivered through the durable PostgreSQL outbox, never inline inside the booking transaction.
+
+The repository now includes lease-based claiming, stale-worker protection, retry backoff, terminal failure state and provider-neutral publishing orchestration. Raw provider errors are never persisted; only stable allow-listed error codes may enter `last_error`.
+
+No external publisher or scheduler is connected yet.
+
+See `docs/OUTBOX_DELIVERY_V1.md`.
+
 ## Cloudflare
 
 Workers remains the application runtime.
