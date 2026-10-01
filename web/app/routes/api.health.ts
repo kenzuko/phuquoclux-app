@@ -8,6 +8,9 @@ export async function loader({ context }: LoaderFunctionArgs) {
   const commerceMode = getCommerceMode(runtime.env);
   const manageBookingExchangeConfigReady =
     manageBookingExchangeConfigured(runtime.env);
+  const hyperdriveBindingConfigured = Boolean(
+    runtime.env.HYPERDRIVE?.connectionString,
+  );
   const manageBookingDatabaseInjected = Boolean(
     runtime.manageBookingDatabase,
   );
@@ -28,6 +31,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
       mapStyleProductionReady,
       weatherRuntimeConfigured,
       manageBookingExchangeConfigReady,
+      hyperdriveBindingConfigured,
       manageBookingDatabaseInjected,
     },
     commerce: {
