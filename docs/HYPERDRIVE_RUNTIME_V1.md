@@ -66,9 +66,13 @@ The test verifies:
 
 ## Provisioning sequence - future infrastructure step
 
-1. Provision the production PostgreSQL database.
-2. Apply reviewed migrations in order.
-3. Create a Cloudflare Hyperdrive configuration pointed at that database.
+Use `docs/POSTGRES_PROVISIONING_V1.md` as the operational runbook.
+
+1. Provision a fresh dedicated PostgreSQL database.
+2. Run `npm run db:migrate:plan`.
+3. Apply reviewed migrations only through the guarded migration runner.
+4. Run plan again and verify every checksum is tracked.
+5. Create a Cloudflare Hyperdrive configuration pointed at that database.
 4. Add the real Hyperdrive binding to the Worker deployment configuration.
 5. Verify the binding in an isolated preview Worker first.
 6. Confirm PostgreSQL transaction/read tests against synthetic non-customer data.
