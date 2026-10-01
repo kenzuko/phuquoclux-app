@@ -11,6 +11,7 @@ export default [
   route("checkout/:slug", "routes/checkout.tsx"),
   route("trip", "routes/trip.tsx"),
   route("bookings", "routes/bookings.tsx"),
+  route("manage/:token", "routes/manage-token.ts"),
   route("api/health", "routes/api.health.ts"),
   route("api/discovery", "routes/api.discovery.ts"),
   route("api/context/weather", "routes/api.weather-context.ts"),
