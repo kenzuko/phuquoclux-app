@@ -77,6 +77,10 @@ test("Worker: React Router request context and health are functional", async ({ 
   const payload = await response.json();
   expect(payload.ok).toBe(true);
   expect(payload.commerce.mode).toBe("prototype");
+  expect(payload.readiness.manageBookingExchangeConfigReady).toBe(false);
+  expect(payload.readiness.manageBookingDatabaseInjected).toBe(false);
+  expect(payload.commerce.guestBookingAccessConnected).toBe(false);
+  expect(payload.commerce.manageBookingDeliveryConnected).toBe(false);
 });
 
 test("Home: map-first layout, discovery and mobile-safe width", async ({ page }, testInfo) => {
@@ -173,4 +177,17 @@ test("Bookings: URL query parameters cannot manufacture a confirmation", async (
   await expect(page.getByText("Đã nhận yêu cầu")).toHaveCount(0);
   await expect(page.getByText("Đã xác nhận", { exact: true })).toHaveCount(0);
   await expect(page.getByText("URL từ bản demo cũ không phải xác nhận đặt chỗ.", { exact: false })).toBeVisible();
+});
+
+test("Manage booking: capability route is hidden and cannot set a cookie while disabled", async ({ request }) => {
+  const token = "a".repeat(64);
+  const response = await request.get(`/manage/${token}`, {
+    maxRedirects: 0,
+  });
+  expect(response.status()).toBe(404);
+  expect(response.headers()["cache-control"]).toContain("no-store");
+  expect(response.headers()["referrer-policy"]).toBe("no-referrer");
+  expect(response.headers()["x-robots-tag"]).toContain("noindex");
+  expect(response.headers()["set-cookie"]).toBeUndefined();
+  expect(await response.text()).not.toContain(token);
 });
