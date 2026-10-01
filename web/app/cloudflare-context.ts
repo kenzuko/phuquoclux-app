@@ -1,5 +1,6 @@
 import { createContext } from "react-router";
 import type { SqlTransactionManager } from "./repositories/postgres-booking-core.server";
+import type { HyperdriveBinding } from "./repositories/hyperdrive-postgres.server";
 
 export type PhuQuocLuxEnv = {
   MAP_STYLE_URL?: string;
@@ -12,6 +13,8 @@ export type PhuQuocLuxEnv = {
   MANAGE_BOOKING_EXCHANGE_ENABLED?: "true" | "false";
   MANAGE_BOOKING_CANONICAL_ORIGIN?: string;
   MANAGE_BOOKING_SESSION_TTL_MINUTES?: string;
+  /** Cloudflare runtime binding. No id/credential is stored in source. */
+  HYPERDRIVE?: HyperdriveBinding;
 };
 
 export type WorkerExecutionContext = {
