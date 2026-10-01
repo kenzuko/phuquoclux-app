@@ -758,8 +758,9 @@ try {
     },
   });
   const second = await connect();
+  let parallel;
   try {
-    const parallel = await Promise.all([
+    parallel = await Promise.all([
       persistManualBookingRequest(manager(one), parallelA, now),
       persistManualBookingRequest(manager(second), parallelB, now),
     ]);
