@@ -47,8 +47,9 @@ export function buildManageBookingLink(
     throw new Error("MANAGE_BOOKING_CANONICAL_ORIGIN_INVALID");
   }
 
-  return new URL(
-    `/manage/${rawAccessToken}`,
-    origin.origin,
-  ).toString();
+  const manageUrl = new URL("/manage", origin.origin);
+  // Fragment is intentionally client-side only: CDNs, access logs, referrers
+  // and the first HTTP request never receive the raw bearer capability.
+  manageUrl.hash = rawAccessToken;
+  return manageUrl.toString();
 }
