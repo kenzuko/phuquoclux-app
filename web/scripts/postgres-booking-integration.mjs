@@ -34,6 +34,9 @@ import {
   createPostgresTransactionManager,
 } from "../app/repositories/hyperdrive-postgres.server.ts";
 import {
+  transitionBookingState,
+} from "../app/repositories/postgres-booking-transition.server.ts";
+import {
   claimOutboxBatch,
   markOutboxPublished,
   outboxRetryDelaySeconds,
@@ -1063,6 +1066,192 @@ try {
     ),
   );
 
+  // Durable optimistic transitions own state + version + event + outbox.
+  await assert.rejects(
+    transitionBookingState(
+      manager(one),
+      {
+        bookingId: crypto.randomUUID(),
+        expectedFrom: "pending_payment",
+        expectedVersion: 1,
+        toState: "paid",
+        reasonCode: "PAYMENT_REQUIRED",
+        source: "system",
+      },
+      new Date("2026-10-01T00:27:00.000Z"),
+    ),
+    /BOOKING_PAYMENT_TRANSITION_REQUIRES_PAYMENT_CONTRACT/,
+  );
+  await assert.rejects(
+    transitionBookingState(
+      manager(one),
+      {
+        bookingId: input.booking.id,
+        expectedFrom: "pending_confirmation",
+        expectedVersion: 1,
+        toState: "confirmed",
+        reasonCode: "OPS_CONFIRMED",
+        source: "guest@example.invalid",
+      },
+      new Date("2026-10-01T00:27:00.000Z"),
+    ),
+    /BOOKING_TRANSITION_SOURCE_INVALID/,
+  );
+
+  const confirmedTransition = await transitionBookingState(
+    manager(one),
+    {
+      bookingId: input.booking.id,
+      expectedFrom: "pending_confirmation",
+      expectedVersion: 1,
+      toState: "confirmed",
+      reasonCode: "OPS_CONFIRMED",
+      source: "ops",
+    },
+    new Date("2026-10-01T00:27:00.000Z"),
+  );
+  assert.deepEqual(confirmedTransition, {
+    outcome: "updated",
+    bookingId: input.booking.id,
+    state: "confirmed",
+    version: 2,
+    updatedAt: "2026-10-01T00:27:00.000Z",
+  });
+
+  const confirmedRow = await one.query(
+    "select state, version, payment_status from bookings where id=$1",
+    [input.booking.id],
+  );
+  assert.deepEqual(confirmedRow.rows[0], {
+    state: "confirmed",
+    version: "2",
+    payment_status: "unpaid",
+  });
+
+  const stateEventV2 = await one.query(
+    `select from_state, to_state, version, reason, payload
+       from booking_events
+      where booking_id=$1 and version=2`,
+    [input.booking.id],
+  );
+  assert.equal(stateEventV2.rows.length, 1);
+  assert.deepEqual(
+    {
+      from_state: stateEventV2.rows[0].from_state,
+      to_state: stateEventV2.rows[0].to_state,
+      version: Number(stateEventV2.rows[0].version),
+      reason: stateEventV2.rows[0].reason,
+      payload: stateEventV2.rows[0].payload,
+    },
+    {
+      from_state: "pending_confirmation",
+      to_state: "confirmed",
+      version: 2,
+      reason: "OPS_CONFIRMED",
+      payload: { source: "ops" },
+    },
+  );
+
+  const staleTransition = await transitionBookingState(
+    manager(one),
+    {
+      bookingId: input.booking.id,
+      expectedFrom: "pending_confirmation",
+      expectedVersion: 1,
+      toState: "cancelled",
+      reasonCode: "OPS_CANCELLED",
+      source: "ops",
+    },
+    new Date("2026-10-01T00:27:01.000Z"),
+  );
+  assert.deepEqual(staleTransition, {
+    outcome: "conflict",
+    bookingId: input.booking.id,
+    currentState: "confirmed",
+    currentVersion: 2,
+  });
+
+  const transitionRaceClient = await connect();
+  try {
+    const race = await Promise.all([
+      transitionBookingState(
+        manager(one),
+        {
+          bookingId: input.booking.id,
+          expectedFrom: "confirmed",
+          expectedVersion: 2,
+          toState: "fulfilled",
+          reasonCode: "SERVICE_FULFILLED",
+          source: "ops",
+        },
+        new Date("2026-10-01T00:28:00.000Z"),
+      ),
+      transitionBookingState(
+        manager(transitionRaceClient),
+        {
+          bookingId: input.booking.id,
+          expectedFrom: "confirmed",
+          expectedVersion: 2,
+          toState: "cancel_requested",
+          reasonCode: "CUSTOMER_CANCEL_REQUESTED",
+          source: "customer",
+        },
+        new Date("2026-10-01T00:28:00.000Z"),
+      ),
+    ]);
+    assert.deepEqual(
+      race.map((result) => result.outcome).sort(),
+      ["conflict", "updated"],
+      "only one optimistic state transition may win",
+    );
+    const winner = race.find((result) => result.outcome === "updated");
+    assert.ok(winner);
+    assert.equal(winner.version, 3);
+    assert.ok(["fulfilled", "cancel_requested"].includes(winner.state));
+  } finally {
+    await transitionRaceClient.end();
+  }
+
+  const transitionRows = await one.query(
+    `select state, version, payment_status
+       from bookings where id=$1`,
+    [input.booking.id],
+  );
+  assert.equal(Number(transitionRows.rows[0].version), 3);
+  assert.equal(transitionRows.rows[0].payment_status, "unpaid");
+
+  const stateEvents = await one.query(
+    `select version, payload
+       from booking_events
+      where booking_id=$1
+      order by version asc`,
+    [input.booking.id],
+  );
+  assert.deepEqual(
+    stateEvents.rows.map((row) => Number(row.version)),
+    [2, 3],
+  );
+  const transitionOutbox = await one.query(
+    `select aggregate_version, payload
+       from outbox_events
+      where aggregate_id=$1
+        and event_name='booking.state_changed'
+      order by aggregate_version asc`,
+    [input.booking.id],
+  );
+  assert.deepEqual(
+    transitionOutbox.rows.map((row) => Number(row.aggregate_version)),
+    [2, 3],
+  );
+  const transitionAuditJson = JSON.stringify({
+    events: stateEvents.rows,
+    outbox: transitionOutbox.rows,
+  });
+  assert.ok(!transitionAuditJson.includes(input.booking.contact.name));
+  assert.ok(!transitionAuditJson.includes(input.booking.contact.email));
+  assert.ok(!transitionAuditJson.includes(input.booking.contact.phone));
+  assert.ok(!transitionAuditJson.includes("SYNTHETIC-TEST-ONLY"));
+
   // Expired replays return the *existing* id, without creating another Quote,
   // booking, or Ops event. No guest data or access token is returned.
   const replay = await persistManualBookingRequest(
@@ -1173,9 +1362,9 @@ try {
             (select count(*)::int from bookings) as bookings,
             (select count(*)::int from outbox_events) as outbox`,
   );
-  assert.deepEqual(counts.rows[0], { keys: 2, bookings: 2, outbox: 4 });
+  assert.deepEqual(counts.rows[0], { keys: 2, bookings: 2, outbox: 6 });
   console.log(
-    "PostgreSQL booking contract PASS: checksum-locked plan/apply migrations, exact migration target identity, pg runtime adapter transaction/rollback, durable booking, lease-safe outbox retry/reclaim, HMAC idempotency, fragment-safe exchange, same-booking session binding, session-authorized no-PII read model and parent-grant invalidation.",
+    "PostgreSQL booking contract PASS: checksum-locked plan/apply migrations, exact migration target identity, pg runtime adapter transaction/rollback, durable booking, optimistic state transitions, lease-safe outbox retry/reclaim, HMAC idempotency, fragment-safe exchange, same-booking session binding, session-authorized no-PII read model and parent-grant invalidation.",
   );
 } finally {
   await one.end();
