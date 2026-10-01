@@ -82,7 +82,9 @@ The repository now contains offline PostgreSQL guest-access and session contract
 - cookie serialization is locked to `__Host-pql_manage`, `Secure`, `HttpOnly`, `SameSite=Lax`, `Path=/`, with no Domain attribute;
 - duplicate or malformed session-cookie values fail closed;
 - migrations `0003_booking_access_hash.sql` and `0004_booking_access_sessions.sql` reject malformed stored hashes;
-- disposable PostgreSQL CI verifies access issue/redeem, session exchange/resolve, expiry, revocation, parent-grant invalidation and raw-token non-persistence.
+- migration `0005_booking_session_binding.sql` makes it impossible for a session authorized by booking A to be rebound to booking B;
+- the authenticated read model accepts only the session cookie and returns a guest-safe projection without booking id, request id, guest name, email, phone or guest note;
+- disposable PostgreSQL CI verifies access issue/redeem, session exchange/resolve, same-booking binding, authenticated reads, expiry, revocation, parent-grant invalidation and raw-token non-persistence.
 
 The access grant is **not consumed automatically** during session exchange. Whether a delivered email/SMS link is one-time remains a later delivery-policy decision.
 
