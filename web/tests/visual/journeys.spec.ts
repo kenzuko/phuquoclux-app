@@ -78,6 +78,7 @@ test("Worker: React Router request context and health are functional", async ({ 
   expect(payload.ok).toBe(true);
   expect(payload.commerce.mode).toBe("prototype");
   expect(payload.readiness.manageBookingExchangeConfigReady).toBe(false);
+  expect(payload.readiness.hyperdriveBindingConfigured).toBe(false);
   expect(payload.readiness.manageBookingDatabaseInjected).toBe(false);
   expect(payload.commerce.guestBookingAccessConnected).toBe(false);
   expect(payload.commerce.manageBookingDeliveryConnected).toBe(false);
