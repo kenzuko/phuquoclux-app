@@ -50,15 +50,43 @@ phuquoclux_booking
 
 Do not use the provider's default `postgres` database.
 
-## 2. Set the database URL locally
+## 2. Set the direct database URL locally
+
+Migrations must use the provider's **direct / unpooled** PostgreSQL connection,
+not a PgBouncer/pooled endpoint.
 
 From the `web` directory:
 
 ```bash
 export DATABASE_URL='postgresql://USER:PASSWORD@HOST:5432/phuquoclux_booking'
+export PQL_MIGRATION_EXPECTED_HOST='EXACT_HOST_FROM_PROVIDER'
+export PQL_MIGRATION_EXPECTED_DATABASE='phuquoclux_booking'
 ```
 
-Do not commit this value and do not paste it into `wrangler.jsonc`.
+The runner compares the exact host and database before connecting. Wildcard host
+expectations are refused.
+
+Do not commit any of these values and do not paste the connection string into
+`wrangler.jsonc`.
+
+### GitHub manual bootstrap path
+
+For an approved infrastructure operation, the repository also contains:
+
+```
+.github/workflows/db-bootstrap.yml
+```
+
+It is manual-only and the migration job starts only when all of these are true:
+
+- the workflow is dispatched from `main`;
+- repository variable `PHUQUOCLUX_DB_BOOTSTRAP_ENABLED=true`;
+- repository secret `PHUQUOCLUX_DATABASE_URL_UNPOOLED` exists;
+- the operator enters the exact expected database and exact expected host;
+- apply mode also receives the exact `APPLY:<database>` confirmation.
+
+The workflow runs plan before apply and plan again after apply. It never creates
+a database, never creates Hyperdrive and never enables guest access.
 
 ## 3. Plan migrations
 
@@ -83,7 +111,10 @@ export PQL_MIGRATION_CONFIRM='APPLY:phuquoclux_booking'
 npm run db:migrate
 ```
 
-The confirmation string must match the actual database name exactly.
+The confirmation string must match the actual database name exactly. When
+`PQL_MIGRATION_EXPECTED_HOST` and
+`PQL_MIGRATION_EXPECTED_DATABASE` are supplied, those must also match the
+connection target exactly before any network connection is opened.
 
 Run plan again:
 
