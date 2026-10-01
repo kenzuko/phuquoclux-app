@@ -173,7 +173,9 @@ export async function resolveManageBookingSession(
     }>(
       `select s.id, s.booking_id, s.access_grant_id, s.expires_at
          from booking_access_sessions s
-         join booking_access_tokens g on g.id = s.access_grant_id
+         join booking_access_tokens g
+           on g.id = s.access_grant_id
+          and g.booking_id = s.booking_id
         where s.session_hash = $1
           and s.revoked_at is null
           and s.expires_at > $2
