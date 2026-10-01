@@ -18,6 +18,7 @@ on:
       - "web/scripts/postgres-migrate.mjs"
       - "web/package.json"
       - ".github/workflows/db-contract.yml"
+      - ".github/workflows/db-bootstrap.yml"
   push:
     branches:
       - main
@@ -35,6 +36,7 @@ on:
       - "web/scripts/postgres-migrate.mjs"
       - "web/package.json"
       - ".github/workflows/db-contract.yml"
+      - ".github/workflows/db-bootstrap.yml"
   workflow_dispatch:
 
 permissions:
