@@ -39,6 +39,12 @@ export type BookingTransitionSource =
   | "system";
 
 const REASON_CODES = new Set<string>(BOOKING_TRANSITION_REASON_CODES);
+const TRANSITION_SOURCES = new Set<BookingTransitionSource>([
+  "ops",
+  "provider",
+  "customer",
+  "system",
+]);
 const PAYMENT_COUPLED_STATES = new Set<BookingState>([
   "paid",
   "refund_pending",
@@ -85,6 +91,9 @@ function validateInput(input: DurableBookingTransitionInput) {
   }
   if (!REASON_CODES.has(input.reasonCode)) {
     throw new Error("BOOKING_TRANSITION_REASON_INVALID");
+  }
+  if (!TRANSITION_SOURCES.has(input.source)) {
+    throw new Error("BOOKING_TRANSITION_SOURCE_INVALID");
   }
 
   assertBookingTransition(input.expectedFrom, input.toState);
