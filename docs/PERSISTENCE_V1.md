@@ -155,9 +155,11 @@ Supplier/provider payloads may be stored as audit JSON, but normalized booking s
 
 Workers remains the application runtime.
 
-When PostgreSQL wiring begins, use a Worker-compatible PostgreSQL connection path. The exact connection adapter is intentionally not committed in this step because database infrastructure has not been provisioned yet.
+The repository now contains a lazy Cloudflare Hyperdrive -> `pg` transaction adapter that satisfies the existing PostgreSQL transaction contract. The Worker injects it only when a real `HYPERDRIVE` runtime binding exists.
 
-This avoids turning an infrastructure placeholder into an accidental production dependency.
+No Hyperdrive id, database URL or credential is committed to source control, and the current `wrangler.jsonc` intentionally contains no Hyperdrive binding. Therefore merging the adapter cannot connect production PostgreSQL by itself.
+
+See `docs/HYPERDRIVE_RUNTIME_V1.md`.
 
 
 ## Concurrency
