@@ -228,8 +228,9 @@ export async function revokeManageBookingSession(
 }
 
 /**
- * Cookie helpers are pure and route-agnostic. A later exchange route can set
- * this header and immediately redirect away from /manage/<raw-capability>.
+ * Cookie helpers are pure and route-agnostic. The fragment landing exchanges
+ * the access capability by POST body, stores this HttpOnly cookie, then client
+ * navigation replaces the clean /manage page with /bookings.
  */
 export function serializeManageBookingSessionCookie(
   rawSessionToken: string,
