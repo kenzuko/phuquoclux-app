@@ -42,7 +42,7 @@ This is a safety gate.
 
 Before live commerce can be enabled, all of these must exist:
 
-1. production PostgreSQL infrastructure and a reviewed Worker-compatible connection path;
+1. production PostgreSQL infrastructure plus a real Cloudflare Hyperdrive binding verified in isolated preview;
 2. migrations applied and durable booking/idempotency contracts wired to runtime;
 3. guest manage-booking delivery plus a reviewed fragment landing/POST exchange flow that sets the tested HttpOnly session cookie, scrubs the capability and navigates to clean `/bookings`;
 4. authoritative Offer pricing;
