@@ -48,7 +48,7 @@ Before live commerce can be enabled, all of these must exist:
 4. authoritative Offer pricing;
 5. provider availability/confirmation path;
 6. payment integration where required;
-7. durable Booking and BookingEvent writes in the production runtime;
+7. durable Booking writes plus the reviewed optimistic transition writer for BookingEvent/outbox state changes in the production runtime;
 8. outbox delivery, terminal-failure reconciliation and failure handling, using the lease/retry contract in `docs/OUTBOX_DELIVERY_V1.md`.
 
 Offline PostgreSQL CI contracts do not satisfy these production gates by themselves. The existence of access/session tables, cookie helpers, the authenticated My Bookings read model, the `/manage` landing page or `/manage/exchange` POST resource must never be interpreted as live guest access.
@@ -65,6 +65,8 @@ Current Worker config sets the first value to `false`. The Worker can now inject
 Changing a Worker variable must never be enough to accidentally turn prototype prices into real transactions.
 
 The existence of the PostgreSQL outbox lease/retry contract does not mean delivery is live. A concrete publisher, scheduler and Ops reconciliation path must be separately implemented and reviewed.
+
+Likewise, the durable booking transition writer does not activate provider/Ops/customer mutations. Payment-coupled states remain blocked until a separate payment contract owns state and payment-status changes atomically.
 
 
 ## Production deploy gate
