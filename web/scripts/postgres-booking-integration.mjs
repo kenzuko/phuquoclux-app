@@ -174,6 +174,29 @@ const secondMigrationRun = await applyMigrations(
 );
 assert.deepEqual(secondMigrationRun.applied, []);
 
+// Applied migration files are immutable. Simulate ledger drift, prove planning
+// refuses it, then restore the synthetic ledger for the rest of this suite.
+const driftClient = await connect();
+const trackedFive = firstMigrationRun.migrations.find(
+  (item) => item.filename === "0005_booking_session_binding.sql",
+);
+assert.ok(trackedFive);
+await driftClient.query(
+  "update pql_schema_migrations set checksum=$2 where filename=$1",
+  [trackedFive.filename, "0".repeat(64)],
+);
+await driftClient.end();
+await assert.rejects(
+  inspectMigrationPlan(url),
+  /MIGRATION_CHECKSUM_MISMATCH:0005_booking_session_binding\.sql/,
+);
+const restoreClient = await connect();
+await restoreClient.query(
+  "update pql_schema_migrations set checksum=$2 where filename=$1",
+  [trackedFive.filename, trackedFive.checksum],
+);
+await restoreClient.end();
+
 const one = await connect();
 try {
   await one.query(
