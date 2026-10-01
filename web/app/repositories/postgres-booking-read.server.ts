@@ -162,7 +162,10 @@ function rowToManagedBooking(row: {
     throw new Error("MANAGED_BOOKING_RECORD_INVALID");
   }
 
-  const updated = new Date(row.updated_at as string | Date);
+  const updated =
+    row.updated_at instanceof Date
+      ? row.updated_at
+      : new Date(String(row.updated_at ?? ""));
   if (!Number.isFinite(updated.getTime())) {
     throw new Error("MANAGED_BOOKING_RECORD_INVALID");
   }
