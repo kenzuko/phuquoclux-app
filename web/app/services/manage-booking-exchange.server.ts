@@ -108,7 +108,7 @@ export async function exchangeManageBookingRequest(input: {
   }
 
   if (
-    request.method !== "GET" ||
+    request.method !== "POST" ||
     !rawAccessToken ||
     !RAW_ACCESS_TOKEN_PATTERN.test(rawAccessToken)
   ) {
@@ -142,11 +142,10 @@ export async function exchangeManageBookingRequest(input: {
       session.expiresAt,
     ),
   );
-  // Relative Location avoids reconstructing a URL from untrusted request data.
-  headers.set("Location", "/bookings");
-
+  // The client immediately replaces /manage with /bookings after this
+  // same-origin POST succeeds. No access capability is ever put in Location.
   return new Response(null, {
-    status: 303,
+    status: 204,
     headers,
   });
 }
