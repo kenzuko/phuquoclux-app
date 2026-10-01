@@ -51,6 +51,9 @@ import {
 import {
   buildManageBookingLink,
 } from "../app/services/manage-booking-delivery.server.ts";
+import {
+  processOutboxBatch,
+} from "../app/services/outbox-publisher.server.ts";
 
 const url = process.env.PG_TEST_URL;
 if (!url || new URL(url).pathname !== "/phuquoclux_contract_test") {
@@ -489,6 +492,55 @@ try {
     next_attempt_at: null,
     lease_token: null,
   });
+
+  // Provider-neutral orchestration never persists thrown error text.
+  const thrownEventId = crypto.randomUUID();
+  await one.query(
+    `insert into outbox_events
+      (id, event_name, aggregate_type, aggregate_id, aggregate_version,
+       payload, status, created_at)
+     values ($1, 'synthetic.publisher.throw', 'booking', $2, 1000,
+             '{"kind":"synthetic"}'::jsonb, 'pending', $3)`,
+    [
+      thrownEventId,
+      input.booking.id,
+      "2026-10-01T00:26:00.000Z",
+    ],
+  );
+  const processSummary = await processOutboxBatch(
+    manager(one),
+    {
+      async publish(event) {
+        assert.equal(event.id, thrownEventId);
+        throw new Error("SYNTHETIC-GUEST-EMAIL@example.invalid");
+      },
+    },
+    {
+      limit: 1,
+      maxAttempts: 1,
+      now: new Date("2026-10-01T00:26:00.000Z"),
+    },
+  );
+  assert.deepEqual(processSummary, {
+    claimed: 1,
+    published: 0,
+    retryScheduled: 0,
+    failedTerminal: 1,
+    leaseLost: 0,
+  });
+  const thrownStored = await one.query(
+    "select status, last_error from outbox_events where id=$1",
+    [thrownEventId],
+  );
+  assert.deepEqual(thrownStored.rows[0], {
+    status: "failed",
+    last_error: "DELIVERY_FAILED",
+  });
+  assert.ok(
+    !JSON.stringify(thrownStored.rows[0]).includes(
+      "SYNTHETIC-GUEST-EMAIL@example.invalid",
+    ),
+  );
 
   // Manage-booking capability: raw token is random and returned only once.
   // PostgreSQL stores only its SHA-256 digest and no guest PII is required to
@@ -1121,7 +1173,7 @@ try {
             (select count(*)::int from bookings) as bookings,
             (select count(*)::int from outbox_events) as outbox`,
   );
-  assert.deepEqual(counts.rows[0], { keys: 2, bookings: 2, outbox: 3 });
+  assert.deepEqual(counts.rows[0], { keys: 2, bookings: 2, outbox: 4 });
   console.log(
     "PostgreSQL booking contract PASS: checksum-locked plan/apply migrations, exact migration target identity, pg runtime adapter transaction/rollback, durable booking, lease-safe outbox retry/reclaim, HMAC idempotency, fragment-safe exchange, same-booking session binding, session-authorized no-PII read model and parent-grant invalidation.",
   );
