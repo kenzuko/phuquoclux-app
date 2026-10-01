@@ -458,17 +458,20 @@ try {
     null,
   );
 
-  // Delivery link builder requires one approved HTTPS origin and puts the raw
-  // capability in the path only. It never invents a query-string transport.
+  // Delivery link builder keeps the raw bearer capability in the URL fragment.
+  // Fragments are client-only and are never sent in the first HTTP request.
   const deliveryLink = buildManageBookingLink(
     "https://phuquoclux.example",
     parentGrant.rawToken,
   );
   assert.equal(
     deliveryLink,
-    `https://phuquoclux.example/manage/${parentGrant.rawToken}`,
+    `https://phuquoclux.example/manage#${parentGrant.rawToken}`,
   );
-  assert.ok(!deliveryLink.includes("?"));
+  const parsedDeliveryLink = new URL(deliveryLink);
+  assert.equal(parsedDeliveryLink.pathname, "/manage");
+  assert.equal(parsedDeliveryLink.search, "");
+  assert.equal(parsedDeliveryLink.hash, `#${parentGrant.rawToken}`);
   await assert.rejects(
     async () => buildManageBookingLink(
       "http://phuquoclux.example",
@@ -477,12 +480,14 @@ try {
     /MANAGE_BOOKING_CANONICAL_ORIGIN_INVALID/,
   );
 
+  const exchangeEndpoint = "https://phuquoclux.example/manage/exchange";
+
   // Public exchange stays hidden unless explicitly enabled.
   const disabledSessionCountBefore = await one.query(
     "select count(*)::int as count from booking_access_sessions",
   );
   const disabledResponse = await exchangeManageBookingRequest({
-    request: new Request(deliveryLink),
+    request: new Request(exchangeEndpoint, { method: "POST" }),
     rawAccessToken: parentGrant.rawToken,
     env: {
       MANAGE_BOOKING_EXCHANGE_ENABLED: "false",
@@ -511,7 +516,7 @@ try {
   };
   assert.equal(manageBookingExchangeConfigured(enabledEnv), true);
   const missingDb = await exchangeManageBookingRequest({
-    request: new Request(deliveryLink),
+    request: new Request(exchangeEndpoint, { method: "POST" }),
     rawAccessToken: parentGrant.rawToken,
     env: enabledEnv,
     now: new Date("2026-10-01T00:14:00.000Z"),
@@ -521,9 +526,9 @@ try {
 
   // Host/origin mismatch cannot mint a cookie even with valid capability + DB.
   const wrongOrigin = await exchangeManageBookingRequest({
-    request: new Request(
-      `https://evil.example/manage/${parentGrant.rawToken}`,
-    ),
+    request: new Request("https://evil.example/manage/exchange", {
+      method: "POST",
+    }),
     rawAccessToken: parentGrant.rawToken,
     env: enabledEnv,
     database: manager(one),
@@ -532,8 +537,9 @@ try {
   assert.equal(wrongOrigin.status, 404);
   assert.equal(wrongOrigin.headers.get("set-cookie"), null);
 
-  // A fresh access capability exchanges once into a clean-url session
-  // response. The access token never appears in Location/body/cookie.
+  // A fresh access capability exchanges from POST body into a distinct session.
+  // The server returns only the HttpOnly cookie. Browser code then replaces the
+  // clean /manage URL with /bookings.
   const routeGrant = await issueManageBookingAccess(
     manager(one),
     input.booking.id,
@@ -544,15 +550,18 @@ try {
     "https://phuquoclux.example",
     routeGrant.rawToken,
   );
+  assert.equal(new URL(routeLink).pathname, "/manage");
+  assert.equal(new URL(routeLink).hash, `#${routeGrant.rawToken}`);
+
   const exchangeResponse = await exchangeManageBookingRequest({
-    request: new Request(routeLink),
+    request: new Request(exchangeEndpoint, { method: "POST" }),
     rawAccessToken: routeGrant.rawToken,
     env: enabledEnv,
     database: manager(one),
     now: new Date("2026-10-01T00:15:00.000Z"),
   });
-  assert.equal(exchangeResponse.status, 303);
-  assert.equal(exchangeResponse.headers.get("location"), "/bookings");
+  assert.equal(exchangeResponse.status, 204);
+  assert.equal(exchangeResponse.headers.get("location"), null);
   assert.equal(exchangeResponse.headers.get("referrer-policy"), "no-referrer");
   assert.equal(
     exchangeResponse.headers.get("cache-control"),
@@ -569,7 +578,6 @@ try {
     new RegExp(`^${MANAGE_BOOKING_SESSION_COOKIE}=[a-f0-9]{64}; `),
   );
   assert.ok(!exchangeCookie.includes(routeGrant.rawToken));
-  assert.ok(!String(exchangeResponse.headers.get("location")).includes(routeGrant.rawToken));
   assert.equal(await exchangeResponse.text(), "");
 
   const rawRouteSession = readManageBookingSessionCookie(
@@ -584,11 +592,9 @@ try {
   assert.ok(routeResolved);
   assert.equal(routeResolved.bookingId, input.booking.id);
 
-  // Invalid capabilities stay indistinguishable from unknown routes.
+  // Invalid capabilities stay indistinguishable from an unknown exchange.
   const invalidExchange = await exchangeManageBookingRequest({
-    request: new Request(
-      "https://phuquoclux.example/manage/" + "0".repeat(64),
-    ),
+    request: new Request(exchangeEndpoint, { method: "POST" }),
     rawAccessToken: "0".repeat(64),
     env: enabledEnv,
     database: manager(one),
@@ -732,7 +738,7 @@ try {
   );
   assert.deepEqual(counts.rows[0], { keys: 2, bookings: 2, outbox: 2 });
   console.log(
-    "PostgreSQL booking contract PASS: durable booking, HMAC idempotency, no-PII outbox, hashed guest access/session, clean-url exchange security, origin/gate fail-closed behavior and parent-grant invalidation.",
+    "PostgreSQL booking contract PASS: durable booking, HMAC idempotency, no-PII outbox, fragment-only delivery capability, POST-body session exchange, origin/gate fail-closed behavior and parent-grant invalidation.",
   );
 } finally {
   await one.end();
