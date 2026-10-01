@@ -71,15 +71,21 @@ After validation, the app should exchange that capability for a secure HttpOnly 
 
 ## Current implementation state
 
-The repository now contains an offline PostgreSQL guest-access contract:
+The repository now contains offline PostgreSQL guest-access and session contracts:
 
-- raw manage-booking tokens are 256-bit random capabilities;
-- the database stores only a SHA-256 hash;
-- expiry and revocation fail closed;
-- successful redemption resolves only the internal booking identity and updates `last_used_at`;
-- migration `0003_booking_access_hash.sql` rejects non-hash token storage;
-- disposable PostgreSQL CI verifies issue, redeem, expiry, revocation and unknown-booking rollback.
+- raw manage-booking access tokens are 256-bit random capabilities;
+- raw manage-booking session tokens are separate 256-bit random capabilities;
+- PostgreSQL stores only SHA-256 hashes of both token types;
+- a session can never outlive its parent access grant;
+- revoking or expiring a parent grant invalidates its child sessions;
+- session expiry and revocation fail closed;
+- cookie serialization is locked to `__Host-pql_manage`, `Secure`, `HttpOnly`, `SameSite=Lax`, `Path=/`, with no Domain attribute;
+- duplicate or malformed session-cookie values fail closed;
+- migrations `0003_booking_access_hash.sql` and `0004_booking_access_sessions.sql` reject malformed stored hashes;
+- disposable PostgreSQL CI verifies access issue/redeem, session exchange/resolve, expiry, revocation, parent-grant invalidation and raw-token non-persistence.
 
-This contract is **not wired to a public route**. No raw token is currently delivered by email/SMS, exchanged for an HttpOnly session, or exposed in analytics.
+The access grant is **not consumed automatically** during session exchange. Whether a delivered email/SMS link is one-time remains a later delivery-policy decision.
 
-The public checkout therefore remains read-only and My Bookings remains empty until the delivery/session boundary and production database connection are implemented and reviewed.
+This contract is still **not wired to a public route**. No token is delivered by email/SMS, no cookie is currently set by a Worker response, and no clean-URL redirect or authenticated My Bookings route exists yet.
+
+The public checkout therefore remains read-only and My Bookings remains empty until the production database connection, delivery boundary and reviewed exchange route are implemented.
