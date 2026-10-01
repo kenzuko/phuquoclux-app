@@ -26,11 +26,7 @@ export default function ManageBookingExchangePage() {
       // Remove the bearer capability from the current history entry before any
       // network request. Fragments are never sent to the server, but this also
       // keeps the token out of the visible URL after hydration.
-      window.history.replaceState(
-        null,
-        "",
-        window.location.pathname + window.location.search,
-      );
+      window.history.replaceState(null, "", "/manage");
 
       if (!/^[0-9a-f]{64}$/.test(rawToken)) {
         if (!cancelled) setState("invalid");
