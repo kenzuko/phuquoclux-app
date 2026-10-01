@@ -122,6 +122,22 @@ function fixture(overrides = {}) {
 // This suite MUST use only a dedicated disposable database. The workflow
 // provisions it freshly with an ephemeral Postgres service container.
 //
+// A non-empty schema without our migration ledger is never auto-adopted.
+const untracked = await connect();
+await untracked.query(
+  "create table untracked_sentinel (id integer primary key)",
+);
+await assert.rejects(
+  inspectMigrationPlan(url),
+  /MIGRATION_UNTRACKED_SCHEMA_REFUSED:untracked_sentinel/,
+);
+await assert.rejects(
+  applyMigrations(url, "APPLY:phuquoclux_contract_test"),
+  /MIGRATION_UNTRACKED_SCHEMA_REFUSED:untracked_sentinel/,
+);
+await untracked.query("drop table untracked_sentinel");
+await untracked.end();
+
 // Exercise the same plan/apply engine intended for real provisioning. Planning
 // must be read-only, apply requires exact database-name confirmation, and a
 // second apply must be idempotent.
