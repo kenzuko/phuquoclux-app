@@ -179,15 +179,37 @@ test("Bookings: URL query parameters cannot manufacture a confirmation", async (
   await expect(page.getByText("URL từ bản demo cũ không phải xác nhận đặt chỗ.", { exact: false })).toBeVisible();
 });
 
-test("Manage booking: capability route is hidden and cannot set a cookie while disabled", async ({ request }) => {
+test("Manage booking: fragment landing never sends the bearer token in the URL", async ({ page, context }) => {
   const token = "a".repeat(64);
-  const response = await request.get(`/manage/${token}`, {
+  await page.goto(`/manage#${token}`);
+
+  // Hydration reads the client-only fragment, immediately scrubs the history
+  // entry, then POSTs it. Current runtime is disabled, so no session is minted.
+  await expect.poll(() => new URL(page.url()).hash).toBe("");
+  await expect(page.getByRole("heading", { name: "Liên kết chưa thể sử dụng" })).toBeVisible();
+  expect(page.url()).not.toContain(token);
+
+  const cookies = await context.cookies();
+  expect(cookies.some((cookie) => cookie.name === "__Host-pql_manage")).toBe(false);
+});
+
+test("Manage booking: disabled exchange endpoint is no-store and cannot set a cookie", async ({ request }) => {
+  const token = "b".repeat(64);
+
+  const landing = await request.get("/manage");
+  expect(landing.status()).toBe(200);
+  expect(landing.headers()["cache-control"]).toContain("no-store");
+  expect(landing.headers()["referrer-policy"]).toBe("no-referrer");
+  expect(landing.headers()["set-cookie"]).toBeUndefined();
+  expect(await landing.text()).not.toContain(token);
+
+  const response = await request.post("/manage/exchange", {
+    form: { token },
     maxRedirects: 0,
   });
   expect(response.status()).toBe(404);
   expect(response.headers()["cache-control"]).toContain("no-store");
   expect(response.headers()["referrer-policy"]).toBe("no-referrer");
-  expect(response.headers()["x-robots-tag"]).toContain("noindex");
   expect(response.headers()["set-cookie"]).toBeUndefined();
   expect(await response.text()).not.toContain(token);
 });
