@@ -10,7 +10,7 @@
     "typecheck": "react-router typegen && tsc --noEmit",
     "deploy": "npm run build && wrangler deploy",
     "check": "npm run typecheck && npm run test:domain && npm run build && wrangler deploy --dry-run",
-    "test:domain": "tsx scripts/domain-check.mjs && tsx scripts/supplier-intake-selftest.mjs && tsx scripts/payment-provider-contract-v1.mjs",
+    "test:domain": "tsx scripts/domain-check.mjs && tsx scripts/supplier-intake-selftest.mjs && tsx scripts/payment-provider-contract-v1.mjs && tsx scripts/payment-webhook-processor-v1.mjs",
     "test:visual": "playwright test",
     "build:pages": "vite build --config vite.pages.config.ts",
     "dev:pages": "vite --config vite.pages.config.ts --host 127.0.0.1 --port 4174",
@@ -20,6 +20,7 @@
     "test:db": "tsx scripts/postgres-booking-integration.mjs && tsx scripts/postgres-payment-contract-v1.mjs",
     "test:payment-contract": "tsx scripts/postgres-payment-contract-v1.mjs",
     "test:payment-provider-contract": "tsx scripts/payment-provider-contract-v1.mjs",
+    "test:payment-webhook-processor": "tsx scripts/payment-webhook-processor-v1.mjs",
     "db:migrate:plan": "node scripts/postgres-migrate.mjs --plan",
     "db:migrate": "node scripts/postgres-migrate.mjs --apply"
   },
