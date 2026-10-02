@@ -212,6 +212,7 @@ try {
       race.map((item) => item.outcome).sort(),
       ["processed", "replayed"],
     );
+    assert.ok(race.every((item) => item.bookingId === fixture.bookingId));
     assert.ok(race.every((item) => item.bookingState === "paid"));
     assert.ok(race.every((item) => item.bookingVersion === 2));
     assert.ok(race.every((item) => item.paymentStatus === "paid"));
@@ -281,6 +282,28 @@ try {
         providerEventId: "evt-paid-001",
         providerReference: "pay-ref-001",
         payloadHash: "c".repeat(64),
+        status: "paid",
+        amount: AMOUNT,
+        currency: "VND",
+        occurredAt: "2026-10-02T01:03:00.000Z",
+      },
+      new Date("2026-10-02T01:03:00.000Z"),
+    ),
+    /PAYMENT_RECEIPT_REPLAY_MISMATCH/,
+  );
+
+  // Even an exact event hash may not be replayed against another booking.
+  await assert.rejects(
+    recordVerifiedPaymentEventV1(
+      manager(client),
+      {
+        attemptId,
+        bookingId: crypto.randomUUID(),
+        quoteId: fixture.quoteId,
+        provider: "synthetic_provider",
+        providerEventId: "evt-paid-001",
+        providerReference: "pay-ref-001",
+        payloadHash: "a".repeat(64),
         status: "paid",
         amount: AMOUNT,
         currency: "VND",
@@ -362,17 +385,17 @@ try {
     `select
        (select jsonb_agg(payload order by aggregate_version)
           from outbox_events
-         where aggregate_id in ($1, $2)) as outbox_payloads,
+         where aggregate_id in ($1::text, $2::text)) as outbox_payloads,
        (select jsonb_agg(payload order by version)
           from booking_events
-         where booking_id=$1) as booking_payloads,
+         where booking_id=$1::uuid) as booking_payloads,
        (select jsonb_agg(jsonb_build_object(
           'provider', provider,
           'provider_event_id', provider_event_id,
           'payload_hash', payload_hash,
           'event_status', event_status))
           from payment_receipts_v1
-         where attempt_id=$3) as receipts`,
+         where attempt_id=$3::uuid) as receipts`,
     [fixture.bookingId, intentId, attemptId],
   );
   const auditJson = JSON.stringify(audit.rows[0]);
@@ -386,11 +409,11 @@ try {
   const eventCounts = await client.query(
     `select
        (select count(*)::int from payment_receipts_v1
-         where attempt_id=$1) as receipts,
+         where attempt_id=$1::uuid) as receipts,
        (select count(*)::int from booking_events
-         where booking_id=$2) as booking_events,
+         where booking_id=$2::uuid) as booking_events,
        (select count(*)::int from outbox_events
-         where aggregate_id in ($2, $3)) as outbox`,
+         where aggregate_id in ($2::text, $3::text)) as outbox`,
     [attemptId, fixture.bookingId, intentId],
   );
   assert.deepEqual(eventCounts.rows[0], {
