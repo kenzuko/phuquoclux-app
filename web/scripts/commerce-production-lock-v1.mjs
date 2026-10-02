@@ -25,11 +25,12 @@ function assertNotMatch(source, pattern, message) {
 }
 
 async function run() {
-  const [deployWorkflow, wrangler, routes, checkout] = await Promise.all([
+  const [deployWorkflow, wrangler, routes, checkout, worker] = await Promise.all([
     text(".github/workflows/deploy-production.yml"),
     text("web/wrangler.jsonc"),
     text("web/app/routes.ts"),
     text("web/app/routes/checkout.tsx"),
+    text("web/workers/app.ts"),
   ]);
 
   // Production deployment must remain prototype-only until a dedicated,
@@ -56,6 +57,11 @@ async function run() {
     '"MANAGE_BOOKING_EXCHANGE_ENABLED": "false"',
     "manage-booking exchange must remain disabled by default",
   );
+  assertNotMatch(
+    wrangler,
+    /"hyperdrive"\s*:/i,
+    "production Worker config must not provision Hyperdrive before database activation review",
+  );
 
   // No public payment ingress exists yet. Provider/webhook code is deliberately
   // offline-only until DB, Hyperdrive and a concrete provider are reviewed.
@@ -63,6 +69,11 @@ async function run() {
     routes,
     /route\([^\n]*(?:payment|webhook)/i,
     "public payment/webhook route detected before production activation review",
+  );
+  assertNotMatch(
+    worker,
+    /payment-production-assembly-v1/i,
+    "offline payment production assembly must not be wired into the Worker",
   );
 
   // Current checkout remains quote-preview-only. If this action changes, the

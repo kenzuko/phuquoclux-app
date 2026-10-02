@@ -26,6 +26,7 @@ const canonicalFiles = [
   "app/services/payment-webhook-processor-v1.server.ts",
   "app/services/payment-webhook-dispatcher-v1.server.ts",
   "app/services/payment-runtime-gate-v1.server.ts",
+  "app/services/payment-production-assembly-v1.server.ts",
 ];
 
 function fail(message) {
