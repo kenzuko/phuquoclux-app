@@ -17,6 +17,7 @@ const canonicalFiles = [
   "app/domain/payment-checkout-contract-v1.ts",
   "app/domain/payment-refund-contract-v1.ts",
   "app/providers/payment-provider-contract-v1.ts",
+  "app/providers/payment-provider-operations-v1.ts",
   "app/providers/payment-provider-registry-v1.ts",
   "app/repositories/postgres-payment-contract-v1.server.ts",
   "app/repositories/postgres-payment-checkout-readiness-v1.server.ts",
