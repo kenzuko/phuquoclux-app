@@ -5,18 +5,22 @@ on:
     branches:
       - main
     paths:
+      - "web/app/domain/payment-contract-v1.ts"
       - "web/app/repositories/postgres-booking-core.server.ts"
       - "web/app/repositories/postgres-booking-access.server.ts"
       - "web/app/repositories/postgres-booking-session.server.ts"
       - "web/app/repositories/postgres-booking-read.server.ts"
       - "web/app/repositories/postgres-booking-transition.server.ts"
+      - "web/app/repositories/postgres-payment-contract-v1.server.ts"
       - "web/app/repositories/hyperdrive-postgres.server.ts"
       - "web/app/repositories/postgres-outbox.server.ts"
       - "web/app/services/outbox-publisher.server.ts"
       - "web/app/services/manage-booking-exchange.server.ts"
       - "web/app/services/manage-booking-delivery.server.ts"
       - "web/db/migrations/**"
+      - "web/db/contracts/**"
       - "web/scripts/postgres-booking-integration.mjs"
+      - "web/scripts/postgres-payment-contract-v1.mjs"
       - "web/scripts/postgres-migrations.mjs"
       - "web/scripts/postgres-migrate.mjs"
       - "web/package.json"
@@ -26,18 +30,22 @@ on:
     branches:
       - main
     paths:
+      - "web/app/domain/payment-contract-v1.ts"
       - "web/app/repositories/postgres-booking-core.server.ts"
       - "web/app/repositories/postgres-booking-access.server.ts"
       - "web/app/repositories/postgres-booking-session.server.ts"
       - "web/app/repositories/postgres-booking-read.server.ts"
       - "web/app/repositories/postgres-booking-transition.server.ts"
+      - "web/app/repositories/postgres-payment-contract-v1.server.ts"
       - "web/app/repositories/hyperdrive-postgres.server.ts"
       - "web/app/repositories/postgres-outbox.server.ts"
       - "web/app/services/outbox-publisher.server.ts"
       - "web/app/services/manage-booking-exchange.server.ts"
       - "web/app/services/manage-booking-delivery.server.ts"
       - "web/db/migrations/**"
+      - "web/db/contracts/**"
       - "web/scripts/postgres-booking-integration.mjs"
+      - "web/scripts/postgres-payment-contract-v1.mjs"
       - "web/scripts/postgres-migrations.mjs"
       - "web/scripts/postgres-migrate.mjs"
       - "web/package.json"
@@ -78,7 +86,7 @@ jobs:
           node-version: "24"
       - name: Install test dependencies
         run: npm install --no-audit --no-fund
-      - name: Verify migrations and transaction contract against real disposable PostgreSQL
+      - name: Verify booking and payment contracts against real disposable PostgreSQL
         env:
           PG_TEST_URL: postgresql://pql_synthetic_test:synthetic-ci-only-not-for-deployment@127.0.0.1:5432/phuquoclux_contract_test
         run: npm run test:db
