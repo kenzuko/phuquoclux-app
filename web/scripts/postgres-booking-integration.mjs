@@ -216,6 +216,7 @@ assert.deepEqual(
     "0004_booking_access_sessions.sql",
     "0005_booking_session_binding.sql",
     "0006_outbox_delivery_leases.sql",
+    "0007_payment_contract_v1.sql",
   ],
 );
 assert.ok(
