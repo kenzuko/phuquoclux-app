@@ -5,6 +5,7 @@ on:
     paths:
       - "web/**"
       - ".github/workflows/web-ci.yml"
+      - ".github/workflows/deploy-production.yml"
   workflow_dispatch:
 
 jobs:
