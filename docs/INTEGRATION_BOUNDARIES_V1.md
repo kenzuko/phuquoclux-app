@@ -1,6 +1,7 @@
 # PhuQuocLux integration boundaries V1
 
 Date: 29/09/2026
+Updated: 02/10/2026
 
 ## Purpose
 
@@ -67,34 +68,27 @@ Supplier-specific payloads may be retained for audit, but UI and Ops should cons
 
 ## Payment boundary
 
-Payment gateways are separate from travel supplier adapters.
+Payment providers are separate from travel supplier adapters and do not own Booking truth.
 
-A PaymentGateway owns:
+The canonical payment architecture is Payment Contract V1 plus the provider verification, registry/dispatcher, webhook processor and runtime activation gate. Legacy `domain/payment.ts` and `providers/payment-gateway.ts` contracts have been removed so there is only one supported payment path.
 
-- checkout/payment session creation;
-- webhook verification;
-- refund actions when supported.
-
-It does not own Booking truth.
+A concrete payment provider adapter may only normalize a verified provider event after checking the provider signature against the exact raw request bytes. Provider identity comes from the trusted registry/runtime mapping, never from webhook body or headers.
 
 A payment webhook changes payment state only after:
 
-1. provider signature is verified;
-2. provider event id has not already been processed;
-3. payment/booking identity is matched;
-4. state transition is valid.
+1. raw request policy validation succeeds;
+2. provider signature is verified;
+3. provider id resolves from the trusted registry;
+4. payment/booking/quote identity and amount/currency match;
+5. provider event replay/idempotency checks succeed;
+6. the booking/payment state transition is valid;
+7. persistence, booking events and transactional outbox updates commit together.
 
 ## Webhook idempotency
 
-`webhook_receipts` uses:
+Payment Contract V1 uses `(provider, provider_event_id)` as the unique verified receipt identity and stores the exact raw-body SHA-256 hash used for replay matching.
 
-```
-(provider, provider_event_id)
-```
-
-as the unique receipt identity.
-
-A provider retry must return the already-processed outcome rather than applying the event twice.
+A provider retry returns the already-processed outcome only when the verified event identity, payload hash and commercial identity match. Mismatched replay attempts fail closed.
 
 ## Delivery retries
 
@@ -109,8 +103,10 @@ Outbox publisher rules:
 
 ## Current state
 
-Contracts and PostgreSQL schema exist.
+Booking/outbox contracts and Payment Contract V1 exist and are exercised against disposable PostgreSQL in CI.
 
-No publisher, JoTrip Ops consumer or payment gateway is connected yet.
+Provider verification, registry/dispatcher, webhook processor and runtime activation gates exist as offline contracts.
 
-That is intentional until persistent PostgreSQL infrastructure is provisioned.
+No concrete payment provider, public payment webhook route, production payment migration or production PostgreSQL/Hyperdrive target is connected yet.
+
+That is intentional. Production commerce remains fail-closed until those production dependencies are explicitly provisioned and reviewed.
