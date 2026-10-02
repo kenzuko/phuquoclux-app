@@ -30,6 +30,7 @@ on:
       - "web/scripts/postgres-payment-refund-readiness-v1.mjs"
       - "web/scripts/postgres-migrations.mjs"
       - "web/scripts/postgres-migrate.mjs"
+      - "web/scripts/migration-manifest-v1.mjs"
       - "web/package.json"
       - ".github/workflows/db-contract.yml"
       - ".github/workflows/db-bootstrap.yml"
@@ -62,6 +63,7 @@ on:
       - "web/scripts/postgres-payment-refund-readiness-v1.mjs"
       - "web/scripts/postgres-migrations.mjs"
       - "web/scripts/postgres-migrate.mjs"
+      - "web/scripts/migration-manifest-v1.mjs"
       - "web/package.json"
       - ".github/workflows/db-contract.yml"
       - ".github/workflows/db-bootstrap.yml"
@@ -104,3 +106,5 @@ jobs:
         env:
           PG_TEST_URL: postgresql://pql_synthetic_test:synthetic-ci-only-not-for-deployment@127.0.0.1:5432/phuquoclux_contract_test
         run: npm run test:db
+      - name: Emit migration checksum manifest
+        run: node scripts/migration-manifest-v1.mjs
