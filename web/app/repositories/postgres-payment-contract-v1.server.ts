@@ -1,10 +1,9 @@
 /**
  * Payment Contract V1 - OFFLINE / PROVIDER-NEUTRAL ONLY.
  *
- * This module deliberately has no public route, Worker binding or concrete
- * payment provider. Its schema lives under db/contracts, not db/migrations.
- * It is exercised only against disposable PostgreSQL until a production
- * payment target/provider is selected and separately activated.
+ * No public route, Worker binding or concrete payment provider is connected
+ * here. The schema lives under db/contracts, outside production migrations,
+ * and is exercised only against disposable PostgreSQL.
  */
 import type {
   BeginRefundInputV1,
@@ -15,7 +14,10 @@ import type {
   VerifiedPaymentEventInputV1,
 } from "../domain/payment-contract-v1";
 import type { BookingState, PaymentStatus } from "../domain/commerce";
-import type { SqlTransaction, SqlTransactionManager } from "./postgres-booking-core.server";
+import type {
+  SqlTransaction,
+  SqlTransactionManager,
+} from "./postgres-booking-core.server";
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 const PROVIDER_ID = /^[a-z0-9][a-z0-9._-]{0,63}$/;
@@ -34,9 +36,7 @@ function positiveMoney(amount: number, currency: string) {
 }
 
 function validProvider(provider: string) {
-  if (!PROVIDER_ID.test(provider)) {
-    throw new Error("PAYMENT_PROVIDER_INVALID");
-  }
+  if (!PROVIDER_ID.test(provider)) throw new Error("PAYMENT_PROVIDER_INVALID");
 }
 
 function validDate(value: string, code: string) {
@@ -94,8 +94,8 @@ function assertAttemptTransition(
     authorized: new Set(["authorized", "paid", "failed"]),
     paid: new Set(["partially_refunded", "refunded"]),
     partially_refunded: new Set(["partially_refunded", "refunded"]),
-    refunded: new Set([]),
-    failed: new Set([]),
+    refunded: new Set(),
+    failed: new Set(),
   };
   if (!allowed[from].has(to)) {
     throw new Error(`PAYMENT_ATTEMPT_TRANSITION_INVALID:${from}->${to}`);
@@ -263,6 +263,85 @@ async function appendPaymentOutbox(
   );
 }
 
+type IntegrityRow = {
+  attempt_id: string;
+  attempt_provider: string;
+  provider_reference: string | null;
+  attempt_status: PaymentAttemptStatusV1;
+  attempt_amount: number | string;
+  attempt_currency: string;
+  intent_id: string;
+  intent_status: PaymentIntentStatusV1;
+  intent_version: number | string;
+  intent_booking_id: string;
+  intent_quote_id: string;
+  intent_amount: number | string;
+  intent_currency: string;
+  booking_state: string;
+  booking_version: number | string;
+  booking_payment_status: string;
+  booking_total_amount: number | string;
+  booking_currency: string;
+  booking_quote_id: string;
+  quote_total_amount: number | string;
+  quote_currency: string;
+  quote_price_state: string;
+};
+
+function assertCommercialIdentity(
+  row: IntegrityRow,
+  input: VerifiedPaymentEventInputV1,
+) {
+  if (
+    row.attempt_id !== input.attemptId ||
+    row.attempt_provider !== input.provider ||
+    row.intent_booking_id !== input.bookingId ||
+    row.intent_quote_id !== input.quoteId ||
+    row.booking_quote_id !== input.quoteId ||
+    row.quote_price_state !== "final"
+  ) {
+    throw new Error("PAYMENT_IDENTITY_INTEGRITY_MISMATCH");
+  }
+  if (
+    Number(row.attempt_amount) !== input.amount ||
+    Number(row.intent_amount) !== input.amount ||
+    Number(row.booking_total_amount) !== input.amount ||
+    Number(row.quote_total_amount) !== input.amount ||
+    row.attempt_currency !== input.currency ||
+    row.intent_currency !== input.currency ||
+    row.booking_currency !== input.currency ||
+    row.quote_currency !== input.currency
+  ) {
+    throw new Error("PAYMENT_COMMERCIAL_INTEGRITY_MISMATCH");
+  }
+  if (
+    row.provider_reference &&
+    input.providerReference &&
+    row.provider_reference !== input.providerReference
+  ) {
+    throw new Error("PAYMENT_PROVIDER_REFERENCE_MISMATCH");
+  }
+}
+
+const INTEGRITY_SELECT = `select
+        a.id as attempt_id, a.provider as attempt_provider,
+        a.provider_reference, a.status as attempt_status,
+        a.amount as attempt_amount, a.currency as attempt_currency,
+        i.id as intent_id, i.status as intent_status,
+        i.version as intent_version, i.booking_id as intent_booking_id,
+        i.quote_id as intent_quote_id, i.amount as intent_amount,
+        i.currency as intent_currency,
+        b.state as booking_state, b.version as booking_version,
+        b.payment_status as booking_payment_status,
+        b.total_amount as booking_total_amount,
+        b.currency as booking_currency, b.quote_id as booking_quote_id,
+        q.total_amount as quote_total_amount, q.currency as quote_currency,
+        q.price_state as quote_price_state
+      from payment_attempts_v1 a
+      join payment_intents_v1 i on i.id=a.intent_id
+      join bookings b on b.id=i.booking_id
+      join quotes q on q.id=i.quote_id`;
+
 export async function createPaymentIntentAttemptV1(
   database: SqlTransactionManager,
   input: CreatePaymentIntentAttemptInputV1,
@@ -310,11 +389,9 @@ export async function createPaymentIntentAttemptV1(
     ) {
       throw new Error("PAYMENT_BOOKING_NOT_READY");
     }
-    const bookingAmount = Number(booking.total_amount);
-    const quoteAmount = Number(booking.quote_total_amount);
     if (
-      bookingAmount !== input.amount ||
-      quoteAmount !== input.amount ||
+      Number(booking.total_amount) !== input.amount ||
+      Number(booking.quote_total_amount) !== input.amount ||
       booking.currency !== input.currency ||
       booking.quote_currency !== input.currency
     ) {
@@ -409,28 +486,35 @@ export async function recordVerifiedPaymentEventV1(
     );
 
     if (!claim.rows.length) {
-      const replay = await tx.query<{
-        attempt_id: string;
-        payload_hash: string;
-        event_status: string;
-        result_payment_status: string | null;
-        result_booking_state: string | null;
-        result_booking_version: number | string | null;
-      }>(
-        `select attempt_id, payload_hash, event_status, result_payment_status,
-                result_booking_state, result_booking_version
-           from payment_receipts_v1
-          where provider=$1 and provider_event_id=$2`,
+      const replay = await tx.query<
+        IntegrityRow & {
+          payload_hash: string;
+          receipt_event_status: string;
+          result_payment_status: string | null;
+          result_booking_state: string | null;
+          result_booking_version: number | string | null;
+        }
+      >(
+        `select x.*, r.payload_hash,
+                r.event_status as receipt_event_status,
+                r.result_payment_status, r.result_booking_state,
+                r.result_booking_version
+           from payment_receipts_v1 r
+           join (${INTEGRITY_SELECT}) x on x.attempt_id=r.attempt_id
+          where r.provider=$1 and r.provider_event_id=$2`,
         [input.provider, input.providerEventId],
       );
       const receipt = replay.rows[0];
-      if (!receipt || receipt.payload_hash !== input.payloadHash) {
+      if (
+        !receipt ||
+        receipt.payload_hash !== input.payloadHash ||
+        receipt.receipt_event_status !== input.status
+      ) {
         throw new Error("PAYMENT_RECEIPT_REPLAY_MISMATCH");
       }
-      if (
-        receipt.attempt_id !== input.attemptId ||
-        receipt.event_status !== input.status
-      ) {
+      try {
+        assertCommercialIdentity(receipt, input);
+      } catch {
         throw new Error("PAYMENT_RECEIPT_REPLAY_MISMATCH");
       }
       if (
@@ -442,7 +526,7 @@ export async function recordVerifiedPaymentEventV1(
       }
       return {
         outcome: "replayed" as const,
-        bookingId: input.bookingId,
+        bookingId: receipt.intent_booking_id,
         bookingState: asBookingState(receipt.result_booking_state),
         bookingVersion: asPositiveVersion(
           receipt.result_booking_version,
@@ -452,84 +536,17 @@ export async function recordVerifiedPaymentEventV1(
       };
     }
 
-    const rows = await tx.query<{
-      attempt_id: string;
-      attempt_provider: string;
-      provider_reference: string | null;
-      attempt_status: PaymentAttemptStatusV1;
-      attempt_amount: number | string;
-      attempt_currency: string;
-      intent_id: string;
-      intent_status: PaymentIntentStatusV1;
-      intent_version: number | string;
-      intent_booking_id: string;
-      intent_quote_id: string;
-      intent_amount: number | string;
-      intent_currency: string;
-      booking_state: string;
-      booking_version: number | string;
-      booking_payment_status: string;
-      booking_total_amount: number | string;
-      booking_currency: string;
-      booking_quote_id: string;
-      quote_total_amount: number | string;
-      quote_currency: string;
-      quote_price_state: string;
-    }>(
-      `select a.id as attempt_id, a.provider as attempt_provider,
-              a.provider_reference, a.status as attempt_status,
-              a.amount as attempt_amount, a.currency as attempt_currency,
-              i.id as intent_id, i.status as intent_status,
-              i.version as intent_version, i.booking_id as intent_booking_id,
-              i.quote_id as intent_quote_id, i.amount as intent_amount,
-              i.currency as intent_currency,
-              b.state as booking_state, b.version as booking_version,
-              b.payment_status as booking_payment_status,
-              b.total_amount as booking_total_amount,
-              b.currency as booking_currency, b.quote_id as booking_quote_id,
-              q.total_amount as quote_total_amount, q.currency as quote_currency,
-              q.price_state as quote_price_state
-         from payment_attempts_v1 a
-         join payment_intents_v1 i on i.id=a.intent_id
-         join bookings b on b.id=i.booking_id
-         join quotes q on q.id=i.quote_id
+    const rows = await tx.query<IntegrityRow>(
+      `${INTEGRITY_SELECT}
         where a.id=$1
         for update of a, i, b`,
       [input.attemptId],
     );
     const row = rows.rows[0];
     if (!row) throw new Error("PAYMENT_ATTEMPT_NOT_FOUND");
-
-    if (
-      row.attempt_provider !== input.provider ||
-      row.intent_booking_id !== input.bookingId ||
-      row.intent_quote_id !== input.quoteId ||
-      row.booking_quote_id !== input.quoteId ||
-      row.quote_price_state !== "final"
-    ) {
-      throw new Error("PAYMENT_IDENTITY_INTEGRITY_MISMATCH");
-    }
-    if (
-      Number(row.attempt_amount) !== input.amount ||
-      Number(row.intent_amount) !== input.amount ||
-      Number(row.booking_total_amount) !== input.amount ||
-      Number(row.quote_total_amount) !== input.amount ||
-      row.attempt_currency !== input.currency ||
-      row.intent_currency !== input.currency ||
-      row.booking_currency !== input.currency ||
-      row.quote_currency !== input.currency
-    ) {
-      throw new Error("PAYMENT_COMMERCIAL_INTEGRITY_MISMATCH");
-    }
-    if (
-      row.provider_reference &&
-      input.providerReference &&
-      row.provider_reference !== input.providerReference
-    ) {
-      throw new Error("PAYMENT_PROVIDER_REFERENCE_MISMATCH");
-    }
-
+    assertCommercialIdentity(row, input);
     assertAttemptTransition(row.attempt_status, input.status);
+
     const currentBookingState = asBookingState(row.booking_state);
     const currentPaymentStatus = asPaymentStatus(row.booking_payment_status);
     const target = targetForEvent(
@@ -550,8 +567,7 @@ export async function recordVerifiedPaymentEventV1(
     await tx.query(
       `update payment_attempts_v1
           set provider_reference=coalesce(provider_reference, $2),
-              status=$3,
-              updated_at=$4
+              status=$3, updated_at=$4
         where id=$1`,
       [
         input.attemptId,
@@ -560,12 +576,14 @@ export async function recordVerifiedPaymentEventV1(
         receivedAt,
       ],
     );
-    await tx.query(
+    const intentUpdate = await tx.query<{ id: string }>(
       `update payment_intents_v1
           set status=$2, version=version+1, updated_at=$3
-        where id=$1 and version=$4`,
+        where id=$1 and version=$4
+        returning id`,
       [row.intent_id, target.intentStatus, receivedAt, intentVersion],
     );
+    if (!intentUpdate.rows.length) throw new Error("PAYMENT_INTENT_CONFLICT");
 
     let nextBookingVersion = bookingVersion;
     if (target.bookingState !== currentBookingState) {
@@ -707,7 +725,6 @@ export async function beginRefundV1(
     const timestamp = now.toISOString();
     const nextBookingVersion = bookingVersion + 1;
     const nextIntentVersion = intentVersion + 1;
-
     const bookingUpdate = await tx.query<{ id: string }>(
       `update bookings
           set state='refund_pending', version=version+1, updated_at=$2
@@ -723,12 +740,14 @@ export async function beginRefundV1(
     );
     if (!bookingUpdate.rows.length) throw new Error("PAYMENT_BOOKING_CONFLICT");
 
-    await tx.query(
+    const intentUpdate = await tx.query<{ id: string }>(
       `update payment_intents_v1
           set status='refund_pending', version=version+1, updated_at=$2
-        where id=$1 and version=$3`,
+        where id=$1 and version=$3
+        returning id`,
       [row.intent_id, timestamp, intentVersion],
     );
+    if (!intentUpdate.rows.length) throw new Error("PAYMENT_INTENT_CONFLICT");
 
     await appendBookingStateEvent(tx, {
       bookingId: input.bookingId,
