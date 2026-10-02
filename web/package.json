@@ -17,7 +17,8 @@
     "test:pages": "playwright test --config playwright.pages.config.ts",
     "supplier:template": "tsx scripts/supplier-intake-check.mjs --template",
     "supplier:check": "tsx scripts/supplier-intake-check.mjs",
-    "test:db": "tsx scripts/postgres-booking-integration.mjs",
+    "test:db": "tsx scripts/postgres-booking-integration.mjs && tsx scripts/postgres-payment-contract-v1.mjs",
+    "test:payment-contract": "tsx scripts/postgres-payment-contract-v1.mjs",
     "db:migrate:plan": "node scripts/postgres-migrate.mjs --plan",
     "db:migrate": "node scripts/postgres-migrate.mjs --apply"
   },
