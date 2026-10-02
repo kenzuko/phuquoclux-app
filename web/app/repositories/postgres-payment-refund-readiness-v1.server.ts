@@ -182,9 +182,11 @@ export async function prepareOrReplayPaymentRefundV1(
   const existing = await readExistingCommand(database, input);
   if (existing) return { outcome: "replayed", ...existing };
 
-  await assertRefundTargetReady(database, input);
-
   try {
+    // Both the readiness check and state transition are inside the same race
+    // recovery boundary. Another request may commit refund_pending after the
+    // initial replay check but before either of these operations runs.
+    await assertRefundTargetReady(database, input);
     await beginRefundV1(database, input, now);
   } catch (error) {
     if (!(error instanceof Error) || error.message !== "PAYMENT_REFUND_VERSION_CONFLICT") {
