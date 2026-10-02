@@ -1,15 +1,12 @@
 #!/usr/bin/env node
 /**
- * Payment Contract V1 upgrade preflight.
+ * Payment Contract V1 tracked-migration preflight.
  *
- * Builds the current tracked migration schema first, then overlays the offline
- * payment contract on the same disposable PostgreSQL database. The overlay is
- * intentionally NOT registered in the production migration ledger yet.
+ * Applies the full tracked migration set to an isolated PostgreSQL database and
+ * verifies that Payment Contract V1 is now present in the migration ledger and
+ * sits on the expected booking schema.
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { applyMigrations } from "./postgres-migrations.mjs";
 
@@ -21,48 +18,31 @@ if (!url || new URL(url).pathname !== "/phuquoclux_contract_test") {
 }
 
 const database = "phuquoclux_contract_test";
-const contractPath = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "../db/contracts/payment_contract_v1.sql",
-);
-const contractSql = readFileSync(contractPath, "utf8");
-
 const migrationRun = await applyMigrations(url, `APPLY:${database}`);
 assert.ok(
   migrationRun.migrations.length > 0 &&
     migrationRun.migrations.every((item) => item.status === "applied"),
-  "all tracked base migrations must be applied before payment overlay",
+  "all tracked migrations must be applied",
+);
+assert.ok(
+  migrationRun.migrations.some(
+    (item) => item.filename === "0007_payment_contract_v1.sql" && item.status === "applied",
+  ),
+  "Payment Contract V1 must be a tracked migration",
 );
 
 const client = new pg.Client({ connectionString: url });
 await client.connect();
 try {
-  const beforeLedger = await client.query(
+  const ledger = await client.query(
     `select filename, checksum
        from pql_schema_migrations
       order by filename`,
   );
-  assert.ok(beforeLedger.rows.length > 0, "base migration ledger must exist");
   assert.equal(
-    beforeLedger.rows.some((row) => row.filename === "payment_contract_v1.sql"),
-    false,
-    "offline payment contract must not already be a tracked production migration",
-  );
-
-  // Apply twice: the upgrade overlay itself must be safe to re-run on the
-  // current tracked schema while it remains outside the migration runner.
-  await client.query(contractSql);
-  await client.query(contractSql);
-
-  const afterLedger = await client.query(
-    `select filename, checksum
-       from pql_schema_migrations
-      order by filename`,
-  );
-  assert.deepEqual(
-    afterLedger.rows,
-    beforeLedger.rows,
-    "payment overlay must not mutate the tracked migration ledger",
+    ledger.rows.some((row) => row.filename === "0007_payment_contract_v1.sql"),
+    true,
+    "payment production migration must be recorded in the ledger",
   );
 
   const tables = await client.query(
@@ -88,11 +68,11 @@ try {
   assert.deepEqual(
     bookingColumns.rows.map((row) => row.column_name),
     ["currency", "payment_status", "quote_id", "state", "total_amount", "version"],
-    "payment overlay must sit on the expected current booking contract",
+    "payment migration must sit on the expected current booking contract",
   );
 
   console.log(
-    `postgres-payment-upgrade-preflight-v1: ok (${beforeLedger.rows.length} tracked migrations + offline payment overlay)`,
+    `postgres-payment-upgrade-preflight-v1: ok (${ledger.rows.length} tracked migrations including Payment Contract V1)`,
   );
 } finally {
   await client.end();
