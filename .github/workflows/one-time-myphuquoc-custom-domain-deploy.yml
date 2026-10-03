@@ -32,7 +32,7 @@ jobs:
       - name: Audit live homepage in a real browser
         working-directory: web
         run: |
-          cat > /tmp/live-audit.mjs <<'NODE'
+          cat > live-audit.mjs <<'NODE'
           import { chromium } from '@playwright/test';
           import fs from 'node:fs';
           const browser = await chromium.launch({headless:true});
@@ -54,25 +54,26 @@ jobs:
             bodyOpacity: getComputedStyle(document.body).opacity,
             textLength: document.body.innerText.length,
           }));
-          await page.screenshot({ path:'/tmp/myphuquoc-live-mobile.png', fullPage:true });
-          fs.writeFileSync('/tmp/myphuquoc-live.txt', JSON.stringify({
+          await page.screenshot({ path:'myphuquoc-live-mobile.png', fullPage:true });
+          fs.writeFileSync('myphuquoc-live.txt', JSON.stringify({
             status: response?.status(), title, h1, brand, metrics, consoleErrors, pageErrors, bodyText
           }, null, 2));
-          console.log(fs.readFileSync('/tmp/myphuquoc-live.txt','utf8'));
+          console.log(fs.readFileSync('myphuquoc-live.txt','utf8'));
           if (response?.status() !== 200) process.exit(2);
           if (!title.includes('My Phu Quoc')) process.exit(3);
           if (!bodyText.includes('Phú Quốc')) process.exit(4);
           if (metrics.textLength < 200) process.exit(5);
           if (metrics.bodyVisibility === 'hidden' || metrics.bodyOpacity === '0') process.exit(6);
+          if (pageErrors.length) process.exit(7);
           await browser.close();
           NODE
-          node /tmp/live-audit.mjs
+          node live-audit.mjs
       - name: Upload live browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: myphuquoc-live-browser-audit
           path: |
-            /tmp/myphuquoc-live-mobile.png
-            /tmp/myphuquoc-live.txt
+            web/myphuquoc-live-mobile.png
+            web/myphuquoc-live.txt
           if-no-files-found: warn
