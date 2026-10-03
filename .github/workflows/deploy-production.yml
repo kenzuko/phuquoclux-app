@@ -46,8 +46,8 @@ jobs:
 
       - name: Check production deployment gate
         env:
-          DEPLOY_ENABLED: ${{ vars.PHUQUOCLUX_DEPLOY_ENABLED }}
-          MAP_STYLE_URL: ${{ vars.PHUQUOCLUX_MAP_STYLE_URL }}
+          DEPLOY_ENABLED: ${{ vars.PHUQUOCLUX_DEPLOY_ENABLED || secrets.PHUQUOCLUX_DEPLOY_ENABLED }}
+          MAP_STYLE_URL: ${{ vars.PHUQUOCLUX_MAP_STYLE_URL || secrets.PHUQUOCLUX_MAP_STYLE_URL }}
           CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
@@ -75,7 +75,7 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          MAP_STYLE_URL: ${{ vars.PHUQUOCLUX_MAP_STYLE_URL }}
+          MAP_STYLE_URL: ${{ vars.PHUQUOCLUX_MAP_STYLE_URL || secrets.PHUQUOCLUX_MAP_STYLE_URL }}
         run: |
           npx wrangler deploy \
             --var "MAP_STYLE_URL:$MAP_STYLE_URL" \
