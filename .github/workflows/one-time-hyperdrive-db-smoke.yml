@@ -45,9 +45,13 @@ jobs:
         run: |
           set -euo pipefail
           sleep 5
-          curl --fail --silent --show-error \
+          status=$(curl --silent --show-error \
             --retry 10 --retry-delay 2 --retry-all-errors \
-            "$SMOKE_URL" -o /tmp/hyperdrive-db-smoke.json
+            -o /tmp/hyperdrive-db-smoke.json -w '%{http_code}' "$SMOKE_URL")
+          echo "Smoke HTTP status: $status"
+          cat /tmp/hyperdrive-db-smoke.json
+          echo
+          test "$status" = "200"
           node <<'NODE'
           const fs = require('fs');
           const p = JSON.parse(fs.readFileSync('/tmp/hyperdrive-db-smoke.json', 'utf8'));
@@ -62,15 +66,15 @@ jobs:
             ['write inserted inside transaction', p.writeInserted === true],
             ['write visible inside transaction', p.writeVisibleInsideTransaction === true],
             ['write rolled back cleanly', p.writeRolledBack === true],
+            ['booking writer created inside transaction', p.writerOutcome === 'created'],
+            ['booking writer rows visible inside transaction', p.writerRowsVisibleInsideTransaction === true],
+            ['booking writer rolled back cleanly', p.writerRolledBackCleanly === true],
           ];
           for (const [name, pass] of checks) {
             console.log(`${pass ? 'PASS' : 'FAIL'} ${name}`);
             if (!pass) process.exitCode = 1;
           }
-          if (process.exitCode) {
-            console.error(JSON.stringify(p, null, 2));
-            process.exit(process.exitCode);
-          }
+          if (process.exitCode) process.exit(process.exitCode);
           console.log(`PASS bookingCount=${p.bookingCount}`);
           NODE
 
