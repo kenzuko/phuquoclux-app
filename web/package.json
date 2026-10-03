@@ -10,7 +10,7 @@
     "typecheck": "react-router typegen && tsc --noEmit",
     "deploy": "npm run build && wrangler deploy",
     "check": "npm run typecheck && npm run test:domain && npm run build && wrangler deploy --dry-run",
-    "test:domain": "tsx scripts/domain-check.mjs && tsx scripts/supplier-intake-selftest.mjs && tsx scripts/payment-provider-contract-v1.mjs && tsx scripts/payment-provider-operations-v1.mjs && tsx scripts/payment-provider-bundle-v1.mjs && tsx scripts/payment-webhook-processor-v1.mjs && tsx scripts/payment-provider-registry-v1.mjs && tsx scripts/payment-runtime-gate-v1.mjs && tsx scripts/payment-production-assembly-v1.mjs && node scripts/payment-canonical-boundary-v1.mjs && node scripts/commerce-production-lock-v1.mjs",
+    "test:domain": "tsx scripts/domain-check-runner.mjs && tsx scripts/supplier-intake-selftest.mjs && tsx scripts/payment-provider-contract-v1.mjs && tsx scripts/payment-provider-operations-v1.mjs && tsx scripts/payment-provider-bundle-v1.mjs && tsx scripts/payment-webhook-processor-v1.mjs && tsx scripts/payment-provider-registry-v1.mjs && tsx scripts/payment-runtime-gate-v1.mjs && tsx scripts/payment-production-assembly-v1.mjs && node scripts/payment-canonical-boundary-v1.mjs && node scripts/commerce-production-lock-v1.mjs",
     "test:visual": "playwright test",
     "build:pages": "vite build --config vite.pages.config.ts",
     "dev:pages": "vite --config vite.pages.config.ts --host 127.0.0.1 --port 4174",
