@@ -23,7 +23,7 @@ async function readyMap(page: import("@playwright/test").Page) {
 
 test("Home: actual React layout, no horizontal overflow, renderable map", async ({ page }, testInfo) => {
   await open(page);
-  await expect(page.getByText("PHUQUOCLUX V1 - XEM THỬ")).toBeVisible();
+  await expect(page.getByText("MY PHU QUOC - XEM THỬ")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Phú Quốc", exact: true })).toBeVisible();
   await expect(page.locator(".search-panel select[name=pax]")).toHaveValue("2");
   await readyMap(page);
