@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "phuquoclux-hyperdrive-smoke",
+  "main": "./scripts/hyperdrive-db-smoke-worker.ts",
+  "compatibility_date": "2026-09-29",
+  "compatibility_flags": ["nodejs_compat"],
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "e5470089fa104a0fb3221d9769ec9474"
+    }
+  ]
+}
