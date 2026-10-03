@@ -111,7 +111,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
 export function meta() {
   return [
-    { title: "Bản đồ Phú Quốc | PhuQuocLux" },
+    { title: "Bản đồ Phú Quốc | My Phu Quoc" },
     {
       name: "description",
       content: "Khám phá tour, vé, xe và địa điểm trên bản đồ Phú Quốc.",
