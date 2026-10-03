@@ -59,6 +59,9 @@ jobs:
             ['booking count returned', /^\d+$/.test(String(p.bookingCount ?? ''))],
             ['migration ledger denied', p.migrationLedgerDenied === true],
             ['permission-denied SQLSTATE', p.migrationLedgerErrorCode === '42501'],
+            ['write inserted inside transaction', p.writeInserted === true],
+            ['write visible inside transaction', p.writeVisibleInsideTransaction === true],
+            ['write rolled back cleanly', p.writeRolledBack === true],
           ];
           for (const [name, pass] of checks) {
             console.log(`${pass ? 'PASS' : 'FAIL'} ${name}`);
