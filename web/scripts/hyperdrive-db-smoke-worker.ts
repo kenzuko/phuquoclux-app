@@ -1,9 +1,21 @@
 import { Client } from "pg";
+import type { PhuQuocLuxEnv } from "../app/cloudflare-context";
 import type { Booking, Quote } from "../app/domain/commerce";
+import {
+  hashManageBookingToken,
+  issueManageBookingAccess,
+  redeemManageBookingAccess,
+  revokeManageBookingAccess,
+} from "../app/repositories/postgres-booking-access.server";
 import {
   persistManualBookingRequest,
   type SqlTransactionManager,
 } from "../app/repositories/postgres-booking-core.server";
+import {
+  hashManageBookingSessionToken,
+  resolveManageBookingSession,
+} from "../app/repositories/postgres-booking-session.server";
+import { exchangeManageBookingRequest } from "../app/services/manage-booking-exchange.server";
 
 type Env = {
   HYPERDRIVE: {
@@ -143,39 +155,44 @@ export default {
         ["sign"],
       );
 
+      const txAdapter = {
+        async query<Row extends object>(sql: string, parameters: readonly unknown[]) {
+          const queryResult = await client.query<Row>(sql, [...parameters]);
+          return { rows: queryResult.rows };
+        },
+      };
+
+      async function seedCatalogRows() {
+        await client.query(
+          `insert into public.products
+            (id, slug, product_type, name, status, payload)
+           values
+            ('tour-three-islands-cano', 'hyperdrive-smoke-tour', 'tour',
+             'Hyperdrive Smoke Tour', 'active', '{}'::jsonb)
+           on conflict (id) do nothing`,
+        );
+        await client.query(
+          `insert into public.offers
+            (id, product_id, provider_id, status, availability_mode,
+             pricing_mode, price_amount, price_currency, price_basis,
+             price_source, price_state, policy, constraints,
+             operational_fields, required_operational_fields)
+           values
+            ('tour-three-islands-cano:shared', 'tour-three-islands-cano',
+             'jotrip-manual-request', 'active', 'request', 'flat',
+             850000, 'VND', 'per_person', 'prototype', 'estimated',
+             '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, '[]'::jsonb)
+           on conflict (id) do nothing`,
+        );
+      }
+
       let writerRowsVisibleInsideTransaction = false;
       const rollbackManager: SqlTransactionManager = {
         async transaction<T>(work: Parameters<SqlTransactionManager["transaction"]>[0]) {
           await client.query("begin");
           try {
-            await client.query(
-              `insert into public.products
-                (id, slug, product_type, name, status, payload)
-               values
-                ('tour-three-islands-cano', 'hyperdrive-smoke-tour', 'tour',
-                 'Hyperdrive Smoke Tour', 'active', '{}'::jsonb)
-               on conflict (id) do nothing`,
-            );
-            await client.query(
-              `insert into public.offers
-                (id, product_id, provider_id, status, availability_mode,
-                 pricing_mode, price_amount, price_currency, price_basis,
-                 price_source, price_state, policy, constraints,
-                 operational_fields, required_operational_fields)
-               values
-                ('tour-three-islands-cano:shared', 'tour-three-islands-cano',
-                 'jotrip-manual-request', 'active', 'request', 'flat',
-                 850000, 'VND', 'per_person', 'prototype', 'estimated',
-                 '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, '[]'::jsonb)
-               on conflict (id) do nothing`,
-            );
-
-            const result = await work({
-              async query<Row extends object>(sql: string, parameters: readonly unknown[]) {
-                const queryResult = await client.query<Row>(sql, [...parameters]);
-                return { rows: queryResult.rows };
-              },
-            });
+            await seedCatalogRows();
+            const result = await work(txAdapter);
 
             const visible = await client.query<{
               booking_count: string;
@@ -234,6 +251,188 @@ export default {
         writerAfter?.idempotency_count === "0" &&
         writerAfter?.outbox_count === "0";
 
+      let guestAccessIssued = false;
+      let guestAccessRawTokenNotPersisted = false;
+      let guestAccessRedeemed = false;
+      let guestExchangeStatus = 0;
+      let guestCookieSecure = false;
+      let guestSessionResolved = false;
+      let guestSessionRawTokenNotPersisted = false;
+      let guestParentRevocationInvalidatesSession = false;
+      let guestFlowRowsVisibleInsideTransaction = false;
+
+      await client.query("begin");
+      try {
+        await seedCatalogRows();
+        const passthroughManager: SqlTransactionManager = {
+          async transaction<T>(work: Parameters<SqlTransactionManager["transaction"]>[0]) {
+            return work(txAdapter) as Promise<T>;
+          },
+        };
+
+        const guestWriter = await persistManualBookingRequest(
+          passthroughManager,
+          {
+            quote: writerQuote,
+            booking: writerBooking,
+            fingerprintKey,
+          },
+          writerNow,
+        );
+        if (guestWriter.outcome !== "created") {
+          throw new Error("GUEST_FLOW_BOOKING_NOT_CREATED");
+        }
+
+        const accessExpiresAt = new Date(writerNow.getTime() + 60 * 60_000).toISOString();
+        const issued = await issueManageBookingAccess(
+          passthroughManager,
+          writerBookingId,
+          accessExpiresAt,
+          writerNow,
+        );
+        guestAccessIssued = /^[0-9a-f]{64}$/.test(issued.rawToken);
+
+        const expectedAccessHash = await hashManageBookingToken(issued.rawToken);
+        const accessRow = await client.query<{ token_hash: string }>(
+          `select token_hash
+             from public.booking_access_tokens
+            where booking_id = $1::uuid
+            order by created_at desc
+            limit 1`,
+          [writerBookingId],
+        );
+        guestAccessRawTokenNotPersisted =
+          Boolean(expectedAccessHash) &&
+          accessRow.rows[0]?.token_hash === expectedAccessHash &&
+          accessRow.rows[0]?.token_hash !== issued.rawToken;
+
+        const redeemed = await redeemManageBookingAccess(
+          passthroughManager,
+          issued.rawToken,
+          writerNow,
+        );
+        guestAccessRedeemed =
+          redeemed?.bookingId === writerBookingId &&
+          redeemed?.purpose === "manage_booking";
+
+        const manageEnv: PhuQuocLuxEnv = {
+          MANAGE_BOOKING_EXCHANGE_ENABLED: "true",
+          MANAGE_BOOKING_CANONICAL_ORIGIN: "https://booking-smoke.invalid",
+          MANAGE_BOOKING_SESSION_TTL_MINUTES: "30",
+        };
+        const exchangeResponse = await exchangeManageBookingRequest({
+          request: new Request("https://booking-smoke.invalid/manage/exchange", {
+            method: "POST",
+          }),
+          rawAccessToken: issued.rawToken,
+          env: manageEnv,
+          database: passthroughManager,
+          now: writerNow,
+        });
+        guestExchangeStatus = exchangeResponse.status;
+        const setCookie = exchangeResponse.headers.get("set-cookie") ?? "";
+        guestCookieSecure =
+          setCookie.startsWith("__Host-pql_manage=") &&
+          /; Path=\//.test(setCookie) &&
+          /; HttpOnly/.test(setCookie) &&
+          /; Secure/.test(setCookie) &&
+          /; SameSite=Lax/.test(setCookie);
+
+        const rawSessionToken =
+          setCookie.match(/__Host-pql_manage=([0-9a-f]{64})/)?.[1] ?? null;
+        const expectedSessionHash = rawSessionToken
+          ? await hashManageBookingSessionToken(rawSessionToken)
+          : null;
+        const sessionRow = await client.query<{
+          id: string;
+          session_hash: string;
+        }>(
+          `select id, session_hash
+             from public.booking_access_sessions
+            where booking_id = $1::uuid
+            order by created_at desc
+            limit 1`,
+          [writerBookingId],
+        );
+        guestSessionRawTokenNotPersisted =
+          Boolean(rawSessionToken && expectedSessionHash) &&
+          sessionRow.rows[0]?.session_hash === expectedSessionHash &&
+          sessionRow.rows[0]?.session_hash !== rawSessionToken;
+
+        const resolved = rawSessionToken
+          ? await resolveManageBookingSession(
+              passthroughManager,
+              rawSessionToken,
+              writerNow,
+            )
+          : null;
+        guestSessionResolved =
+          resolved?.bookingId === writerBookingId &&
+          resolved?.sessionId === sessionRow.rows[0]?.id;
+
+        if (!redeemed) {
+          throw new Error("GUEST_FLOW_ACCESS_REDEEM_FAILED");
+        }
+        const revoked = await revokeManageBookingAccess(
+          passthroughManager,
+          redeemed.grantId,
+          writerBookingId,
+          writerNow,
+        );
+        const afterParentRevoke = rawSessionToken
+          ? await resolveManageBookingSession(
+              passthroughManager,
+              rawSessionToken,
+              new Date(writerNow.getTime() + 1).toISOString() as unknown as Date,
+            )
+          : null;
+        guestParentRevocationInvalidatesSession = revoked && afterParentRevoke === null;
+
+        const visible = await client.query<{
+          booking_count: string;
+          access_count: string;
+          session_count: string;
+        }>(
+          `select
+             (select count(*)::text from public.bookings where id = $1::uuid) as booking_count,
+             (select count(*)::text from public.booking_access_tokens where booking_id = $1::uuid) as access_count,
+             (select count(*)::text from public.booking_access_sessions where booking_id = $1::uuid) as session_count`,
+          [writerBookingId],
+        );
+        guestFlowRowsVisibleInsideTransaction =
+          visible.rows[0]?.booking_count === "1" &&
+          visible.rows[0]?.access_count === "1" &&
+          visible.rows[0]?.session_count === "1";
+      } finally {
+        await client.query("rollback");
+      }
+
+      const guestAfterRollback = await client.query<{
+        booking_count: string;
+        quote_count: string;
+        idempotency_count: string;
+        outbox_count: string;
+        access_count: string;
+        session_count: string;
+      }>(
+        `select
+           (select count(*)::text from public.bookings where id = $1::uuid) as booking_count,
+           (select count(*)::text from public.quotes where id = $2::uuid) as quote_count,
+           (select count(*)::text from public.idempotency_keys where request_id = $3::uuid) as idempotency_count,
+           (select count(*)::text from public.outbox_events where aggregate_id = $4::text) as outbox_count,
+           (select count(*)::text from public.booking_access_tokens where booking_id = $1::uuid) as access_count,
+           (select count(*)::text from public.booking_access_sessions where booking_id = $1::uuid) as session_count`,
+        [writerBookingId, writerQuoteId, writerRequestId, writerBookingId],
+      );
+      const guestAfter = guestAfterRollback.rows[0];
+      const guestFlowRolledBackCleanly =
+        guestAfter?.booking_count === "0" &&
+        guestAfter?.quote_count === "0" &&
+        guestAfter?.idempotency_count === "0" &&
+        guestAfter?.outbox_count === "0" &&
+        guestAfter?.access_count === "0" &&
+        guestAfter?.session_count === "0";
+
       return Response.json({
         ok: true,
         database: identity.rows[0]?.database_name ?? null,
@@ -248,6 +447,16 @@ export default {
         writerOutcome: writerResult.outcome,
         writerRowsVisibleInsideTransaction,
         writerRolledBackCleanly,
+        guestAccessIssued,
+        guestAccessRawTokenNotPersisted,
+        guestAccessRedeemed,
+        guestExchangeStatus,
+        guestCookieSecure,
+        guestSessionResolved,
+        guestSessionRawTokenNotPersisted,
+        guestParentRevocationInvalidatesSession,
+        guestFlowRowsVisibleInsideTransaction,
+        guestFlowRolledBackCleanly,
       });
     } catch (error) {
       const candidate = error as { code?: string; message?: string };
