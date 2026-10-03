@@ -27,18 +27,6 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Fix smoke-only Date argument
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('scripts/hyperdrive-db-smoke-worker.ts')
-          s = p.read_text()
-          old = 'new Date(writerNow.getTime() + 1).toISOString() as unknown as Date'
-          new = 'new Date(writerNow.getTime() + 1)'
-          assert old in s
-          p.write_text(s.replace(old, new))
-          PY
-
       - name: Deploy temporary Hyperdrive smoke Worker
         id: deploy
         env:
@@ -51,7 +39,7 @@ jobs:
           test -n "$url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
-      - name: Run real DB query through Hyperdrive
+      - name: Run outbox lease and retry checks
         env:
           SMOKE_URL: ${{ steps.deploy.outputs.url }}
         run: |
@@ -59,7 +47,7 @@ jobs:
           status="000"
           for attempt in $(seq 1 15); do
             status=$(curl --silent --show-error \
-              -o /tmp/hyperdrive-db-smoke.json -w '%{http_code}' "$SMOKE_URL" || true)
+              -o /tmp/hyperdrive-outbox-smoke.json -w '%{http_code}' "$SMOKE_URL" || true)
             if [ "$status" != "404" ] && [ "$status" != "000" ]; then
               break
             fi
@@ -67,43 +55,26 @@ jobs:
             sleep 2
           done
           echo "Smoke HTTP status: $status"
-          cat /tmp/hyperdrive-db-smoke.json || true
+          cat /tmp/hyperdrive-outbox-smoke.json || true
           echo
           test "$status" = "200"
           node <<'NODE'
           const fs = require('fs');
-          const p = JSON.parse(fs.readFileSync('/tmp/hyperdrive-db-smoke.json', 'utf8'));
+          const p = JSON.parse(fs.readFileSync('/tmp/hyperdrive-outbox-smoke.json', 'utf8'));
           const checks = [
             ['ok=true', p.ok === true],
-            ['database=phuquoclux_prod', p.database === 'phuquoclux_prod'],
-            ['user=phuquoclux_runtime', p.user === 'phuquoclux_runtime'],
-            ['bookings table visible', p.bookingsTable === 'bookings'],
-            ['booking count returned', /^\d+$/.test(String(p.bookingCount ?? ''))],
-            ['migration ledger denied', p.migrationLedgerDenied === true],
-            ['permission-denied SQLSTATE', p.migrationLedgerErrorCode === '42501'],
-            ['write inserted inside transaction', p.writeInserted === true],
-            ['write visible inside transaction', p.writeVisibleInsideTransaction === true],
-            ['write rolled back cleanly', p.writeRolledBack === true],
-            ['booking writer created inside transaction', p.writerOutcome === 'created'],
-            ['booking writer rows visible inside transaction', p.writerRowsVisibleInsideTransaction === true],
-            ['booking writer rolled back cleanly', p.writerRolledBackCleanly === true],
-            ['guest access issued', p.guestAccessIssued === true],
-            ['raw access token not persisted', p.guestAccessRawTokenNotPersisted === true],
-            ['guest access redeemed', p.guestAccessRedeemed === true],
-            ['manage exchange returns 204', p.guestExchangeStatus === 204],
-            ['session cookie security flags', p.guestCookieSecure === true],
-            ['manage session resolves booking', p.guestSessionResolved === true],
-            ['raw session token not persisted', p.guestSessionRawTokenNotPersisted === true],
-            ['parent revoke invalidates session', p.guestParentRevocationInvalidatesSession === true],
-            ['guest rows visible inside transaction', p.guestFlowRowsVisibleInsideTransaction === true],
-            ['guest flow rolled back cleanly', p.guestFlowRolledBackCleanly === true],
+            ['success event published', p.successPublished === true],
+            ['stale lease rejected', p.staleLeaseRejected === true],
+            ['retry scheduled', p.retryScheduled === true],
+            ['raw provider error not persisted', p.noRawProviderErrorPersisted === true],
+            ['exactly one success claimed', p.successSummary?.claimed === 1],
+            ['exactly one success published', p.successSummary?.published === 1],
           ];
           for (const [name, pass] of checks) {
             console.log(`${pass ? 'PASS' : 'FAIL'} ${name}`);
             if (!pass) process.exitCode = 1;
           }
           if (process.exitCode) process.exit(process.exitCode);
-          console.log(`PASS bookingCount=${p.bookingCount}`);
           NODE
 
       - name: Delete temporary smoke Worker
