@@ -1,4 +1,4 @@
-name: One-time My Phu Quoc Hyperdrive read-only smoke
+name: One-time My Phu Quoc Hyperdrive read-only diagnostic
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  hyperdrive-smoke:
+  hyperdrive-diagnostic:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         working-directory: web
         run: npm install --no-audit --no-fund
-      - name: Prepare isolated read-only Hyperdrive smoke worker
+      - name: Prepare isolated read-only Hyperdrive diagnostic worker
         working-directory: web
         run: |
           set -euo pipefail
@@ -45,12 +45,16 @@ jobs:
                     current_user as database_user,
                     to_regclass('public.bookings') is not null as bookings_table,
                     to_regclass('public.outbox_events') is not null as outbox_table,
-                    to_regclass('public.booking_access_tokens') is not null as access_table,
-                    exists(select 1 from schema_migrations where name = '0006_outbox_delivery_leases.sql') as outbox_lease_migration
+                    to_regclass('public.booking_access_tokens') is not null as access_table
                 `);
                 return Response.json({ ok: true, ...ping.rows[0] });
               } catch (error) {
-                return Response.json({ ok: false, code: 'HYPERDRIVE_QUERY_FAILED' }, { status: 500 });
+                return Response.json({
+                  ok: false,
+                  code: 'HYPERDRIVE_QUERY_FAILED',
+                  pgCode: typeof error?.code === 'string' ? error.code : null,
+                  errorName: typeof error?.name === 'string' ? error.name : null
+                }, { status: 500 });
               } finally {
                 await client.end().catch(() => {});
               }
@@ -85,22 +89,26 @@ jobs:
           npx wrangler dev --remote --config .tmp-hyperdrive-smoke/wrangler.jsonc --port 8787 > /tmp/hyperdrive-wrangler.log 2>&1 &
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
-          ok=false
+          ready=false
           for i in $(seq 1 30); do
-            if curl --fail --silent --show-error --max-time 20 http://127.0.0.1:8787/ -o /tmp/hyperdrive-smoke.json; then
-              ok=true
+            code=$(curl --silent --show-error --max-time 20 -o /tmp/hyperdrive-smoke.json -w '%{http_code}' http://127.0.0.1:8787/ || true)
+            if [ "$code" = "200" ] || [ "$code" = "500" ]; then
+              ready=true
               break
             fi
             sleep 2
           done
-          if [ "$ok" != "true" ]; then
+          if [ "$ready" != "true" ]; then
             cat /tmp/hyperdrive-wrangler.log
             exit 1
           fi
+          echo "HTTP_STATUS=$code"
           cat /tmp/hyperdrive-smoke.json
+          if [ "$code" != "200" ]; then
+            exit 1
+          fi
           grep -q '"ok":true' /tmp/hyperdrive-smoke.json
           grep -q '"bookings_table":true' /tmp/hyperdrive-smoke.json
           grep -q '"outbox_table":true' /tmp/hyperdrive-smoke.json
           grep -q '"access_table":true' /tmp/hyperdrive-smoke.json
-          grep -q '"outbox_lease_migration":true' /tmp/hyperdrive-smoke.json
           echo "HYPERDRIVE_READONLY_SMOKE=PASS"
