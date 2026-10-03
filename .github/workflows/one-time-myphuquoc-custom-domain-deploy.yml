@@ -1,4 +1,4 @@
-name: One-time My Phu Quoc Hyperdrive read-only diagnostic
+name: One-time My Phu Quoc Hyperdrive outbox isolation test
 
 on:
   push:
@@ -11,9 +11,9 @@ permissions:
   contents: read
 
 jobs:
-  hyperdrive-diagnostic:
+  hyperdrive-outbox:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - name: Checkout approved main
         uses: actions/checkout@v4
@@ -26,46 +26,267 @@ jobs:
       - name: Install dependencies
         working-directory: web
         run: npm install --no-audit --no-fund
-      - name: Prepare isolated read-only Hyperdrive diagnostic worker
+      - name: Prepare isolated Hyperdrive contract worker
         working-directory: web
         run: |
           set -euo pipefail
           mkdir -p .tmp-hyperdrive-smoke
-          cat > .tmp-hyperdrive-smoke/worker.mjs <<'NODE'
+          cat > .tmp-hyperdrive-smoke/worker.ts <<'NODE'
           import pg from 'pg';
+          import {
+            claimOutboxBatch,
+            markOutboxPublished,
+            scheduleOutboxRetry,
+          } from '../app/repositories/postgres-outbox.server';
+          import { processOutboxBatch } from '../app/services/outbox-publisher.server';
+          import {
+            importManageBookingDeliveryDerivationKey,
+            issueOrReuseManageBookingDeliveryAccess,
+          } from '../app/repositories/postgres-booking-delivery-access.server';
+          import { buildManageBookingLink } from '../app/services/manage-booking-delivery.server';
+          import { createResendManageBookingDeliveryProvider } from '../app/services/resend-manage-booking-delivery.server';
+
           const { Client } = pg;
+
+          function invariant(condition: unknown, code: string): asserts condition {
+            if (!condition) throw new Error(code);
+          }
+
+          function manager(client: pg.Client) {
+            return {
+              async transaction<T>(work: (tx: { query<Row extends object = Record<string, unknown>>(sql: string, parameters: readonly unknown[]): Promise<{ rows: Row[] }> }) => Promise<T>) {
+                await client.query('BEGIN');
+                try {
+                  const result = await work({
+                    async query<Row extends object = Record<string, unknown>>(sql: string, parameters: readonly unknown[]) {
+                      const response = await client.query<Row>(sql, [...parameters]);
+                      return { rows: response.rows };
+                    },
+                  });
+                  await client.query('COMMIT');
+                  return result;
+                } catch (error) {
+                  await client.query('ROLLBACK').catch(() => {});
+                  throw error;
+                }
+              },
+            };
+          }
+
           export default {
-            async fetch(_request, env) {
+            async fetch(_request: Request, env: { HYPERDRIVE: { connectionString: string } }) {
               const client = new Client({ connectionString: env.HYPERDRIVE.connectionString });
+              const steps: Record<string, unknown> = {};
               try {
                 await client.connect();
                 const ping = await client.query(`
-                  select
-                    current_database() as database_name,
-                    current_user as database_user,
-                    to_regclass('public.bookings') is not null as bookings_table,
-                    to_regclass('public.outbox_events') is not null as outbox_table,
-                    to_regclass('public.booking_access_tokens') is not null as access_table
+                  select current_database() as database_name,
+                         current_user as database_user,
+                         to_regclass('public.outbox_events') is not null as outbox_table
                 `);
-                return Response.json({ ok: true, ...ping.rows[0] });
+                invariant(ping.rows[0]?.outbox_table === true, 'PUBLIC_OUTBOX_SCHEMA_MISSING');
+                steps.runtime = ping.rows[0];
+
+                // All writes below are TEMP tables scoped to this one Hyperdrive
+                // connection. No public booking/outbox row is changed.
+                await client.query('create temp table outbox_events (like public.outbox_events including all) on commit preserve rows');
+                await client.query(`
+                  create temp table bookings (
+                    id uuid primary key
+                  ) on commit preserve rows
+                `);
+                await client.query(`
+                  create temp table booking_access_tokens (
+                    id uuid primary key,
+                    booking_id uuid not null,
+                    purpose text not null,
+                    token_hash text not null unique,
+                    created_at timestamptz not null,
+                    expires_at timestamptz not null,
+                    revoked_at timestamptz,
+                    last_used_at timestamptz
+                  ) on commit preserve rows
+                `);
+
+                const db = manager(client);
+                const eventId = crypto.randomUUID();
+                await client.query(
+                  `insert into outbox_events
+                    (id, event_name, aggregate_type, aggregate_id, aggregate_version,
+                     payload, status, attempts, created_at)
+                   values ($1, 'synthetic.hyperdrive.outbox', 'synthetic', $2, 1,
+                           '{"kind":"synthetic-hyperdrive"}'::jsonb, 'pending', 0,
+                           '2000-01-01T00:00:00.000Z')`,
+                  [eventId, crypto.randomUUID()],
+                );
+
+                const t0 = new Date('2026-10-03T10:10:00.000Z');
+                const first = await claimOutboxBatch(db, { limit: 1, leaseSeconds: 30, now: t0 });
+                invariant(first.length === 1 && first[0].id === eventId && first[0].attempts === 1, 'LEASE_FIRST_CLAIM_FAILED');
+
+                const blocked = await claimOutboxBatch(db, {
+                  limit: 1,
+                  leaseSeconds: 30,
+                  now: new Date('2026-10-03T10:10:10.000Z'),
+                });
+                invariant(blocked.length === 0, 'ACTIVE_LEASE_DID_NOT_BLOCK');
+
+                const reclaimed = await claimOutboxBatch(db, {
+                  limit: 1,
+                  leaseSeconds: 30,
+                  now: new Date('2026-10-03T10:10:31.000Z'),
+                });
+                invariant(reclaimed.length === 1 && reclaimed[0].id === eventId, 'LEASE_RECLAIM_FAILED');
+                invariant(reclaimed[0].attempts === 2, 'LEASE_RECLAIM_ATTEMPT_COUNT_FAILED');
+                invariant(reclaimed[0].leaseToken !== first[0].leaseToken, 'LEASE_TOKEN_NOT_ROTATED');
+
+                const staleAck = await markOutboxPublished(
+                  db,
+                  eventId,
+                  first[0].leaseToken,
+                  new Date('2026-10-03T10:10:32.000Z'),
+                );
+                invariant(staleAck === false, 'STALE_LEASE_ACK_NOT_BLOCKED');
+
+                const retry = await scheduleOutboxRetry(db, {
+                  eventId,
+                  leaseToken: reclaimed[0].leaseToken,
+                  errorCode: 'synthetic@example.invalid',
+                  now: new Date('2026-10-03T10:10:33.000Z'),
+                });
+                invariant(retry.outcome === 'retry_scheduled', 'RETRY_NOT_SCHEDULED');
+                invariant(retry.errorCode === 'DELIVERY_FAILED', 'RETRY_ERROR_NOT_SANITIZED');
+                invariant(retry.attempts === 2, 'RETRY_ATTEMPT_COUNT_INVALID');
+                invariant(retry.nextAttemptAt === '2026-10-03T10:15:33.000Z', 'RETRY_BACKOFF_INVALID');
+
+                const early = await claimOutboxBatch(db, {
+                  limit: 1,
+                  now: new Date('2026-10-03T10:15:32.000Z'),
+                });
+                invariant(early.length === 0, 'RETRY_CLAIMED_TOO_EARLY');
+
+                const third = await claimOutboxBatch(db, {
+                  limit: 1,
+                  now: new Date('2026-10-03T10:15:33.000Z'),
+                });
+                invariant(third.length === 1 && third[0].attempts === 3, 'RETRY_DUE_CLAIM_FAILED');
+                invariant(
+                  await markOutboxPublished(db, eventId, third[0].leaseToken, new Date('2026-10-03T10:15:34.000Z')) === true,
+                  'PUBLISH_ACK_FAILED',
+                );
+                invariant((await claimOutboxBatch(db, { limit: 1, now: new Date('2026-10-03T10:15:35.000Z') })).length === 0, 'PUBLISHED_EVENT_RECLAIMED');
+                steps.outboxLeaseRetry = 'PASS';
+
+                const thrownId = crypto.randomUUID();
+                await client.query(
+                  `insert into outbox_events
+                    (id, event_name, aggregate_type, aggregate_id, aggregate_version,
+                     payload, status, attempts, created_at)
+                   values ($1, 'synthetic.publisher.throw', 'synthetic', $2, 1,
+                           '{"kind":"synthetic"}'::jsonb, 'pending', 0,
+                           '2000-01-02T00:00:00.000Z')`,
+                  [thrownId, crypto.randomUUID()],
+                );
+                const summary = await processOutboxBatch(
+                  db,
+                  { async publish() { throw new Error('PRIVATE-SYNTHETIC@example.invalid'); } },
+                  { limit: 1, maxAttempts: 1, now: new Date('2026-10-03T10:16:00.000Z') },
+                );
+                invariant(summary.failedTerminal === 1 && summary.published === 0, 'PUBLISHER_THROW_CONTRACT_FAILED');
+                const storedThrow = await client.query('select status, last_error from outbox_events where id=$1', [thrownId]);
+                invariant(storedThrow.rows[0]?.status === 'failed', 'PUBLISHER_THROW_STATUS_INVALID');
+                invariant(storedThrow.rows[0]?.last_error === 'DELIVERY_FAILED', 'PUBLISHER_THROW_ERROR_NOT_SANITIZED');
+                steps.publisherSanitization = 'PASS';
+
+                // Retry-stable manage-booking capability. Temp tables shadow
+                // production tables, so this proves DB semantics without adding
+                // a real guest or booking.
+                const bookingId = crypto.randomUUID();
+                await client.query('insert into bookings (id) values ($1)', [bookingId]);
+                const keyA = await importManageBookingDeliveryDerivationKey('11'.repeat(32));
+                const keyB = await importManageBookingDeliveryDerivationKey('22'.repeat(32));
+                const firstAccess = await issueOrReuseManageBookingDeliveryAccess(
+                  db,
+                  bookingId,
+                  '2026-10-10T00:00:00.000Z',
+                  keyA,
+                  new Date('2026-10-03T10:20:00.000Z'),
+                );
+                const retryAccess = await issueOrReuseManageBookingDeliveryAccess(
+                  db,
+                  bookingId,
+                  '2026-10-10T00:00:00.000Z',
+                  keyA,
+                  new Date('2026-10-03T10:20:10.000Z'),
+                );
+                invariant(firstAccess.reused === false && retryAccess.reused === true, 'DELIVERY_CAPABILITY_REUSE_FLAG_INVALID');
+                invariant(firstAccess.grantId === retryAccess.grantId, 'DELIVERY_GRANT_NOT_REUSED');
+                invariant(firstAccess.rawToken === retryAccess.rawToken, 'DELIVERY_TOKEN_NOT_RETRY_STABLE');
+                const tokenRows = await client.query('select token_hash from booking_access_tokens where booking_id=$1', [bookingId]);
+                invariant(tokenRows.rows.length === 1, 'DELIVERY_TOKEN_ROW_COUNT_INVALID');
+                invariant(!JSON.stringify(tokenRows.rows).includes(firstAccess.rawToken), 'RAW_DELIVERY_TOKEN_PERSISTED');
+                const rotated = await issueOrReuseManageBookingDeliveryAccess(
+                  db,
+                  bookingId,
+                  '2026-10-10T00:00:00.000Z',
+                  keyB,
+                  new Date('2026-10-03T10:20:20.000Z'),
+                );
+                invariant(rotated.reused === false && rotated.rawToken !== firstAccess.rawToken, 'DERIVATION_KEY_ROTATION_FAILED');
+
+                const manageUrl = buildManageBookingLink('https://myphuquoc.com', firstAccess.rawToken);
+                invariant(manageUrl === `https://myphuquoc.com/manage#${firstAccess.rawToken}`, 'CANONICAL_MANAGE_URL_INVALID');
+
+                const calls: Array<{ headers: Headers; body: string }> = [];
+                const provider = createResendManageBookingDeliveryProvider({
+                  apiKey: 'synthetic-key',
+                  from: 'My Phu Quoc <synthetic@example.invalid>',
+                  fetcher: async (_url, init) => {
+                    calls.push({
+                      headers: new Headers(init?.headers),
+                      body: String(init?.body ?? ''),
+                    });
+                    return new Response(JSON.stringify({ id: 'synthetic-message-id' }), {
+                      status: 200,
+                      headers: { 'content-type': 'application/json' },
+                    });
+                  },
+                });
+                const request = {
+                  bookingId,
+                  channel: 'email' as const,
+                  destination: 'synthetic@example.invalid',
+                  manageUrl,
+                  expiresAt: firstAccess.expiresAt,
+                };
+                invariant((await provider.deliver(request)).accepted === true, 'DELIVERY_PROVIDER_FIRST_REJECTED');
+                invariant((await provider.deliver(request)).accepted === true, 'DELIVERY_PROVIDER_RETRY_REJECTED');
+                invariant(calls.length === 2, 'DELIVERY_PROVIDER_CALL_COUNT_INVALID');
+                invariant(calls[0].headers.get('Idempotency-Key') === `manage-booking/${bookingId}`, 'DELIVERY_IDEMPOTENCY_KEY_INVALID');
+                invariant(calls[1].headers.get('Idempotency-Key') === calls[0].headers.get('Idempotency-Key'), 'DELIVERY_IDEMPOTENCY_KEY_NOT_STABLE');
+                invariant(calls[1].body === calls[0].body, 'DELIVERY_RETRY_BODY_NOT_STABLE');
+                steps.deliveryRetryIdempotency = 'PASS';
+
+                return Response.json({ ok: true, steps });
               } catch (error) {
                 return Response.json({
                   ok: false,
-                  code: 'HYPERDRIVE_QUERY_FAILED',
+                  code: typeof error?.message === 'string' && /^[A-Z0-9_]+$/.test(error.message)
+                    ? error.message
+                    : 'HYPERDRIVE_OUTBOX_TEST_FAILED',
                   pgCode: typeof error?.code === 'string' ? error.code : null,
-                  errorName: typeof error?.name === 'string' ? error.name : null
                 }, { status: 500 });
               } finally {
                 await client.end().catch(() => {});
               }
-            }
+            },
           };
           NODE
           cat > .tmp-hyperdrive-smoke/wrangler.jsonc <<'JSON'
           {
             "$schema": "../node_modules/wrangler/config-schema.json",
-            "name": "myphuquoc-hyperdrive-readonly-smoke",
-            "main": "./worker.mjs",
+            "name": "myphuquoc-hyperdrive-outbox-isolation-test",
+            "main": "./worker.ts",
             "compatibility_date": "2026-09-29",
             "compatibility_flags": ["nodejs_compat"],
             "workers_dev": true,
@@ -77,21 +298,19 @@ jobs:
             ]
           }
           JSON
-      - name: Run remote Worker against actual Hyperdrive binding
+      - name: Exercise leases retry and idempotency through Hyperdrive
         working-directory: web
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          test -n "$CLOUDFLARE_API_TOKEN"
-          test -n "$CLOUDFLARE_ACCOUNT_ID"
           npx wrangler dev --remote --config .tmp-hyperdrive-smoke/wrangler.jsonc --port 8787 > /tmp/hyperdrive-wrangler.log 2>&1 &
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           ready=false
           for i in $(seq 1 30); do
-            code=$(curl --silent --show-error --max-time 20 -o /tmp/hyperdrive-smoke.json -w '%{http_code}' http://127.0.0.1:8787/ || true)
+            code=$(curl --silent --show-error --max-time 30 -o /tmp/hyperdrive-outbox.json -w '%{http_code}' http://127.0.0.1:8787/ || true)
             if [ "$code" = "200" ] || [ "$code" = "500" ]; then
               ready=true
               break
@@ -103,12 +322,10 @@ jobs:
             exit 1
           fi
           echo "HTTP_STATUS=$code"
-          cat /tmp/hyperdrive-smoke.json
-          if [ "$code" != "200" ]; then
-            exit 1
-          fi
-          grep -q '"ok":true' /tmp/hyperdrive-smoke.json
-          grep -q '"bookings_table":true' /tmp/hyperdrive-smoke.json
-          grep -q '"outbox_table":true' /tmp/hyperdrive-smoke.json
-          grep -q '"access_table":true' /tmp/hyperdrive-smoke.json
-          echo "HYPERDRIVE_READONLY_SMOKE=PASS"
+          cat /tmp/hyperdrive-outbox.json
+          test "$code" = "200"
+          grep -q '"ok":true' /tmp/hyperdrive-outbox.json
+          grep -q '"outboxLeaseRetry":"PASS"' /tmp/hyperdrive-outbox.json
+          grep -q '"publisherSanitization":"PASS"' /tmp/hyperdrive-outbox.json
+          grep -q '"deliveryRetryIdempotency":"PASS"' /tmp/hyperdrive-outbox.json
+          echo "HYPERDRIVE_OUTBOX_ISOLATION_TEST=PASS"
