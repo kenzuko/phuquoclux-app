@@ -18,6 +18,20 @@ jobs:
   visual:
     runs-on: ubuntu-latest
     timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: phuquoclux_visual
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d phuquoclux_visual"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: web
@@ -37,6 +51,8 @@ jobs:
         run: npx playwright install --with-deps chromium webkit
 
       - name: Run browser journeys and take QA screenshots
+        env:
+          CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE: postgresql://postgres:postgres@127.0.0.1:5432/phuquoclux_visual
         run: npm run test:visual
 
       - name: Upload browser QA evidence

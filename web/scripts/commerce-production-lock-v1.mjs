@@ -6,6 +6,8 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(scriptDir, "..");
 const repoRoot = path.resolve(webRoot, "..");
 
+const REVIEWED_HYPERDRIVE_ID = "e5470089fa104a0fb3221d9769ec9474";
+
 async function text(relativeToRepo) {
   return readFile(path.join(repoRoot, relativeToRepo), "utf8");
 }
@@ -33,8 +35,8 @@ async function run() {
     text("web/workers/app.ts"),
   ]);
 
-  // Production deployment must remain prototype-only until a dedicated,
-  // reviewed activation change intentionally replaces this lock.
+  // Production deployment remains prototype-only. Database connectivity is now
+  // reviewed separately and must not implicitly activate commerce or payment.
   assertContains(
     deployWorkflow,
     '--var "COMMERCE_MODE:prototype"',
@@ -46,7 +48,8 @@ async function run() {
     "production deploy must not contain a live commerce override",
   );
 
-  // Local/default Worker config must fail closed as well.
+  // Local/default Worker config fails closed for commerce, while allowing only
+  // the reviewed Hyperdrive target and binding name.
   assertContains(
     wrangler,
     '"COMMERCE_MODE": "prototype"',
@@ -57,14 +60,24 @@ async function run() {
     '"MANAGE_BOOKING_EXCHANGE_ENABLED": "false"',
     "manage-booking exchange must remain disabled by default",
   );
+  assertContains(
+    wrangler,
+    '"binding": "HYPERDRIVE"',
+    "reviewed Hyperdrive binding is missing",
+  );
+  assertContains(
+    wrangler,
+    `"id": "${REVIEWED_HYPERDRIVE_ID}"`,
+    "Hyperdrive id does not match the reviewed PhuQuocLux database target",
+  );
   assertNotMatch(
     wrangler,
-    /"hyperdrive"\s*:/i,
-    "production Worker config must not provision Hyperdrive before database activation review",
+    /localConnectionString/i,
+    "local or plaintext database connection strings must not be committed",
   );
 
-  // No public payment ingress exists yet. Provider/webhook code is deliberately
-  // offline-only until DB, Hyperdrive and a concrete provider are reviewed.
+  // No public payment ingress exists yet. Provider/webhook code remains
+  // offline-only even though the Worker now has a reviewed database binding.
   assertNotMatch(
     routes,
     /route\([^\n]*(?:payment|webhook)/i,
