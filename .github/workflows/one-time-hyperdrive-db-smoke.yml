@@ -44,12 +44,18 @@ jobs:
           SMOKE_URL: ${{ steps.deploy.outputs.url }}
         run: |
           set -euo pipefail
-          sleep 5
-          status=$(curl --silent --show-error \
-            --retry 10 --retry-delay 2 --retry-all-errors \
-            -o /tmp/hyperdrive-db-smoke.json -w '%{http_code}' "$SMOKE_URL")
+          status="000"
+          for attempt in $(seq 1 15); do
+            status=$(curl --silent --show-error \
+              -o /tmp/hyperdrive-db-smoke.json -w '%{http_code}' "$SMOKE_URL" || true)
+            if [ "$status" != "404" ] && [ "$status" != "000" ]; then
+              break
+            fi
+            echo "Worker not propagated yet (HTTP $status), attempt $attempt/15"
+            sleep 2
+          done
           echo "Smoke HTTP status: $status"
-          cat /tmp/hyperdrive-db-smoke.json
+          cat /tmp/hyperdrive-db-smoke.json || true
           echo
           test "$status" = "200"
           node <<'NODE'
