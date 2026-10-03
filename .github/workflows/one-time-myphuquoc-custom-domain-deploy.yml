@@ -1,4 +1,4 @@
-name: One-time My Phu Quoc public homepage audit
+name: One-time My Phu Quoc live browser audit
 
 on:
   push:
@@ -11,51 +11,68 @@ permissions:
   contents: read
 
 jobs:
-  audit:
+  browser-audit:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - name: Audit public homepage, health and canonical redirect
+      - name: Checkout main app dependencies
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install dependencies
+        working-directory: web
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+      - name: Audit live homepage in a real browser
+        working-directory: web
         run: |
-          set -euo pipefail
-
-          echo "=== APEX ROOT ==="
-          curl --silent --show-error --max-time 20 -D /tmp/root.headers https://myphuquoc.com/ -o /tmp/root.html
-          cat /tmp/root.headers
-          echo "ROOT_BYTES=$(wc -c < /tmp/root.html)"
-          echo "ROOT_TITLE=$(grep -o '<title>[^<]*' /tmp/root.html | head -1 | sed 's/<title>//' || true)"
-          grep -q 'My Phu Quoc' /tmp/root.html
-          grep -q 'Phú Quốc' /tmp/root.html
-
-          echo "=== ROOT ASSETS ==="
-          python - <<'PY'
-          import re, pathlib, urllib.parse, subprocess
-          html=pathlib.Path('/tmp/root.html').read_text(errors='replace')
-          urls=[]
-          for pat in [r'<script[^>]+src="([^"]+)"', r'<link[^>]+href="([^"]+)"']:
-              urls += re.findall(pat, html)
-          seen=[]
-          for u in urls:
-              if u.startswith('/') and u not in seen:
-                  seen.append(u)
-          print('ASSET_COUNT', len(seen))
-          for u in seen[:20]:
-              full='https://myphuquoc.com'+u
-              p=subprocess.run(['curl','--silent','--show-error','--max-time','20','-o','/dev/null','-w','%{http_code}',full],capture_output=True,text=True)
-              print(p.stdout.strip(), u)
-              if p.stdout.strip() not in ('200','204'):
-                  raise SystemExit(f'asset failed: {u} -> {p.stdout.strip()}')
-          PY
-
-          echo "=== HEALTH ==="
-          curl --fail --silent --show-error --max-time 20 https://myphuquoc.com/api/health | tee /tmp/health.json
-          grep -q '"ok":true' /tmp/health.json
-          grep -q '"mode":"prototype"' /tmp/health.json
-
-          echo "=== WWW REDIRECT ==="
-          headers=$(curl --silent --show-error --max-time 20 -I 'https://www.myphuquoc.com/test-path?x=1' | tr -d '\r')
-          echo "$headers"
-          echo "$headers" | grep -Eq '^HTTP/[^ ]+ (301|308)$'
-          echo "$headers" | grep -Fqi 'location: https://myphuquoc.com/test-path?x=1'
-
-          echo "PUBLIC_HOMEPAGE_AUDIT=PASS"
+          cat > /tmp/live-audit.mjs <<'NODE'
+          import { chromium } from '@playwright/test';
+          import fs from 'node:fs';
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+          const consoleErrors=[];
+          const pageErrors=[];
+          page.on('console', msg => { if (msg.type()==='error') consoleErrors.push(msg.text()); });
+          page.on('pageerror', err => pageErrors.push(String(err)));
+          const response = await page.goto('https://myphuquoc.com/', { waitUntil:'networkidle', timeout:60000 });
+          const title = await page.title();
+          const bodyText = (await page.locator('body').innerText()).slice(0,4000);
+          const h1 = await page.locator('h1').first().innerText().catch(()=> '');
+          const brand = await page.getByText('My Phu Quoc', { exact:false }).first().isVisible().catch(()=>false);
+          const metrics = await page.evaluate(() => ({
+            bodyW: document.body.scrollWidth,
+            bodyH: document.body.scrollHeight,
+            bodyDisplay: getComputedStyle(document.body).display,
+            bodyVisibility: getComputedStyle(document.body).visibility,
+            bodyOpacity: getComputedStyle(document.body).opacity,
+            textLength: document.body.innerText.length,
+          }));
+          await page.screenshot({ path:'/tmp/myphuquoc-live-mobile.png', fullPage:true });
+          fs.writeFileSync('/tmp/myphuquoc-live.txt', JSON.stringify({
+            status: response?.status(), title, h1, brand, metrics, consoleErrors, pageErrors, bodyText
+          }, null, 2));
+          console.log(fs.readFileSync('/tmp/myphuquoc-live.txt','utf8'));
+          if (response?.status() !== 200) process.exit(2);
+          if (!title.includes('My Phu Quoc')) process.exit(3);
+          if (!bodyText.includes('Phú Quốc')) process.exit(4);
+          if (metrics.textLength < 200) process.exit(5);
+          if (metrics.bodyVisibility === 'hidden' || metrics.bodyOpacity === '0') process.exit(6);
+          await browser.close();
+          NODE
+          node /tmp/live-audit.mjs
+      - name: Upload live browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: myphuquoc-live-browser-audit
+          path: |
+            /tmp/myphuquoc-live-mobile.png
+            /tmp/myphuquoc-live.txt
+          if-no-files-found: warn
