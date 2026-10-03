@@ -187,8 +187,8 @@ export default {
                  (select count(*)::text from public.bookings where id = $1::uuid) as booking_count,
                  (select count(*)::text from public.quotes where id = $2::uuid) as quote_count,
                  (select count(*)::text from public.idempotency_keys where request_id = $3::uuid) as idempotency_count,
-                 (select count(*)::text from public.outbox_events where aggregate_id = $1) as outbox_count`,
-              [writerBookingId, writerQuoteId, writerRequestId],
+                 (select count(*)::text from public.outbox_events where aggregate_id = $4::text) as outbox_count`,
+              [writerBookingId, writerQuoteId, writerRequestId, writerBookingId],
             );
             const row = visible.rows[0];
             writerRowsVisibleInsideTransaction =
@@ -224,8 +224,8 @@ export default {
            (select count(*)::text from public.bookings where id = $1::uuid) as booking_count,
            (select count(*)::text from public.quotes where id = $2::uuid) as quote_count,
            (select count(*)::text from public.idempotency_keys where request_id = $3::uuid) as idempotency_count,
-           (select count(*)::text from public.outbox_events where aggregate_id = $1) as outbox_count`,
-        [writerBookingId, writerQuoteId, writerRequestId],
+           (select count(*)::text from public.outbox_events where aggregate_id = $4::text) as outbox_count`,
+        [writerBookingId, writerQuoteId, writerRequestId, writerBookingId],
       );
       const writerAfter = writerAfterRollback.rows[0];
       const writerRolledBackCleanly =
