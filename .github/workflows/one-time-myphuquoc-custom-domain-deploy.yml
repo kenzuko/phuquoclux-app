@@ -52,7 +52,7 @@ jobs:
           echo '=== normal HTTPS www redirect ==='
           headers=$(curl --silent --show-error --max-time 20 -I 'https://www.myphuquoc.com/test-path?x=1' | tr -d '\r')
           echo "$headers"
-          echo "$headers" | grep -Eq '^HTTP/[^ ]+ (301|308)$'
+          echo "$headers" | grep -Eq '^HTTP/[^ ]+[[:space:]]+(301|308)[[:space:]]*$'
           echo "$headers" | grep -Fqi 'location: https://myphuquoc.com/test-path?x=1'
 
           echo 'DNS_MULTI_RESOLVER_AUDIT=PASS'
