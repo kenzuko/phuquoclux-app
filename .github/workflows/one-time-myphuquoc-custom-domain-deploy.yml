@@ -1,4 +1,4 @@
-name: One-time My Phu Quoc custom domain audit
+name: One-time My Phu Quoc public homepage audit
 
 on:
   push:
@@ -15,44 +15,47 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Audit Cloudflare zone, Worker domains and public DNS
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Audit public homepage, health and canonical redirect
         run: |
           set -euo pipefail
-          test -n "$CLOUDFLARE_API_TOKEN"
-          test -n "$CLOUDFLARE_ACCOUNT_ID"
-          auth=(-H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json")
 
-          curl --fail --silent --show-error "${auth[@]}" \
-            "https://api.cloudflare.com/client/v4/zones?name=myphuquoc.com" -o /tmp/zone.json
-          zone_id=$(node -e "const p=require('/tmp/zone.json'); const z=p.result?.[0]; if(!z) process.exit(2); console.log(z.id)")
-          node -e "const p=require('/tmp/zone.json'); const z=p.result?.[0]; console.log(JSON.stringify({zone:z?.name,status:z?.status,paused:z?.paused,name_servers:z?.name_servers},null,2))"
+          echo "=== APEX ROOT ==="
+          curl --silent --show-error --max-time 20 -D /tmp/root.headers https://myphuquoc.com/ -o /tmp/root.html
+          cat /tmp/root.headers
+          echo "ROOT_BYTES=$(wc -c < /tmp/root.html)"
+          echo "ROOT_TITLE=$(grep -o '<title>[^<]*' /tmp/root.html | head -1 | sed 's/<title>//' || true)"
+          grep -q 'My Phu Quoc' /tmp/root.html
+          grep -q 'Phú Quốc' /tmp/root.html
 
-          curl --fail --silent --show-error "${auth[@]}" \
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains?service=phuquoclux-app" -o /tmp/domains.json
-          node -e "const p=require('/tmp/domains.json'); console.log(JSON.stringify((p.result||[]).map(d=>({hostname:d.hostname,service:d.service,zone_name:d.zone_name,cert_present:Boolean(d.cert_id)})),null,2))"
+          echo "=== ROOT ASSETS ==="
+          python - <<'PY'
+          import re, pathlib, urllib.parse, subprocess
+          html=pathlib.Path('/tmp/root.html').read_text(errors='replace')
+          urls=[]
+          for pat in [r'<script[^>]+src="([^"]+)"', r'<link[^>]+href="([^"]+)"']:
+              urls += re.findall(pat, html)
+          seen=[]
+          for u in urls:
+              if u.startswith('/') and u not in seen:
+                  seen.append(u)
+          print('ASSET_COUNT', len(seen))
+          for u in seen[:20]:
+              full='https://myphuquoc.com'+u
+              p=subprocess.run(['curl','--silent','--show-error','--max-time','20','-o','/dev/null','-w','%{http_code}',full],capture_output=True,text=True)
+              print(p.stdout.strip(), u)
+              if p.stdout.strip() not in ('200','204'):
+                  raise SystemExit(f'asset failed: {u} -> {p.stdout.strip()}')
+          PY
 
-          for host in myphuquoc.com www.myphuquoc.com; do
-            curl --fail --silent --show-error "${auth[@]}" \
-              "https://api.cloudflare.com/client/v4/zones/$zone_id/dns_records?name=$host" -o "/tmp/dns-${host}.json"
-            node -e "const p=require('/tmp/dns-${host}.json'); console.log(JSON.stringify({host:'${host}',records:(p.result||[]).map(r=>({type:r.type,name:r.name,content:r.content,proxied:r.proxied}))},null,2))"
-            echo "DoH Cloudflare $host"
-            curl --fail --silent --show-error -H 'accept: application/dns-json' \
-              "https://cloudflare-dns.com/dns-query?name=$host&type=A" | \
-              node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const p=JSON.parse(s);console.log(JSON.stringify({Status:p.Status,Answer:(p.Answer||[]).map(a=>a.data)},null,2))})"
-          done
-
-          echo "HTTP apex check"
-          curl --fail --silent --show-error --retry 4 --retry-delay 3 --max-time 20 https://myphuquoc.com/api/health | tee /tmp/health.json
+          echo "=== HEALTH ==="
+          curl --fail --silent --show-error --max-time 20 https://myphuquoc.com/api/health | tee /tmp/health.json
           grep -q '"ok":true' /tmp/health.json
           grep -q '"mode":"prototype"' /tmp/health.json
 
-          echo "HTTP www redirect check"
-          headers=$(curl --silent --show-error --retry 4 --retry-delay 3 --max-time 20 -I 'https://www.myphuquoc.com/test-path?x=1' | tr -d '\r')
+          echo "=== WWW REDIRECT ==="
+          headers=$(curl --silent --show-error --max-time 20 -I 'https://www.myphuquoc.com/test-path?x=1' | tr -d '\r')
           echo "$headers"
           echo "$headers" | grep -Eq '^HTTP/[^ ]+ (301|308)$'
-          echo "$headers" | grep -Fxq 'location: https://myphuquoc.com/test-path?x=1'
+          echo "$headers" | grep -Fqi 'location: https://myphuquoc.com/test-path?x=1'
 
-          echo "CUSTOM_DOMAIN_AUDIT=PASS"
+          echo "PUBLIC_HOMEPAGE_AUDIT=PASS"
