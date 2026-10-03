@@ -1,6 +1,7 @@
-# PhuQuocLux product identity V1
+# My Phu Quoc product identity V1
 
 Date: 29/09/2026
+Public brand updated: 03/10/2026
 
 ## Decision
 
@@ -14,7 +15,7 @@ These are different concepts:
 
 Example:
 
-```
+```text
 type: tour
 id: tour-three-islands-cano
 slug: tour-3-dao-cano
@@ -30,7 +31,7 @@ That structure only allows one Tour product, one Ticket product and one Transfer
 
 A real mass marketplace must support:
 
-```
+```text
 tour
 ├── Tour 3 đảo
 ├── Tour 4 đảo
@@ -44,7 +45,7 @@ without changing the commerce architecture.
 
 Public routes now use slugs:
 
-```
+```text
 /product/:slug
 /checkout/:slug
 ```
@@ -57,7 +58,7 @@ Commerce, Offer, Quote, Booking and provider calls use Product id.
 
 Offer belongs to Product id, not Product type.
 
-```
+```text
 Product tour-three-islands-cano
   ├── Offer shared
   └── Offer private
@@ -93,3 +94,7 @@ Map links use the slug.
 Map category filters use Product type.
 
 This keeps Map UX simple while preserving scalable commerce identity.
+
+## Brand independence
+
+Public brand identity (`My Phu Quoc`) is separate from stable Product ids, slugs and legacy infrastructure identifiers. A brand change must not mutate transactional identity or booking history.
