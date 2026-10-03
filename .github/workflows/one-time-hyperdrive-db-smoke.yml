@@ -44,7 +44,10 @@ jobs:
           SMOKE_URL: ${{ steps.deploy.outputs.url }}
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --retry 8 --retry-delay 2 "$SMOKE_URL" -o /tmp/hyperdrive-db-smoke.json
+          sleep 5
+          curl --fail --silent --show-error \
+            --retry 10 --retry-delay 2 --retry-all-errors \
+            "$SMOKE_URL" -o /tmp/hyperdrive-db-smoke.json
           node <<'NODE'
           const fs = require('fs');
           const p = JSON.parse(fs.readFileSync('/tmp/hyperdrive-db-smoke.json', 'utf8'));
