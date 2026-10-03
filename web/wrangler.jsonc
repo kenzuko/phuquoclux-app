@@ -6,6 +6,16 @@
   "observability": {
     "enabled": true
   },
+  "routes": [
+    {
+      "pattern": "myphuquoc.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.myphuquoc.com",
+      "custom_domain": true
+    }
+  ],
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
