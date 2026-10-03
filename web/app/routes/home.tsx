@@ -287,7 +287,7 @@ export default function HomeRoute() {
               <div className="home-trust-head">
                 <div>
                   <p className="section-kicker">VẬN HÀNH TẠI PHÚ QUỐC</p>
-                  <h2>PhuQuocLux, vận hành bởi JoTrip</h2>
+                  <h2>My Phu Quoc, vận hành bởi JoTrip</h2>
                 </div>
                 <span>Local operations</span>
               </div>
