@@ -19,6 +19,7 @@ import { getOffer, offerSupportsPax } from "../app/domain/offer";
 import { priceOffer, unitQuantitiesFromSearch } from "../app/domain/pricing";
 import { normalizeServiceDate } from "../app/domain/service-date";
 import "../app/styles/app.css";
+import "../app/styles/myphuquoc-brand.css";
 import "./preview.css";
 
 // Only public domain/UI functions execute in this site. React Router server
@@ -45,7 +46,7 @@ function PreviewLayout() {
   return (
     <>
       <div className="pages-preview-bar" role="note">
-        <strong>PHUQUOCLUX V1 - XEM THỬ</strong>
+        <strong>MY PHU QUOC - XEM THỬ</strong>
         <span>
           Bản xem thử được tạo từ nhánh main. Giá và vị trí phải xác minh trước khi bán.
           Thời tiết, xác nhận đặt chỗ và thanh toán chưa kết nối.

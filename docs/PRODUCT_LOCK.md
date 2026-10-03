@@ -1,9 +1,9 @@
-# PhuQuocLux App — Product Lock
-Version: V0.1 — 29/09/2026
+# My Phu Quoc - Product Lock
+Version: V1.0 - 03/10/2026
 
 ## One-sentence definition
 
-**PhuQuocLux is a map-first mass travel marketplace for Phu Quoc: the map helps travelers see and discover what is around them, search and categories help them find what they already want, and a reliable commerce and local operations engine lets them book and use those services with minimal friction.**
+**My Phu Quoc is a map-first mass travel marketplace for Phu Quoc: the map helps travelers see and discover what is around them, search and categories help them find what they already want, and a reliable commerce and local operations engine lets them book and use those services with minimal friction.**
 
 ## Locked principles
 
@@ -12,25 +12,27 @@ Version: V0.1 — 29/09/2026
 3. Map is not the commerce or database backbone.
 4. Search and categories remain first-class.
 5. Nobody must understand the map in order to buy.
-6. Home keeps the large embedded map direction from the original design.
+6. Home keeps a large embedded map direction.
 7. Full Map is a separate deeper exploration state.
 8. Product and MapEntity are separate domains.
 9. Product, Offer, Availability, Quote, Booking and Payment are separate concepts.
 10. Tours, attraction tickets and transfers are the first native-commerce priorities.
 11. Hotels and flights must not force OTA/GDS-level complexity into V1.
 12. Open Phu Quoc remains a separate public destination-intelligence product.
-13. PhuQuocLux consumes relevant shared destination data without forking Weather/Airport/Transit/Near Me.
+13. My Phu Quoc consumes relevant shared destination data without forking Weather/Airport/Transit/Near Me.
 14. Modular monolith first. No premature microservices.
 15. AI chatbot is not part of the core V1 architecture.
 16. My Bookings / post-purchase is first-class.
 17. Never fake real-time inventory.
 18. Scope discipline beats feature count.
+19. JoTrip is the operator / commerce layer, not a competing consumer header brand.
+20. Public brand names may change without forcing risky renames of stable internal infrastructure identifiers.
 
 ## Core user paths
 
 ### Known intent
 
-```
+```text
 Search / Category
       ↓
 Results
@@ -42,7 +44,7 @@ Book
 
 ### Discovery
 
-```
+```text
 Map
  ↓
 Area / Place
@@ -56,7 +58,7 @@ Book
 
 ## Product hierarchy
 
-```
+```text
 MAP / SEARCH / CATEGORY
           ↓
       DISCOVERY
@@ -74,7 +76,7 @@ MAP / SEARCH / CATEGORY
 
 ## Home direction
 
-```
+```text
 Brand / destination
 Search
 Date + Guests
@@ -97,7 +99,7 @@ Supporting content
 
 ## Data separation
 
-```
+```text
 MapEntity
  ├── Area
  ├── Place
@@ -140,10 +142,10 @@ Products may link to one or many MapEntities. They are never the same object.
 
 ## Technical direction
 
-```
+```text
 Web / Mobile
      ↓
-JoTrip / PhuQuocLux API-BFF
+JoTrip / My Phu Quoc API-BFF
      ↓
 Discovery | Commerce | Customer
      ↓
@@ -153,3 +155,7 @@ Provider adapters
 ```
 
 Keep the implementation modular but initially deployable as a modular monolith.
+
+## Rebrand compatibility lock
+
+The repository, Worker, database, package and deployment variable names may continue using the legacy `phuquoclux` identifier until a separate infrastructure migration is justified. This is intentional and does not make `PhuQuocLux` a public-facing brand.

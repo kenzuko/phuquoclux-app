@@ -113,11 +113,11 @@ export function meta({
   data?: Awaited<ReturnType<typeof loader>>;
 }) {
   if (!data) {
-    return [{ title: "Dịch vụ Phú Quốc | PhuQuocLux" }];
+    return [{ title: "Dịch vụ Phú Quốc | My Phu Quoc" }];
   }
 
   return [
-    { title: `${data.product.name} | PhuQuocLux` },
+    { title: `${data.product.name} | My Phu Quoc` },
     { name: "description", content: data.product.lead },
     { property: "og:title", content: data.product.name },
     { property: "og:description", content: data.product.lead },
@@ -328,7 +328,7 @@ export default function ProductRoute() {
                 <div className="map-verification-note">
                   <b>Chưa hiển thị vị trí chính xác</b>
                   <p>
-                    PhuQuocLux chỉ hiển thị pin khi vị trí đủ tin cậy.
+                    My Phu Quoc chỉ hiển thị pin khi vị trí đủ tin cậy.
                     Những điểm chưa xác minh sẽ không được đặt gần đúng trên bản đồ.
                   </p>
                 </div>
@@ -490,7 +490,7 @@ export default function ProductRoute() {
                 <b>{pax} khách cần nhiều hơn một xe.</b>
                 <span>
                   Lựa chọn hiện tại hỗ trợ tối đa {singleOfferMaxPax} khách
-                  trên một xe. PhuQuocLux chưa tự chia nhiều xe ở bước này,
+                  trên một xe. My Phu Quoc chưa tự chia nhiều xe ở bước này,
                   nên hãy giảm số khách để tiếp tục.
                 </span>
               </div>

@@ -28,7 +28,7 @@ import {
 
 export function meta() {
   return [
-    { title: "Đặt chỗ của tôi | PhuQuocLux" },
+    { title: "Đặt chỗ của tôi | My Phu Quoc" },
     { name: "robots", content: "noindex,nofollow" },
   ];
 }
@@ -145,7 +145,7 @@ export default function BookingsRoute() {
               Liên kết hoặc phiên quản lý đặt chỗ không còn hiệu lực. Không có
               thông tin đặt chỗ nào được hiển thị.
             </p>
-            <Link to="/">Về PhuQuocLux</Link>
+            <Link to="/">Về My Phu Quoc</Link>
           </section>
         ) : access === "runtime_unavailable" ? (
           <section className="booking-empty">
@@ -155,7 +155,7 @@ export default function BookingsRoute() {
               Hệ thống không thể xác thực phiên quản lý hiện tại. Không có
               thông tin đặt chỗ nào được hiển thị.
             </p>
-            <Link to="/">Về PhuQuocLux</Link>
+            <Link to="/">Về My Phu Quoc</Link>
           </section>
         ) : (
           <section className="booking-empty">

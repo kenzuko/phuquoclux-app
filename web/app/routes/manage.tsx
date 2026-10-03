@@ -6,7 +6,7 @@ type ExchangeState = "working" | "unavailable" | "invalid";
 
 export function meta() {
   return [
-    { title: "Mở đặt chỗ | PhuQuocLux" },
+    { title: "Mở đặt chỗ | My Phu Quoc" },
     { name: "robots", content: "noindex,nofollow" },
     { name: "referrer", content: "no-referrer" },
   ];
@@ -84,7 +84,7 @@ export default function ManageBookingExchangePage() {
                 Liên kết có thể đã hết hạn, không hợp lệ hoặc chức năng quản lý
                 đặt chỗ chưa được mở. Không có thông tin đặt chỗ nào được hiển thị.
               </p>
-              <Link to="/">Về PhuQuocLux</Link>
+              <Link to="/">Về My Phu Quoc</Link>
             </>
           )}
         </section>
