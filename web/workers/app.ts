@@ -64,12 +64,25 @@ function withResponsePolicy(
   });
 }
 
+function redirectCanonicalHostname(request: Request) {
+  const url = new URL(request.url);
+  if (url.hostname.toLowerCase() !== "www.myphuquoc.com") return null;
+
+  url.protocol = "https:";
+  url.hostname = "myphuquoc.com";
+  url.port = "";
+  return Response.redirect(url.toString(), 308);
+}
+
 export default {
   async fetch(
     request: Request,
     env: PhuQuocLuxEnv,
     ctx: WorkerExecutionContext,
   ) {
+    const canonicalRedirect = redirectCanonicalHostname(request);
+    if (canonicalRedirect) return canonicalRedirect;
+
     const requestId = crypto.randomUUID();
     const routerContext = new RouterContextProvider();
 
