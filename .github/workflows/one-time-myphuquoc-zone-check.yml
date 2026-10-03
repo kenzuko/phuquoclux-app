@@ -1,0 +1,48 @@
+name: One-time MyPhuQuoc Cloudflare zone check
+
+on:
+  push:
+    branches:
+      - myphuquoc-brand-domain-20261003
+    paths:
+      - ".github/workflows/one-time-myphuquoc-zone-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-zone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check myphuquoc.com in Cloudflare account
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            "https://api.cloudflare.com/client/v4/zones?name=myphuquoc.com" \
+            -o /tmp/zone.json
+          node <<'NODE'
+          const fs = require('fs');
+          const p = JSON.parse(fs.readFileSync('/tmp/zone.json', 'utf8'));
+          if (!p.success) {
+            console.error('Cloudflare API request failed');
+            process.exit(1);
+          }
+          const zone = Array.isArray(p.result) ? p.result[0] : null;
+          if (!zone) {
+            console.log('ZONE_FOUND=false');
+            process.exit(0);
+          }
+          console.log('ZONE_FOUND=true');
+          console.log(`ZONE_NAME=${zone.name}`);
+          console.log(`ZONE_STATUS=${zone.status}`);
+          console.log(`ZONE_PAUSED=${zone.paused}`);
+          console.log(`ZONE_TYPE=${zone.type}`);
+          console.log(`NAMESERVERS=${(zone.name_servers || []).join(',')}`);
+          NODE
