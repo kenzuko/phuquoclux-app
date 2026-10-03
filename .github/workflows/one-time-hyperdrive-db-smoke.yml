@@ -27,6 +27,18 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Fix smoke-only Date argument
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/hyperdrive-db-smoke-worker.ts')
+          s = p.read_text()
+          old = 'new Date(writerNow.getTime() + 1).toISOString() as unknown as Date'
+          new = 'new Date(writerNow.getTime() + 1)'
+          assert old in s
+          p.write_text(s.replace(old, new))
+          PY
+
       - name: Deploy temporary Hyperdrive smoke Worker
         id: deploy
         env:
@@ -75,6 +87,16 @@ jobs:
             ['booking writer created inside transaction', p.writerOutcome === 'created'],
             ['booking writer rows visible inside transaction', p.writerRowsVisibleInsideTransaction === true],
             ['booking writer rolled back cleanly', p.writerRolledBackCleanly === true],
+            ['guest access issued', p.guestAccessIssued === true],
+            ['raw access token not persisted', p.guestAccessRawTokenNotPersisted === true],
+            ['guest access redeemed', p.guestAccessRedeemed === true],
+            ['manage exchange returns 204', p.guestExchangeStatus === 204],
+            ['session cookie security flags', p.guestCookieSecure === true],
+            ['manage session resolves booking', p.guestSessionResolved === true],
+            ['raw session token not persisted', p.guestSessionRawTokenNotPersisted === true],
+            ['parent revoke invalidates session', p.guestParentRevocationInvalidatesSession === true],
+            ['guest rows visible inside transaction', p.guestFlowRowsVisibleInsideTransaction === true],
+            ['guest flow rolled back cleanly', p.guestFlowRolledBackCleanly === true],
           ];
           for (const [name, pass] of checks) {
             console.log(`${pass ? 'PASS' : 'FAIL'} ${name}`);
