@@ -1,8 +1,9 @@
 /**
- * Delivery boundary for future manage-booking links.
+ * Delivery boundary for manage-booking links.
  *
- * This file defines link construction and provider contracts only. It does not
- * send email/SMS and must never log or persist the raw capability URL.
+ * Provider implementations receive the raw capability only in memory. They must
+ * never log or persist the raw capability URL. Provider-specific failures are
+ * reduced to stable error codes before they can reach durable outbox state.
  */
 export type ManageBookingDeliveryChannel = "email" | "sms";
 
@@ -17,6 +18,7 @@ export type ManageBookingDeliveryRequest = {
 export type ManageBookingDeliveryResult = {
   accepted: boolean;
   providerMessageId?: string;
+  errorCode?: string;
 };
 
 export interface ManageBookingDeliveryProvider {
