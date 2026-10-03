@@ -1,0 +1,86 @@
+name: One-time My Phu Quoc custom domain deploy
+
+on:
+  push:
+    branches:
+      - one-time-myphuquoc-custom-domain-deploy-20261003
+    paths:
+      - ".github/workflows/one-time-myphuquoc-custom-domain-deploy.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout approved main snapshot
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Verify fail-closed runtime flags and custom domains
+        run: |
+          set -euo pipefail
+          grep -q '"COMMERCE_MODE": "prototype"' wrangler.jsonc
+          grep -q '"MANAGE_BOOKING_EXCHANGE_ENABLED": "false"' wrangler.jsonc
+          grep -q '"pattern": "myphuquoc.com"' wrangler.jsonc
+          grep -q '"pattern": "www.myphuquoc.com"' wrangler.jsonc
+          grep -q '"custom_domain": true' wrangler.jsonc
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Domain checks
+        run: npm run test:domain
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy approved main snapshot with custom domains
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          MAP_STYLE_URL: ${{ vars.PHUQUOCLUX_MAP_STYLE_URL || secrets.PHUQUOCLUX_MAP_STYLE_URL || 'https://tiles.openfreemap.org/styles/liberty' }}
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          npx wrangler deploy \
+            --var "MAP_STYLE_URL:$MAP_STYLE_URL" \
+            --var "WEATHER_RUNTIME_BASE_URL:https://weather.openphuquoc.com" \
+            --var "COMMERCE_MODE:prototype" \
+            --var "MANAGE_BOOKING_EXCHANGE_ENABLED:false"
+
+      - name: Smoke apex and www custom domains
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 20); do
+            if curl --fail --silent --show-error --max-time 15 https://myphuquoc.com/api/health -o /tmp/health.json; then
+              break
+            fi
+            sleep 6
+          done
+          grep -q '"ok":true' /tmp/health.json
+          grep -q '"mode":"prototype"' /tmp/health.json
+
+          for i in $(seq 1 20); do
+            code=$(curl --silent --show-error --max-time 15 -o /dev/null -w '%{http_code}' https://www.myphuquoc.com/test-path?x=1 || true)
+            if [ "$code" = "301" ] || [ "$code" = "308" ]; then
+              break
+            fi
+            sleep 6
+          done
+          headers=$(curl --silent --show-error --max-time 15 -I https://www.myphuquoc.com/test-path?x=1)
+          echo "$headers"
+          echo "$headers" | grep -Ei '^location: https://myphuquoc.com/test-path\?x=1\r?$'
