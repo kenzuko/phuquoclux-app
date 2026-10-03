@@ -108,20 +108,20 @@ export async function loader({ params, request, context }: LoaderFunctionArgs) {
 }
 
 /**
- * Fail closed before reading a request body. There is no durable database,
- * guest-access token or delivery channel yet. A POST may never create an
- * ephemeral "booking" that tells guests JoTrip received their request.
+ * Fail closed before reading a request body. Durable storage and guest access
+ * are already present, but production delivery/outbox activation is not yet
+ * cleared end-to-end. A POST must stay unavailable until that gate is green.
  */
 export async function action(): Promise<never> {
   throw new Response(
-    "Booking requests are not available until durable storage and guest access are configured.",
+    "Booking requests are not available until delivery and activation checks are complete.",
     { status: 503, headers: { "Cache-Control": "no-store" } },
   );
 }
 
 export function meta() {
   return [
-    { title: "Xem trước đặt dịch vụ | PhuQuocLux" },
+    { title: "Xem trước đặt dịch vụ | My Phu Quoc" },
     { name: "robots", content: "noindex,nofollow" },
   ];
 }
@@ -153,12 +153,12 @@ export default function CheckoutRoute() {
               <h1>Kiểm tra lựa chọn</h1>
               <p>
                 Bạn có thể xem phương án, ngày đi, số khách và giá tham khảo,
-                nhưng hiện tại PhuQuocLux chưa tiếp nhận yêu cầu đặt chỗ.
+                nhưng hiện tại My Phu Quoc chưa tiếp nhận yêu cầu đặt chỗ.
               </p>
               <div className="prototype-warning" role="status">
-                Chúng tôi chưa mở nhận thông tin khách vì hệ thống lưu booking
-                và gửi xác nhận vẫn đang hoàn thiện. Không có yêu cầu nào
-                được gửi đi hoặc ghi nhận ở bước này.
+                Chúng tôi chưa mở nhận thông tin khách vì luồng giao booking
+                và xác nhận cuối cùng vẫn đang được kiểm tra. Không có yêu cầu
+                nào được gửi đi hoặc ghi nhận ở bước này.
               </div>
             </section>
 
@@ -243,7 +243,7 @@ export default function CheckoutRoute() {
               </div>
             ) : null}
             <div className="support-note">
-              <b>PhuQuocLux do JoTrip vận hành</b>
+              <b>My Phu Quoc do JoTrip vận hành</b>
               <p>
                 Trang này chưa gửi yêu cầu đến JoTrip. Chỉ khi có xác nhận
                 thật, đặt chỗ mới xuất hiện trong tài khoản khách.

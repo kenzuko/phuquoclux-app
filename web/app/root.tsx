@@ -12,25 +12,26 @@ import {
 } from "react-router";
 import "./cloudflare-context";
 import "./styles/app.css";
+import "./styles/myphuquoc-brand.css";
 
 export function links() {
   return [
     {
       rel: "icon",
-      type: "image/webp",
-      href: "/assets/phuquoclux-mark.webp",
+      type: "image/png",
+      href: "/assets/myphuquoc-mark.png",
     },
   ];
 }
 
 export function meta() {
   return [
-    { title: "PhuQuocLux | Phú Quốc" },
-    { property: "og:site_name", content: "PhuQuocLux" },
+    { title: "My Phu Quoc | Your Island, Your Way." },
+    { property: "og:site_name", content: "My Phu Quoc" },
     {
       name: "description",
       content:
-        "Khám phá và đặt dịch vụ du lịch Phú Quốc trên bản đồ, vận hành bởi JoTrip.",
+        "Khám phá Phú Quốc theo cách của bạn - bản đồ, dịch vụ và hành trình trên My Phu Quoc, do JoTrip vận hành.",
     },
   ];
 }
@@ -41,7 +42,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#f7f9f6" />
+        <meta name="theme-color" content="#f8f7f2" />
         <Meta />
         <Links />
       </head>
@@ -98,9 +99,9 @@ export function ErrorBoundary() {
         : status === 400
           ? "Một số thông tin gửi lên chưa đúng định dạng. Hãy quay lại và kiểm tra lại."
           : status === 403
-            ? "PhuQuocLux đã chặn yêu cầu này để bảo vệ giao dịch của bạn."
+            ? "My Phu Quoc đã chặn yêu cầu này để bảo vệ giao dịch của bạn."
             : status === 503
-              ? "PhuQuocLux đang giữ an toàn giao dịch thay vì tiếp tục với dữ liệu chưa đủ."
+              ? "My Phu Quoc đang giữ an toàn giao dịch thay vì tiếp tục với dữ liệu chưa đủ."
               : "Bạn có thể quay lại trang chính và thử lại.";
 
   return (

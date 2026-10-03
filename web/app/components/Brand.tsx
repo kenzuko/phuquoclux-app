@@ -1,20 +1,26 @@
 import { Link } from "react-router";
 
 export function Brand({ compact = false }: { compact?: boolean }) {
+  const markSrc = import.meta.env.VITE_PAGES_PREVIEW === "1"
+    ? `${import.meta.env.BASE_URL}assets/myphuquoc-mark.png`
+    : "/assets/myphuquoc-mark.png";
+
   return (
-    <Link className="brand" to="/" aria-label="PhuQuocLux">
+    <Link
+      className="brand"
+      to="/"
+      aria-label="My Phu Quoc - Your Island, Your Way."
+    >
       <img
         className="brand-mark"
-        src={import.meta.env.VITE_PAGES_PREVIEW === "1" ? `${import.meta.env.BASE_URL}assets/phuquoclux-mark.webp` : "/assets/phuquoclux-mark.webp"}
+        src={markSrc}
         alt=""
-        width={46}
-        height={46}
+        width={48}
+        height={48}
       />
       <span className="brand-copy">
-        <strong>
-          PhuQuoc<span>Lux</span>
-        </strong>
-        {!compact ? <small>by JoTrip</small> : null}
+        <strong>MY PHU QUOC</strong>
+        {!compact ? <small>YOUR ISLAND, YOUR WAY.</small> : null}
       </span>
     </Link>
   );

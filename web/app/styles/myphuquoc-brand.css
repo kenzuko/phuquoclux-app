@@ -1,0 +1,42 @@
+:root{
+  --green-800:#01384a;
+  --green-700:#013b4c;
+  --green-600:#0b5968;
+  --green-100:#e8f1f2;
+  --orange:#d59e46;
+  --orange-soft:#f8efdf;
+  --ink:#10242c;
+  --muted:#67747a;
+  --line:#dbe4e5;
+  --surface:#f5f8f7;
+  --shadow:0 16px 40px rgba(1,59,76,.10);
+}
+
+body{background:#fbfcfb}
+
+.brand{gap:9px}
+.brand-mark{width:48px;height:48px;object-fit:contain}
+.brand-copy{line-height:1.05}
+.brand-copy strong{
+  color:#013b4c;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:.08em;
+  white-space:nowrap;
+}
+.brand-copy small{
+  color:#8d7042;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:.16em;
+  margin-top:5px;
+  text-transform:uppercase;
+}
+
+@media(max-width:560px){
+  .brand{gap:7px}
+  .brand-mark{width:42px;height:42px}
+  .brand-copy strong{font-size:14px;letter-spacing:.06em}
+  .brand-copy small{display:none}
+}
