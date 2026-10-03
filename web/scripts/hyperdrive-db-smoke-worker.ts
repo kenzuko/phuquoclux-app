@@ -39,6 +39,36 @@ export default {
           /permission denied/i.test(candidate.message ?? "");
       }
 
+      const smokeRequestId = crypto.randomUUID();
+      let writeInserted = false;
+      let writeVisibleInsideTransaction = false;
+
+      await client.query("begin");
+      try {
+        const inserted = await client.query<{ request_id: string }>(
+          `insert into public.idempotency_keys
+            (request_id, scope, resource_type, resource_id, expires_at)
+           values ($1::uuid, 'hyperdrive_smoke', 'smoke', 'rollback-only', now() + interval '5 minutes')
+           returning request_id::text as request_id`,
+          [smokeRequestId],
+        );
+        writeInserted = inserted.rows[0]?.request_id === smokeRequestId;
+
+        const visible = await client.query<{ row_count: string }>(
+          "select count(*)::text as row_count from public.idempotency_keys where request_id = $1::uuid",
+          [smokeRequestId],
+        );
+        writeVisibleInsideTransaction = visible.rows[0]?.row_count === "1";
+      } finally {
+        await client.query("rollback");
+      }
+
+      const afterRollback = await client.query<{ row_count: string }>(
+        "select count(*)::text as row_count from public.idempotency_keys where request_id = $1::uuid",
+        [smokeRequestId],
+      );
+      const writeRolledBack = afterRollback.rows[0]?.row_count === "0";
+
       return Response.json({
         ok: true,
         database: identity.rows[0]?.database_name ?? null,
@@ -47,6 +77,9 @@ export default {
         bookingCount: count.rows[0]?.booking_count ?? null,
         migrationLedgerDenied,
         migrationLedgerErrorCode,
+        writeInserted,
+        writeVisibleInsideTransaction,
+        writeRolledBack,
       });
     } catch (error) {
       const candidate = error as { code?: string; message?: string };
