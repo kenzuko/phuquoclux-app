@@ -15,7 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export function meta() {
   return [
-    { title: "Hành trình của tôi | PhuQuocLux" },
+    { title: "Hành trình của tôi | My Phu Quoc" },
     { name: "robots", content: "noindex,nofollow" },
   ];
 }
@@ -49,7 +49,7 @@ export default function TripRoute() {
           <span>≋</span>
           <h2>Chưa có hành trình</h2>
           <p>
-            Khi bạn có đặt chỗ được xác nhận, PhuQuocLux sẽ gom giờ đón,
+            Khi bạn có đặt chỗ được xác nhận, My Phu Quoc sẽ gom giờ đón,
             voucher và dịch vụ trong ngày vào đây. Không cần tạo lịch thủ công.
           </p>
           <div className="trip-empty-actions">
