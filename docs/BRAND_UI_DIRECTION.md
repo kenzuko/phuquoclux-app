@@ -1,102 +1,108 @@
-# PhuQuocLux App — Brand & UI Direction
-Version: V0.1 — 29/09/2026
+# My Phu Quoc - Brand & UI Direction
+Version: V1.0 - 03/10/2026
 
 ## Brand architecture
 
+- **My Phu Quoc**: public consumer smart-island / travel marketplace identity.
 - **JoTrip**: operator / commerce / local operations layer.
-- **PhuQuocLux**: consumer-facing Phu Quoc mass marketplace.
 - **JoTrip DMC**: separate bespoke / high-touch product.
 
-Public consumer identity should be **PhuQuocLux**.  
-Use **by JoTrip** only as a trust/operator signature in low-emphasis surfaces such as footer, About, booking confirmation, support and legal.
+Public consumer identity is **My Phu Quoc**.
+JoTrip should appear only where operator trust, support, commerce or legal context benefits from it. It should not compete with My Phu Quoc in the main header.
 
-## Logo direction
+Tagline:
 
-The existing PhuQuocLux identity has valuable heritage and a strong Phu Quoc cue. Keep the island silhouette and green/orange DNA.
+> YOUR ISLAND, YOUR WAY.
 
-Do not use the old full lockup everywhere.
+## Logo lock
 
-### Recommended logo system
+Owner-approved source assets are the canonical logo artwork.
 
-1. **App / map mark**
-   - Island silhouette + orange travel stroke.
-   - Simplified for small sizes.
-   - Must work at 24/32/48 px.
-   - Plane detail may be reduced or removed at small sizes because the app is broader than air travel.
+### Primary use
 
-2. **Primary consumer wordmark**
-   - `PhuQuocLux`
-   - Modernized digital lockup while retaining the original green/orange identity.
-   - Avoid making “Lux” visually scream luxury-only.
+Use the flat transparent My Phu Quoc logo / mark for:
+- app header;
+- navigation;
+- favicon / app-icon source;
+- loading states;
+- compact footer lockup.
 
-3. **Legacy/company lockup**
-   - Existing “PHUQUOCLux Travel Co.” lockup may remain for heritage/corporate usage.
-   - It should not be the default app-header logo.
+Do not redraw, distort, stretch or reinterpret the symbol.
 
-4. **Operator signature**
-   - `by JoTrip`
-   - Quiet, secondary.
-   - Never compete with PhuQuocLux on the main consumer UI.
+### 3D / presentation artwork
 
-## Core palette extracted from the existing logo
+The dimensional version may be used selectively for:
+- brand reveal;
+- About / brand story;
+- large marketing moments.
 
-- Heritage Green: `#657D3C`
-- Deep Island Green: `#4D7328`
-- Mid Island Green: `#6A8930`
-- Light Island Green: `#7C9742`
-- Travel Orange: `#FBB041`
+Do not use the 3D version as the everyday navbar logo.
 
-These are starting tokens, not a final UI palette. The app will need neutral surfaces, text colors, semantic states and accessible contrast pairs.
+## Core palette
+
+The public UI moves from the legacy green/orange system to a restrained deep-teal + gold system derived from the approved My Phu Quoc logo.
+
+Current web tokens:
+- Deep Teal: `#013B4C`
+- Dark Teal: `#01384A`
+- Mid Teal: `#0B5968`
+- Soft Teal: `#E8F1F2`
+- Gold: `#D59E46`
+- Soft Gold: `#F8EFDF`
+
+Keep surfaces light. My Phu Quoc is a useful smart-island product, not a black/gold luxury landing page.
 
 ## Product personality
 
-PhuQuocLux should feel:
+My Phu Quoc should feel:
 - local;
 - useful;
-- energetic;
+- personal;
+- calm;
 - visual;
 - trustworthy;
 - mass-market;
 - modern without looking generic.
 
 Avoid:
-- black/gold luxury clichés;
 - resort-brochure styling;
 - travel-agency visual clutter;
-- too many tropical gradients;
-- overuse of orange;
-- “premium-only” language.
+- excessive luxury cues;
+- generic tropical decoration;
+- overusing gradients;
+- turning JoTrip into a second competing consumer brand.
 
 ## Visual thesis
 
 > The island is the interface.
 
-The map is the recognizable visual language of the product, while search, categories and commerce remain immediately usable.
+The map remains the recognizable product language while search, categories and commerce stay immediately usable.
 
 ## Header rule
 
-Mobile header should not carry the old oversized full logo. Prefer compact mark + `PhuQuocLux`.
-
-Desktop may use a wider wordmark.
+- Desktop: approved flat mark + `MY PHU QUOC`; tagline may appear when space permits.
+- Mobile: approved flat mark + compact `MY PHU QUOC`; hide the tagline when it crowds navigation.
+- Never use the dimensional logo as the normal header mark.
 
 ## Map styling
 
-The map must feel like PhuQuocLux, not an unmodified Google/Mapbox canvas.
+The map must feel like My Phu Quoc, not an unmodified mapping canvas.
 
 Use branded overlays:
-- green/orange selected state;
+- teal selected state;
+- gold as restrained accent;
 - clear category pins;
 - soft neutral base map;
 - high visual priority for Phu Quoc coastline and major areas;
 - restrained POI density;
 - branded bottom sheets/cards.
 
-Do not tint the entire map green or orange.
+Do not tint the entire map teal or gold.
 
-## Marketing line direction
+## Product story
 
-Working product story:
+Primary brand line:
 
-> See Phu Quoc. Find what you need. Book it.
+> Your Island, Your Way.
 
-Vietnamese copy should remain natural and transactional rather than aspirational luxury copy.
+Vietnamese product copy remains natural, useful and transactional. The brand can feel personal without becoming decorative or luxury-heavy.
